@@ -1,0 +1,67 @@
+stages:
+  - test
+  - teardown
+
+include:
+  - https://gitlab.invenia.ca/infrastructure/gitlab-ci-helper/raw/master/templates/hidden-jobs.yml
+  - https://gitlab.invenia.ca/infrastructure/gitlab-ci-helper/raw/master/templates/teardown.yml
+
+"1.0 (Mac)":
+  tags:
+    - mac
+    - shell-ci
+  extends: .test_shell_1_0
+
+"1.0 (Linux, 64-bit)":
+  tags:
+    - linux
+    - 64-bit
+    - docker-ci
+  extends: .test_docker_1_0
+
+"1.0 (Linux, 32-bit)":
+  tags:
+    - linux
+    - 32-bit
+    - shell-ci
+  extends: .test_shell_1_0
+
+"1.1 (Mac)":
+  tags:
+    - mac
+    - shell-ci
+  extends: .test_shell_1_1
+
+"1.1 (Linux, 64-bit)":
+  tags:
+    - linux
+    - 64-bit
+    - docker-ci
+  extends: .test_docker_1_1
+
+"1.1 (Linux, 32-bit)":
+  tags:
+    - linux
+    - 32-bit
+    - shell-ci
+  extends: .test_shell_1_1
+
+"Nightly (Mac)":
+  tags:
+    - mac
+    - shell-ci
+  extends: .test_shell_nightly
+
+"Nightly (Linux, 64-bit)":
+  tags:
+    - linux
+    - 64-bit
+    - docker-ci
+  extends: .test_docker_nightly
+
+"Nightly (Linux, 32-bit)":
+  tags:
+    - linux
+    - 32-bit
+    - shell-ci
+  extends: .test_shell_nightly
