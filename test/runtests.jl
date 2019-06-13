@@ -1,6 +1,9 @@
 using Metrics
 using Test
 
+using Distributions: Normal, MvNormal
+
 @testset "Metrics.jl" begin
-    # Write your own tests here.
+    include("utils.jl")
+    include("regression.jl")
 end
