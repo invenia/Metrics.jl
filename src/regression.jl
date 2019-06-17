@@ -51,3 +51,49 @@ end
 function joint_loglikelihood(dist::Distribution{Multivariate}, y_pred)
     return loglikelihood(MvNormal(mean(dist), cov(dist)), y_pred)
 end
+
+
+"""
+    picp(
+        lower_bound::AbstractVector, upper_bound::AbstractVector, y_true::AbstractVector
+    ) -> Float64
+    picp(α::Float64, dist_samples::AbstractMatrix, y_true::AbstractVector) -> FFloat64
+    picp(
+        α::Float64,
+        dist::Distribution{Multivariate},
+        y_true::AbstractVector;
+        nsamples::Int=1000,
+    ) -> Float64
+
+Prediction Interval Coverage Probability (PICP). Measure the number of measured points,
+`y_true`, that fall within the credible interval defined by `lb` and `ub`.
+
+Given a sample of the distribution `dist_samples`, find the interquantile range (`α` to
+either side of the samples' median) and calculate PICP.
+
+In order to compute this quantity, for a distribution and a given interquantile range (`α`
+to either side of the median) we need the computation of the quantiles, which is done via a
+Monte Carlo method, using a number of samples specified by `nsamples` (default 1000).
+
+https://en.wikipedia.org/wiki/Prediction_interval
+"""
+function picp(
+    lower_bound::AbstractVector, upper_bound::AbstractVector, y_true::AbstractVector
+)
+    return mean(lower_bound .<= y_true .<= upper_bound)
+end
+
+function picp(α::Float64, dist_samples::AbstractMatrix, y_true::AbstractVector)
+    lower_bound = quantile.(eachrow(dist_samples), (1 - α)/2)
+    upper_bound = quantile.(eachrow(dist_samples), (1 + α)/2)
+    return picp(lower_bound, upper_bound, y_true)
+end
+
+function picp(
+    α::Float64,
+    dist::Distribution{Multivariate},
+    y_true::AbstractVector;
+    nsamples::Int=1000,
+)
+    return picp(α, rand(dist, nsamples), y_true)
+end

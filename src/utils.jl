@@ -24,3 +24,9 @@ macro _dimcheck(condition::Expr)
         end
     end
 end
+
+# If I understand this page correctly, `eachrow` should exists for `1.1`
+# https://github.com/JuliaLang/julia/commit/6b0429181142eabb441c1febf0ae286f559b2f32
+if VERSION < v"1.1"
+    eachrow(A::AbstractVecOrMat) = (view(A, i, :) for i in axes(A, 1))
+end
