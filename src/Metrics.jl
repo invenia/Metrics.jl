@@ -9,6 +9,7 @@ export
     evaluate,
     squared_error,
     marginal_loglikelihood,
-    joint_loglikelihood
+    joint_loglikelihood,
+    picp
 
 end # module

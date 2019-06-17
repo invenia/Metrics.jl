@@ -60,6 +60,43 @@
         end
     end
 
+    @testset "picp" begin
+        @testset "base function" begin
+            lower_bound = collect(1:10)
+            upper_bound = collect(11:20)
+            y_pred = collect(6:15)
+            @test picp(lower_bound, upper_bound, y_pred) == 1
+            lower_bound = collect(1:5)
+            upper_bound = collect(11:15)
+            y_pred = [2, 14, 1, 4, 15]
+            @test picp(lower_bound, upper_bound, y_pred) == 0.6
+        end
+        @testset "vector point using samples" begin
+            # `dist` isn't used
+            dist = MvNormal(3, 2)
+            α = .5
+            y_true = [2.5, -3.74, 5.5]
+            samples = [1. 2. 3. 4. 5.; -3. -3.5 -4. -4.5 -5.; -1. 1. 3. 5. 7.]
+            @test picp(α, samples, y_true) == 2/3
+            α = .25
+            @test picp(α, samples, y_true) == 1/3
+            α = 1.0
+            @test picp(α, samples, y_true) == 3/3
+            y_true = [0, -3.76, 5.5]
+            @test picp(α, samples, y_true) == 2/3
+        end
+        @testset "vector point not using samples (could fail due to randomness)" begin
+            dist = MvNormal([1., 2., 3.], 2.0)
+            α = .1
+            y_true = [1., -2., -3.]
+            @test picp(α, dist, y_true) == 1/3 # This could randomly fail
+            dist = MvNormal([1., 2., 3.], sqrt(2.0))
+            y_true = [1., 1., -3.]
+            α = .6
+            @test picp(α, dist, y_true) == 2/3 # This could randomly fail
+        end
+    end
+
     @testset "evaluate" begin
         @testset "squared_error" begin
             dist = rand()
