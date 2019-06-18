@@ -89,11 +89,36 @@
             dist = MvNormal([1., 2., 3.], 2.0)
             α = .1
             y_true = [1., -2., -3.]
-            @test picp(α, dist, y_true) == 1/3 # This could randomly fail
+            @test picp(α, dist, y_true) == 1/3 # This can fail due to randomness
             dist = MvNormal([1., 2., 3.], sqrt(2.0))
             y_true = [1., 1., -3.]
             α = .6
-            @test picp(α, dist, y_true) == 2/3 # This could randomly fail
+            @test picp(α, dist, y_true) == 2/3 # This can fail due to randomness
+        end
+    end
+
+    @testset "wpicp" begin
+        @testset "base function" begin
+            dist = MvNormal([1., 2., 3., 4.], 2.0)
+            y_true = [1., -200., -300., -400.]
+            @test wpicp(dist, y_true) == fill(.25, 18) # This can fail due to randomness
+
+            α_range=0.25:0.05:0.75
+            # This can fail due to randomness
+            @test wpicp(dist, y_true, α_range) == fill(.25, 11)
+            @test length(wpicp(dist, y_true, α_range)) == length(α_range)
+
+            α_min=0.15
+            α_max=0.85
+            α_step=0.01
+            # This can fail due to randomness
+            @test wpicp(dist, y_true, α_min=α_min, α_max=α_max, α_step=α_step) ==
+                wpicp(dist, y_true, α_min:α_step:α_max)
+
+            y_true = [1., 3., -300., -400.]
+            α_range=0.1:0.8:0.9
+            # This can fail due to randomness
+            @test wpicp(dist, y_true, α_range) == [.25, .5]
         end
     end
 
