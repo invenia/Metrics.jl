@@ -10,6 +10,7 @@ export
     squared_error,
     marginal_loglikelihood,
     joint_loglikelihood,
-    picp
+    picp,
+    wpicp
 
 end # module

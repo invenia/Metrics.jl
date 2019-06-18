@@ -57,7 +57,7 @@ end
     picp(
         lower_bound::AbstractVector, upper_bound::AbstractVector, y_true::AbstractVector
     ) -> Float64
-    picp(α::Float64, dist_samples::AbstractMatrix, y_true::AbstractVector) -> FFloat64
+    picp(α::Float64, dist_samples::AbstractMatrix, y_true::AbstractVector) -> Float64
     picp(
         α::Float64,
         dist::Distribution{Multivariate},
@@ -96,4 +96,45 @@ function picp(
     nsamples::Int=1000,
 )
     return picp(α, rand(dist, nsamples), y_true)
+end
+
+"""
+    wpicp(
+        dist::Distribution,
+        y_true::AbstractVector,
+        α_range::StepRangeLen;
+        nsamples::Int=1000,
+    ) -> Vector{Float64}
+    wpicp(
+        dist::Distribution,
+        y_true::AbstractVector;
+        α_min::Float64=0.10,
+        α_max::Float64=0.95,
+        α_step::Float64=0.05,
+        nsamples::Int=1000,
+    ) -> Vector{Float64}
+
+Compute picp over a window of quantiles, specified by `α_min/max/step`. `nsamples` determines
+the number of samples used for the estimation of each quantile. Returns a vector with all
+`picp` values.
+"""
+function wpicp(
+    dist::Distribution,
+    y_true::AbstractVector,
+    α_range::StepRangeLen;
+    nsamples::Int=1000,
+)
+    dist_samples = rand(dist, nsamples)
+    # broadcast only on `α_range`
+    return picp.(α_range, Ref(dist_samples), Ref(y_true))
+end
+function wpicp(
+    dist::Distribution,
+    y_true::AbstractVector;
+    α_min::Float64=0.10,
+    α_max::Float64=0.95,
+    α_step::Float64=0.05,
+    nsamples::Int=1000,
+)
+    return wpicp(dist, y_true, α_min:α_step:α_max; nsamples=nsamples)
 end
