@@ -138,3 +138,43 @@ function wpicp(
 )
     return wpicp(dist, y_true, α_min:α_step:α_max; nsamples=nsamples)
 end
+
+"""
+    apicp(
+        dist::Distribution,
+        y_true::AbstractVector,
+        α_range::StepRangeLen;
+        nsamples::Int=1000,
+    ) -> Float64
+    apicp(
+        dist::Distribution,
+        y_true::AbstractVector;
+        α_min::Float64=0.10,
+        α_max::Float64=0.95,
+        α_step::Float64=0.05,
+        nsamples::Int=1000,
+    ) -> Float64
+
+Compute the adjusted `picp` value over a window specified by `α_min/max/step` and return
+the slope `m` of the line corresponding to the least-squares fit of picp = m * α that
+passes through the origin.
+"""
+function apicp(
+    dist::Distribution,
+    y_true::AbstractVector,
+    α_range::StepRangeLen;
+    nsamples::Int=1000,
+)
+    ps = wpicp(dist, y_true, α_range; nsamples=nsamples)
+    return dot(α_range, ps) / dot(α_range, α_range)
+end
+function apicp(
+    dist::Distribution,
+    y_true::AbstractVector;
+    α_min::Float64=0.10,
+    α_max::Float64=0.95,
+    α_step::Float64=0.05,
+    nsamples::Int=1000,
+)
+    return apicp(dist, y_true, α_min:α_step:α_max; nsamples=nsamples)
+end

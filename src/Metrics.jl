@@ -1,6 +1,7 @@
 module Metrics
 
 using Distributions
+using LinearAlgebra: dot
 
 include("utils.jl")
 include("regression.jl")
@@ -11,6 +12,7 @@ export
     marginal_loglikelihood,
     joint_loglikelihood,
     picp,
-    wpicp
+    wpicp,
+    apicp
 
 end # module

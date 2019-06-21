@@ -130,6 +130,29 @@
         end
     end
 
+    @testset "apicp" begin
+        @testset "base function" begin
+            dist = MvNormal([1., 2., 3., 4.], 2.0)
+            y_true = [1., 3., -300., -400.]
+            α_range=0.1:0.8:0.9
+
+            seed!(1234)
+            # dot([0.1, 0.9], [.25, .5]) / sum([0.1, 0.9] .^ 2)
+            @test apicp(dist, y_true, α_range) == 0.5792682926829268
+
+            y_true = [1., -200., -300., -400.]
+            seed!(1234)
+            @test apicp(dist, y_true) == 0.3827460510328068
+
+            α_min=0.15
+            α_max=0.85
+            α_step=0.01
+            seed!(1234)
+            @test apicp(dist, y_true, α_min=α_min, α_max=α_max, α_step=α_step) ==
+                apicp(dist, y_true, α_min:α_step:α_max)
+        end
+    end
+
     @testset "evaluate" begin
         @testset "squared_error" begin
             dist = rand()
