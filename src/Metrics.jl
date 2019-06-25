@@ -5,6 +5,7 @@ using LinearAlgebra: dot
 
 include("utils.jl")
 include("regression.jl")
+include("financial.jl")
 
 export
     evaluate,
@@ -13,6 +14,7 @@ export
     joint_loglikelihood,
     picp,
     wpicp,
-    apicp
+    apicp,
+    expected_shortfall
 
 end # module
