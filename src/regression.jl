@@ -6,15 +6,97 @@ Compute a metric with truths `grounds_truths` and predictions `predictions`
 evaluate(metric, grounds_truths, predictions) = metric(grounds_truths, predictions)
 
 """
-    squared_error(y_true, y_pred)
+    squared_error(y_true, y_pred) -> Float64
 
-Compute the total square error between a set of truths `y_true` and
-predictions `y_pred`.
+Compute the total square error between a set of truths `y_true` and predictions `y_pred`.
 """
+
 function squared_error(y_true, y_pred)
     @_dimcheck size(y_true) == size(y_pred)
-    return sum((y_true - y_pred) .^ 2)
+    return sum((y_true .- y_pred) .^ 2)
 end
+
+const se = squared_error
+
+"""
+    mean_squared_error(y_true, y_pred) -> Float64
+
+Compute the mean square error between a set of truths `y_true` and predictions `y_pred`.
+"""
+function mean_squared_error(y_true::AbstractVector, y_pred::AbstractVector)
+    @_dimcheck size(y_true) == size(y_pred)
+    return mean(squared_error.(y_true, y_pred))
+end
+
+const mse = mean_squared_error
+
+"""
+    root_mean_squared_error(y_true, y_pred) -> Float64
+
+Compute the root of the mean square error between a set of truths `y_true` and predictions
+`y_pred`.
+"""
+root_mean_squared_error(y_true, y_pred) = √mean_squared_error(y_true, y_pred)
+const rmse = root_mean_squared_error
+
+"""
+    normalised_root_mean_squared_error(y_true, y_pred) -> Float64
+    normalised_root_mean_squared_error(y_true, y_pred, α::Float64) -> Float64
+
+Compute the normalised root of the mean square error between a set of truths `y_true` and
+predictions `y_pred`. You can also normalised on the interquartile range using `α`. This is
+normalised by the range of `y_true` and it is scaled to unit range.
+
+https://en.wikipedia.org/wiki/Root-mean-square_deviation#Normalized_root-mean-square_deviation
+"""
+function normalised_root_mean_squared_error(y_true, y_pred)
+    y_true_min, y_true_max = extrema(vcat(y_true...))
+    return root_mean_squared_error(y_true, y_pred) / (y_true_max - y_true_min)
+end
+
+function normalised_root_mean_squared_error(y_true, y_pred, α::Float64)
+    temp = vcat(y_true...)
+    return root_mean_squared_error(y_true, y_pred) /
+        (quantile(temp, .5 + α) - quantile(temp, .5 - α))
+end
+
+const nrmse = normalised_root_mean_squared_error
+
+"""
+    standardized_mean_squared_error(y_true, y_pred) -> Float64
+
+Compute the standardized mean square error between a set of truths `y_true` and predictions
+`y_pred`.
+"""
+function standardized_mean_squared_error(y_true, y_pred)
+    return mean_squared_error(y_true, y_pred) / var(norm.(y_true))
+end
+
+const smse = standardized_mean_squared_error
+
+"""
+    absolute_error(y_true, y_pred) -> Float64
+
+Compute the total absolute error between a set of truths `y_true` and predictions `y_pred`.
+"""
+function absolute_error(y_true, y_pred)
+    @_dimcheck size(y_true) == size(y_pred)
+    return sum(abs.(y_true .- y_pred))
+end
+
+const ae = absolute_error
+
+"""
+    mean_absolute_error(y_true, y_pred) -> Float64
+
+Compute the mean absolute error between a set of truths `y_true` and predictions `y_pred`.
+"""
+function mean_absolute_error(y_true::AbstractVector, y_pred::AbstractVector)
+    @_dimcheck size(y_true) == size(y_pred)
+    return mean(absolute_error.(y_true, y_pred))
+end
+
+const mae = mean_absolute_error
 
 """
     marginal_loglikelihood(dist::Distribution{Univariate}, y_pred) -> Float64
