@@ -1,16 +1,8 @@
 """
-    evaluate(metric, grounds_truths, predictions)
-
-Compute a metric with truths `grounds_truths` and predictions `predictions`
-"""
-evaluate(metric, grounds_truths, predictions) = metric(grounds_truths, predictions)
-
-"""
     squared_error(y_true, y_pred) -> Float64
 
 Compute the total square error between a set of truths `y_true` and predictions `y_pred`.
 """
-
 function squared_error(y_true, y_pred)
     @_dimcheck size(y_true) == size(y_pred)
     return sum((y_true .- y_pred) .^ 2)
