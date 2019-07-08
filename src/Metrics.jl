@@ -5,6 +5,7 @@ using LinearAlgebra: dot, norm
 using MLDataUtils
 using NamedDims
 
+include("evaluate.jl")
 include("utils.jl")
 include("regression.jl")
 include("financial.jl")

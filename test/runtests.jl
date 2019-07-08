@@ -1,5 +1,6 @@
 using Metrics
 using Test
+using NamedDims
 
 using Random: seed!, shuffle!
 using Distributions: Normal, MvNormal

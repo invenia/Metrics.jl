@@ -5,6 +5,8 @@
             y_true = 1
             y_pred = 1
             @test squared_error(y_true, y_pred) == 0
+            @test evaluate(squared_error, y_true, y_pred) == 0
+
             y_true = 4
             @test squared_error(y_true, y_pred) == 9
             y_true = rand(Int64)
@@ -15,13 +17,18 @@
             y_true = [1, 2, 3]
             y_pred = [1, 2, 3]
             @test squared_error(y_true, y_pred) == 0
+            @test evaluate(squared_error, y_true, y_pred) == 0
+
             y_true = [2, 2, 2, 2]
             y_pred = [1, 2, 3, 4]
             @test squared_error(y_true, y_pred) == 6
+            @test evaluate(squared_error, y_true, y_pred) == 6
+
             y_true = rand(Int64, 7)
             y_pred = rand(Int64, 7)
             @test squared_error(y_true, y_pred) == squared_error(y_pred, y_true)
         end
+
         @testset "matrixvariate point" begin
             y_true = [
                 1  2  3  4
@@ -29,16 +36,22 @@
                 1  2  3  4
             ]
             @test squared_error(y_true, y_true) == 0
+            @test evaluate(squared_error, y_true, y_true) == 0
+
             y_pred = fill(2, 3, 4)
             @test squared_error(y_true, y_pred) == 18
+            @test evaluate(squared_error, y_true, y_pred) == 18
         end
+
         @testset "erroring" begin
             y_true = 1
             y_pred = [1, 2, 3]
             @test_throws DimensionMismatch squared_error(y_true, y_pred)
+
             y_true = [2, 2]
             y_pred = [1, 2, 3, 4]
             @test_throws DimensionMismatch squared_error(y_true, y_pred)
+            @test_throws DimensionMismatch evaluate(squared_error, y_true, y_pred) == 0
         end
     end
 
@@ -62,8 +75,21 @@
                 [1,  2,  3,  4],
             ]
             @test mean_squared_error(y_true, y_true) == 0
+
             y_pred = fill(fill(2, 4), 3)
             @test mean_squared_error(y_true, y_pred) == 6
+
+            y_true_m = [1 2 3 4; 1 2 3 4; 1 2 3 4]
+            y_pred_m = fill(2, (3,4))
+            @test evaluate(mean_squared_error, y_true_m, y_pred_m) == 6
+            @test evaluate(mean_squared_error, y_true_m, y_pred_m; obsdim=1) == 6
+            @test evaluate(mean_squared_error, y_true_m', y_pred_m'; obsdim=2) == 6
+            y_true_nda = NamedDimsArray{(:vars, :obs)}(y_true_m')
+            y_pred_nda = NamedDimsArray{(:vars, :obs)}(y_pred_m')
+            @test evaluate(mean_squared_error, y_true_nda, y_pred_nda) == 6
+            @test evaluate(mean_squared_error, y_true_nda', y_pred_nda') == 6
+            @test evaluate(mean_squared_error, y_true_nda', y_pred_nda) == 6
+            @test evaluate(mean_squared_error, y_true_nda, y_pred_nda') == 6
         end
         @testset "matrixvariate point" begin
             y_true = [
@@ -73,6 +99,10 @@
             ]
             y_pred = fill(fill(2, 2, 2), 3)
             @test mean_squared_error(y_true, y_pred) == 6
+
+            y_true_m = cat(y_true...; dims=3)
+            y_pred_m = fill(2, (2, 2, 3))
+            @test evaluate(mean_squared_error, y_true_m, y_pred_m; obsdim=3) == 6
         end
         @testset "erroring" begin
             y_true = [2, 2]

@@ -8,7 +8,9 @@ function squared_error(y_true, y_pred)
     return sum((y_true .- y_pred) .^ 2)
 end
 
+obs_quantity(::typeof(squared_error)) = SingleObsMetric()
 const se = squared_error
+
 
 """
     mean_squared_error(y_true, y_pred) -> Float64
@@ -20,6 +22,7 @@ function mean_squared_error(y_true::AbstractVector, y_pred::AbstractVector)
     return mean(squared_error.(y_true, y_pred))
 end
 
+obs_quantity(::typeof(mean_squared_error)) = MultipleObsMetric()
 const mse = mean_squared_error
 
 """
@@ -29,6 +32,7 @@ Compute the root of the mean square error between a set of truths `y_true` and p
 `y_pred`.
 """
 root_mean_squared_error(y_true, y_pred) = √mean_squared_error(y_true, y_pred)
+obs_quantity(::typeof(root_mean_squared_error)) = MultipleObsMetric()
 const rmse = root_mean_squared_error
 
 """
@@ -42,16 +46,17 @@ normalised by the range of `y_true` and it is scaled to unit range.
 https://en.wikipedia.org/wiki/Root-mean-square_deviation#Normalized_root-mean-square_deviation
 """
 function normalised_root_mean_squared_error(y_true, y_pred)
-    y_true_min, y_true_max = extrema(vcat(y_true...))
+    y_trues = reduce(vcat, y_true)
+    y_true_min, y_true_max = extrema(y_trues)
     return root_mean_squared_error(y_true, y_pred) / (y_true_max - y_true_min)
 end
 
 function normalised_root_mean_squared_error(y_true, y_pred, α::Float64)
-    temp = vcat(y_true...)
+    y_trues = reduce(vcat, y_true)
     return root_mean_squared_error(y_true, y_pred) /
-        (quantile(temp, .5 + α) - quantile(temp, .5 - α))
+        (quantile(y_trues, .5 + α) - quantile(y_trues, .5 - α))
 end
-
+obs_quantity(::typeof(normalised_root_mean_squared_error)) = MultipleObsMetric()
 const nrmse = normalised_root_mean_squared_error
 
 """
@@ -63,7 +68,7 @@ Compute the standardized mean square error between a set of truths `y_true` and 
 function standardized_mean_squared_error(y_true, y_pred)
     return mean_squared_error(y_true, y_pred) / var(norm.(y_true))
 end
-
+obs_quantity(::typeof(standardized_mean_squared_error)) = MultipleObsMetric()
 const smse = standardized_mean_squared_error
 
 """
@@ -75,7 +80,7 @@ function absolute_error(y_true, y_pred)
     @_dimcheck size(y_true) == size(y_pred)
     return sum(abs.(y_true .- y_pred))
 end
-
+obs_quantity(::typeof(absolute_error)) = SingleObsMetric()
 const ae = absolute_error
 
 """
@@ -87,7 +92,7 @@ function mean_absolute_error(y_true::AbstractVector, y_pred::AbstractVector)
     @_dimcheck size(y_true) == size(y_pred)
     return mean(absolute_error.(y_true, y_pred))
 end
-
+obs_quantity(::typeof(mean_absolute_error)) = MultipleObsMetric()
 const mae = mean_absolute_error
 
 """
@@ -105,7 +110,7 @@ function marginal_loglikelihood(dist::Distribution{Univariate}, y_pred)
 end
 
 function marginal_loglikelihood(dist::Distribution{Multivariate}, y_pred)
-    # We use `.√var` instead of `std` because `std` thorws an error
+    # We use `.√var` instead of `std` because `std` throws an error
     return loglikelihood(MvNormal(mean(dist), .√var(dist)), y_pred)
 end
 
