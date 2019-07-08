@@ -90,6 +90,9 @@
             @test evaluate(mean_squared_error, y_true_nda', y_pred_nda') == 6
             @test evaluate(mean_squared_error, y_true_nda', y_pred_nda) == 6
             @test evaluate(mean_squared_error, y_true_nda, y_pred_nda') == 6
+            y_true_nda2 = NamedDimsArray{(:vars, :points)}(y_true_m')
+            y_pred_nda2 = NamedDimsArray{(:vars, :points)}(y_pred_m')
+            @test evaluate(mean_squared_error, y_true_nda2, y_pred_nda2; obsdim=:points) == 6
         end
         @testset "matrixvariate point" begin
             y_true = [

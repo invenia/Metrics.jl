@@ -11,6 +11,10 @@ end
 
 split_into_obs(::SingleObsMetric, data; obsdim=nothing) = data
 function split_into_obs(::MultipleObsMetric, data; obsdim=nothing)
+    if data isa NamedDimsArray && obsdim isa Symbol
+        obsdim = NamedDims.dim(data, obsdim)
+    end
+
     if obsdim == nothing
         obsdim = _default_obsdim(data)
     elseif obsdim isa Integer
