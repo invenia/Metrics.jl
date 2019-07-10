@@ -8,8 +8,9 @@ using StatsUtils: sqrtcov
 include("evaluate.jl")
 include("utils.jl")
 include("regression.jl")
-include("price_impact.jl")
+include("regression_picp.jl")
 include("financial.jl")
+include("price_impact.jl")
 
 export
     evaluate,
