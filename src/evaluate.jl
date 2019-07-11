@@ -39,17 +39,21 @@ function arrange_obs(metric, data; obsdim=nothing)
     return arrange_obs(obs_arrangement(metric), data; obsdim=obsdim)
 end
 
+
+# These are basically scalar quantities and don't (generally) represent observations
+# at all. e.g. threshold parameters.
 # never slice: (avoid even thinking about traits)
 for T in (Distribution, Number, Symbol,)
     @eval arrange_obs(metric, data::$T; obsdim=nothing) = data
 end
 
 ## Two arg forms: obsdim is optional, we may or may not need it.
-arrange_obs(::SingleObs, data; obsdim=nothing) = data
 
 for T in (Any, AbstractVector)
+    # Need a iterator and it aleady is an iterator so no need ot change
     @eval arrange_obs(::IteratorOfObs, obs_iter::$T; obsdim=nothing) = obs_iter
 
+    # It is an iterator of observations and we need to arrange it into an Array
     @eval function arrange_obs(
         ::ArraySlicesOfObs{D},
         obs_iter::$T;
@@ -83,8 +87,15 @@ for T in (Any, AbstractVector)
     end
 end
 
-# Avoid ambiguity
+# If it is a single observation than never any need to rearrage
+arrange_obs(::SingleObs, data; obsdim=nothing) = data
+
 for A in (IteratorOfObs, ArraySlicesOfObs)
+    # Handle non-1D AbstractArray data, this means we need to know the obsdim
+    # This method fills in the obsdim, if required, to the default
+    # then redispatches to the 3 arg form below.
+    # Filling in the observation dimension is the same regardless of if targetting
+    # IteratorOfObs, ArraySlicesOfObs
     @eval function arrange_obs(arrangement::$A, data::AbstractArray; obsdim=nothing)
         if obsdim == nothing
             obsdim = _default_obsdim(data)
@@ -98,11 +109,15 @@ for A in (IteratorOfObs, ArraySlicesOfObs)
 end
 
 ## 3 arg forms: we know the obsdim we need and our current form may not agree
+## These are only needed for (non 1D) arrays
+
+# Slice up the array to get an iterator of observations
 function arrange_obs(::IteratorOfObs, data::AbstractArray, obsdim::Integer)
     # This is basically eachslice from julia 1.1+
     return (selectdim(data, obsdim, ii) for ii in axes(data, obsdim))
 end
 
+# Permute the array so the observations are on the right dimension
 function arrange_obs(
     ::ArraySlicesOfObs{D},
     data::AbstractArray{<:Any, N},
