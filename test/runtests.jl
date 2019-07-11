@@ -1,4 +1,4 @@
-using Distributions: Normal, MvNormal
+using Distributions
 using Metrics
 using Metrics: IteratorOfObs, MatrixRowsOfObs, MatrixColsOfObs, arrange_obs
 using NamedDims

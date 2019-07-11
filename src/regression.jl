@@ -106,15 +106,14 @@ probability of the points.
 `marginal_loglikelihood(dist, y_pred) = log(P (dist | y_pred))`
 """
 function marginal_loglikelihood(dist::Distribution{Univariate}, y_pred)
-    return loglikelihood(Normal(mean(dist), std(dist)), y_pred)
+    normalized_dist = Normal(mean(dist), std(dist))
+    return loglikelihood(normalized_dist, y_pred)
 end
 
 function marginal_loglikelihood(dist::Distribution{Multivariate}, y_pred)
-    return loglikelihood(MvNormal(mean(dist), cov(dist)), y_pred)
-end
-
-function marginal_loglikelihood(dist::MvNormal, y_pred)
-    return loglikelihood(dist, y_pred)
+    # `std` is not defined on `MvNormal` so we use `sqrt.(var(...))`
+    normalized_dist = MvNormal(mean(dist), sqrt.(var(dist)))
+    return loglikelihood(normalized_dist, y_pred)
 end
 
 obs_arrangement(::typeof(marginal_loglikelihood)) = MatrixColsOfObs()
@@ -134,7 +133,8 @@ function joint_loglikelihood(dist::Distribution{Univariate}, y_pred)
 end
 
 function joint_loglikelihood(dist::Distribution{Multivariate}, y_pred)
-    return loglikelihood(MvNormal(mean(dist), cov(dist)), y_pred)
+    normalized_dist = MvNormal(mean(dist), cov(dist))
+    return loglikelihood(normalized_dist, y_pred)
 end
 
 joint_loglikelihood(dist::MvNormal, y_pred) = loglikelihood(dist, y_pred)
