@@ -1,8 +1,29 @@
-# Trait for if metric applies to a whole dataset or just one single thing
-abstract type ObsArrangement end
-# trait function is `obs_arrangement`
+"""
+    evaluate(metric, args...; [obsdim], kwargs...)
+
+Compute a metric with with the given arguements.
+the `args` are passed to the `metric` function after rearragement (if required)
+to match the expected observation structure used by the given `metric`.
+
+One should thus look at the documentation for the individual metric
+
+### Keyword Arguments
+ - `obsdim`: Which dimension of a array contains the observation.
+Determined automatically if not provided. Ignored if a metric is not defined
+across multiple observations.
+ - all other `kwargs` are passed to the `metric` function
+"""
+function evaluate(metric, args...; obsdim=nothing, kwargs...)
+    return metric(
+        (arrange_obs(metric, arg; obsdim=obsdim) for arg in args)...;
+        kwargs...
+    )
+end
 
 # These traits say how the given function wants to get its observations.
+# trait function is `obs_arrangement`
+abstract type ObsArrangement end
+
 struct SingleObs <: ObsArrangement end
 struct IteratorOfObs <: ObsArrangement end
 struct ArraySlicesOfObs{D} <: ObsArrangement end
@@ -117,21 +138,4 @@ function _default_obsdim(x::NamedDimsArray{L}) where L
         )))
     end
     return @inbounds obsnames[used]
-end
-
-"""
-    evaluate(metric, grounds_truths, predictions, args...)
-
-Compute a metric with truths `grounds_truths` and predictions `predictions`
-
-### Keyword Arguments
- - `obsdim`: Which dimension of a array contains the observation.
-Determined automatically if not provided. Ignored if a metric is not defined
-across multiple observations.
-"""
-function evaluate(metric, args...; obsdim=nothing, kwargs...)
-    return metric(
-        (arrange_obs(metric, arg; obsdim=obsdim) for arg in args)...;
-        kwargs...
-    )
 end
