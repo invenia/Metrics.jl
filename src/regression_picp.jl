@@ -1,32 +1,33 @@
 """
-    picp(
-        lower_bound::AbstractVector, upper_bound::AbstractVector, y_true::AbstractVector
-    ) -> Float64
-    picp(α::Float64, dist_samples::AbstractMatrix, y_true::AbstractVector) -> Float64
-    picp(
-        α::Float64,
-        dist::Distribution{Multivariate},
-        y_true::AbstractVector;
-        nsamples::Int=1000,
-    ) -> Float64
+    picp(α, distribution|samples, y_trues)
 
-Prediction Interval Coverage Probability (PICP). Measure the number of measured points,
-`y_true`, that fall within the credible interval defined by `lb` and `ub`.
+Prediction Interval Coverage Probability (PICP).
+Suitable for assessing an estimated distribution against a set of true observations.
+Less impacted by ourliers than loglikelihoods.
+A `picp` that is closer to α is bettter.
+If it is below α it means the distribution is too narrow,
+If it is above α it means the distribution is too wide.
 
-Given a sample of the distribution `dist_samples`, find the interquantile range (`α` to
-either side of the samples' median) and calculate PICP.
+picp is bounded below at zero, which indicates that no true observations
+fall with in the credible interval.
+It is bounded above at 1, which indicates all observations fall in the credible interval.
+(To reiterate the above a score of 1 is not good)
 
-In order to compute this quantity, for a distribution and a given interquantile range (`α`
-to either side of the median) we need the computation of the quantiles, which is done via a
-Monte Carlo method, using a number of samples specified by `nsamples` (default 1000).
+`picp` counts the portion of points that fall with-in a credible interval of size `α`,
+for the distribution.
+The distribution may be given explictly or via samples.
 
 https://en.wikipedia.org/wiki/Prediction_interval
 """
 function picp end
 
-# TODO: think about argument order
 
 # Univariate, bounds given
+"""
+    picp(y_trues; lower_bound, upper_bound)
+
+Lower-level univariate `picp`, for it the bounds of the credible window are already known.
+"""
 function picp(y_trues; lower_bound, upper_bound)
     return mean(lower_bound .<= y_trues .<= upper_bound)
 end
@@ -64,91 +65,57 @@ end
 
 
 """
-    wpicp(
-        dist::Distribution,
-        y_true::AbstractVector,
-        α_range::StepRangeLen;
-        nsamples::Int=1000,
-    ) -> Vector{Float64}
-    wpicp(
-        dist::Distribution,
-        y_true::AbstractVector;
-        α_min::Float64=0.10,
-        α_max::Float64=0.95,
-        α_step::Float64=0.05,
-        nsamples::Int=1000,
-    ) -> Vector{Float64}
+    wpicp([α_range], distribution|samples, y_trues)
 
-Compute picp over a window of quantiles, specified by `α_min/max/step`. `nsamples` determines
-the number of samples used for the estimation of each quantile. Returns a vector with all
-`picp` values.
+Compute `picp` over a window of quantiles, specified by `α_range`
+Returns a vector with all `picp` values.
+if `α_range` is not provided this defaults to `0.1:0.05:0.95`.
 
 This is useful either for plotting, or as a partway step for calculating `apicp`.
 
 Source: Eric P. came up with this
 """
-function wpicp(
-    dist::Distribution,
-    y_true::AbstractVector,
-    α_range::StepRangeLen;
-    nsamples::Int=1000,
-)
-    dist_samples = rand(dist, nsamples)
-    # broadcast only on `α_range`
-    return picp.(α_range, Ref(dist_samples), Ref(y_true))
+wpicp(args...) = wpicp(0.1:0.05:0.95, args...)
+wpicp(α_range::AbstractRange, args...) = [picp(α, args...) for α in α_range]
+function wpicp(α_range::AbstractRange, dist::AbstractMvNormal, y_trues)
+    # This is just an optimized version of the above for the MvNormal case
+    # To avoid recalculating the centroid, and proj for each α
+    # It is about 20x faster than the generic fallback.
+
+    centroid = mean(dist)
+    proj = inv(cov(dist))
+
+    ds = map(y_trues) do y
+        offset = y .- centroid
+        offset' * proj * offset
+    end
+    bound_dist = Chisq(length(dist))
+    return map(α_range) do α
+        bound = quantile(bound_dist, α)
+        mean(ds) do d
+            d<=bound
+        end
+    end
 end
-function wpicp(
-    dist::Distribution,
-    y_true::AbstractVector;
-    α_min::Float64=0.10,
-    α_max::Float64=0.95,
-    α_step::Float64=0.05,
-    nsamples::Int=1000,
-)
-    return wpicp(dist, y_true, α_min:α_step:α_max; nsamples=nsamples)
-end
+
 
 """
-    apicp(
-        dist::Distribution,
-        y_true::AbstractVector,
-        α_range::StepRangeLen;
-        nsamples::Int=1000,
-    ) -> Float64
-    apicp(
-        dist::Distribution,
-        y_true::AbstractVector;
-        α_min::Float64=0.10,
-        α_max::Float64=0.95,
-        α_step::Float64=0.05,
-        nsamples::Int=1000,
-    ) -> Float64
+    apicp([α_range], distribution|samples, y_trues)
 
-Compute the adjusted `picp` value over a window specified by `α_min/max/step` and return
+Compute the adjusted `picp` value over a window specified by `α_range` and return
 the slope `m` of the line corresponding to the least-squares fit of picp = m * α that
 passes through the origin.
+if `α_range` is not provided this defaults to `0.1:0.05:0.95`.
+
+This is a kind of normalizized `picp`.
 
 A negative picp means you have overall too much spread,
 a positive picp means you have too little.
 
 Source: Eric P. came up with this
 """
-function apicp(
-    dist::Distribution,
-    y_true::AbstractVector,
-    α_range::StepRangeLen;
-    nsamples::Int=1000,
-)
-    ps = wpicp(dist, y_true, α_range; nsamples=nsamples)
-    return dot(α_range, ps) / dot(α_range, α_range)
+function apicp(α_range::AbstractRange, args...)
+    ps = wpicp(α_range, args...)
+    return dot(α_range, ps) / sum(abs, α_range)
 end
-function apicp(
-    dist::Distribution,
-    y_true::AbstractVector;
-    α_min::Float64=0.10,
-    α_max::Float64=0.95,
-    α_step::Float64=0.05,
-    nsamples::Int=1000,
-)
-    return apicp(dist, y_true, α_min:α_step:α_max; nsamples=nsamples)
-end
+apicp(args...) = apicp(0.1:0.05:0.95, args...)
