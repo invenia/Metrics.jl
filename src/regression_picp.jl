@@ -82,6 +82,10 @@ end
 Compute picp over a window of quantiles, specified by `α_min/max/step`. `nsamples` determines
 the number of samples used for the estimation of each quantile. Returns a vector with all
 `picp` values.
+
+This is useful either for plotting, or as a partway step for calculating `apicp`.
+
+Source: Eric P. came up with this
 """
 function wpicp(
     dist::Distribution,
@@ -123,6 +127,11 @@ end
 Compute the adjusted `picp` value over a window specified by `α_min/max/step` and return
 the slope `m` of the line corresponding to the least-squares fit of picp = m * α that
 passes through the origin.
+
+A negative picp means you have overall too much spread,
+a positive picp means you have too little.
+
+Source: Eric P. came up with this
 """
 function apicp(
     dist::Distribution,
