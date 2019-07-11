@@ -2,7 +2,6 @@ module Metrics
 
 using Distributions
 using LinearAlgebra: dot, norm
-using MLDataUtils
 using NamedDims
 
 include("evaluate.jl")

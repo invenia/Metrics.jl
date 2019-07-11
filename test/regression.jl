@@ -353,13 +353,39 @@
     @testset "marginal_loglikelihood" begin
         @testset "scalar point" begin
             dist = Normal(0.1, 2)
-            y_pred = [.1, .2, .3]
-            @test marginal_loglikelihood(dist, y_pred) == -4.842507141293854
+            y_pred = [0.1, 0.2, 0.3]
+            y_mean = [0.1, 0.1, 0.1]
+
+            @test marginal_loglikelihood(dist, y_pred) < 0.0 # logprobs always negative
+
+            # y_pred is less likely than y_mean
+            @test marginal_loglikelihood(dist, y_pred) < marginal_loglikelihood(dist, y_mean)
+
+            # test arrangements
+            expected = marginal_loglikelihood(dist, y_pred)
+            @test expected == evaluate(marginal_loglikelihood, dist, y_pred)
+            @test expected == evaluate(marginal_loglikelihood, dist, Tuple(y_pred))
         end
         @testset "vector point" begin
-            dist = MvNormal(3, 2)
-            y_pred = [8 10 10; 10 5 7; 9 7 10]
-            @test marginal_loglikelihood(dist, y_pred) == -98.00877142388157
+            dist = MvNormal(3, 1.5)
+            y_pred = [
+                8.  10   9  11
+                10   5   7  12
+                10   7  10  1
+            ]
+            y_mean = zeros(3, 4)
+
+            @test marginal_loglikelihood(dist, y_pred) < 0.0 # logprobs always negative
+            # y_pred is less likely than y_mean
+            @test marginal_loglikelihood(dist, y_pred) < marginal_loglikelihood(dist, y_mean)
+
+            # Test observation rearragement
+            expected = marginal_loglikelihood(dist, y_pred)
+            @test expected == evaluate(marginal_loglikelihood, dist, y_pred, obsdim=2)
+            obs_iter = [[8., 10, 10], [10., 5, 7], [9., 7, 10], [11., 12, 1]]
+            @test expected == evaluate(marginal_loglikelihood, dist, obs_iter)
+            @test expected == evaluate(marginal_loglikelihood, dist, y_pred'; obsdim=1)
+            @test expected == evaluate(marginal_loglikelihood, dist, y_pred')
         end
     end
 
@@ -367,15 +393,41 @@
         @testset "scalar point" begin
             dist = Normal(0.1, 2)
             y_pred = [.1, .2, .3]
-            @test joint_loglikelihood(dist, y_pred) == -4.842507141293854
-            @test joint_loglikelihood(dist, y_pred) == marginal_loglikelihood(dist, y_pred)
+            y_mean = [0.1, 0.1, 0.1]
+
+            @test joint_loglikelihood(dist, y_pred) < 0.0  # logprobs always negative
+
+            # y_pred is less likely than y_mean
+            @test joint_loglikelihood(dist, y_pred) < joint_loglikelihood(dist, y_mean)
+
+            # test arrangements
+            expected = joint_loglikelihood(dist, y_pred)
+            @test expected == evaluate(joint_loglikelihood, dist, y_pred)
+            @test expected == evaluate(joint_loglikelihood, dist, Tuple(y_pred))
         end
         @testset "vector point" begin
-            dist = MvNormal(3, 2)
-            y_pred = [8 10 10; 10 5 7; 9 7 10]
-            @test joint_loglikelihood(dist, y_pred) == -98.00877142388157
+            dist = MvNormal(3, 1.5)
+            y_pred = [
+                8.  10   9  11
+                10   5   7  12
+                10   7  10  1
+            ]
+            y_mean = zeros(3, 4)
+
+            @test joint_loglikelihood(dist, y_pred) < 0.0  # logprobs always negative
+            # y_pred is less likely than y_mean
+            @test joint_loglikelihood(dist, y_pred) < joint_loglikelihood(dist, y_mean)
+
+            # Test observation rearragement
+            expected = joint_loglikelihood(dist, y_pred)
+            @test expected == evaluate(joint_loglikelihood, dist, y_pred, obsdim=2)
+            obs_iter = [[8., 10, 10], [10., 5, 7], [9., 7, 10], [11., 12, 1]]
+            @test expected == evaluate(joint_loglikelihood, dist, obs_iter)
+            @test expected == evaluate(joint_loglikelihood, dist, y_pred'; obsdim=1)
+            @test expected == evaluate(joint_loglikelihood, dist, y_pred')
         end
     end
+
 
     @testset "picp" begin
         @testset "base function" begin
@@ -469,13 +521,4 @@
                 apicp(dist, y_true, α_min:α_step:α_max)
         end
     end
-
-    @testset "evaluate" begin
-        @testset "squared_error" begin
-            dist = rand()
-            y_pred = rand()
-            @test evaluate(squared_error, dist, y_pred) == squared_error(dist, y_pred)
-        end
-    end
-
 end
