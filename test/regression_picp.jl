@@ -22,8 +22,8 @@ end
     # We check it here by testing those properties. (rather than checking exact values)
     @testset "Samples based (Univariate only)" begin
         # Testing uniform distribution case
-        dist_samples = rand(1000)
-        test_samples = rand(1000)
+        dist_samples = rand(10_000)
+        test_samples = rand(10_000)
         for α in (0.1, 0.3, 0.5, 0.7, 0.9)
             @test picp(α, dist_samples, dist_samples) ≈ α
             @test picp(α, dist_samples, test_samples) ≈ α rtol=0.15
