@@ -24,11 +24,23 @@ end
 # trait function is `obs_arrangement`
 abstract type ObsArrangement end
 
+# Note for implementors: with these traits
+# if the input to your function is a mix of ArraySlicesOfObs 
+# and IteratorOfObs for 1D,
+# e.g. a matrix with columns as obs and some vector
+# then you sould declare it as 
+# `obs_arrangement(:typeof(mymetric)) = MatrixColsOfObs()` 
+# (or MatrixRowsOfObs, if that case, etc)
+# as the `ArraySlicesOfObs` will not rearrange any 1D inputs
+
 struct SingleObs <: ObsArrangement end
 struct IteratorOfObs <: ObsArrangement end
 struct ArraySlicesOfObs{D} <: ObsArrangement end
 const MatrixRowsOfObs = ArraySlicesOfObs{1}
 const MatrixColsOfObs = ArraySlicesOfObs{2}
+
+
+
 # TODO: Consider adding `VectorOfObs`, which is like `collect` + `IteratorOfObs`
 # this would let things that are type-constrained to `AbstractVector` work.
 # At the cost of matrializing all the generators that slice up matrixes
