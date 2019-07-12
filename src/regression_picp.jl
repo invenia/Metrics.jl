@@ -3,7 +3,7 @@
 
 Prediction Interval Coverage Probability (PICP).
 Suitable for assessing an estimated distribution against a set of true observations.
-Less impacted by ourliers than loglikelihoods.
+Less impacted by outliers than loglikelihoods.
 A `picp` that is closer to α is bettter.
 If it is below α it means the distribution is too narrow,
 If it is above α it means the distribution is too wide.
