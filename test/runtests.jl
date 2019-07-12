@@ -16,6 +16,7 @@ using Test
 using Distributions
 using Distributions: Normal, MvNormal
 
+seed!(1)
 @testset "Metrics.jl" begin
     include("evaluate.jl")
     include("utils.jl")

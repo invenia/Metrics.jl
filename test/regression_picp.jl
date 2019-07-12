@@ -1,7 +1,7 @@
 const testing_distributions = let
     sqrtcov4 = randn(4, 4)
     sqrtcov10 = randn(10, 10)
-    sqrtcov50 = randn(50, 50)
+    sqrtcov20 = randn(20, 20)
 
     (
         # Univariate (We only test on Normal as the test are easier but the code is the
@@ -12,8 +12,21 @@ const testing_distributions = let
         MvNormal(3, 0.2),
         MvNormal(randn(4), sqrtcov4 * sqrtcov4'),
         MvNormal(randn(10), sqrtcov10 * sqrtcov10'),
-        MvNormal(randn(50), sqrtcov50 * sqrtcov50'),
+        MvNormal(randn(20), sqrtcov20 * sqrtcov20'),
     )
+end
+
+"""
+    rand_out_of_dist(dist)
+
+Returns data that is outside the given distribution, for testing purposes.
+Generated data comes from a overlapping uniform distribution
+Returns an iterator of observations
+"""
+function rand_out_of_dist(dist, n_samples)
+    basis = max((rand(dist) for _ in 1:100)...)
+    center = mean(dist)
+    return [center .+ 10*(rand()-0.5).*basis for ii in 1:n_samples]
 end
 
 @testset "picp" begin
@@ -47,7 +60,7 @@ end
         end
     end
 
-    @testset "Distributions - $typeof(dist)" for dist in testing_distributions
+    @testset "Distributions - $(typeof(dist))" for dist in testing_distributions
         samples = [rand(dist) for _ in 1:5_000]
         for α in (0.1, 0.3, 0.5, 0.7, 1.0)
             # It is exected that for a good sample the portion of points within the confidance interval
@@ -55,21 +68,42 @@ end
             # (Kinda by definition)
             @test picp(α, dist, samples) ≈ α rtol=0.15
 
-            # since this is symetrical, and the sample is as good as it gets
-            # shifting the sample should make the PICP go down.
-            old_picp = α
-            for shift in (0.2, 0.3, 0.5, 1.2, 2, 5)
-                if dist isa UnivariateDistribution
-                    shifted_samples = samples .+ shift
-                else # Multivariate
-                    offset = fill(shift, length(dist))
-                    shifted_samples = samples .+ Ref(offset)
+            @testset "shifted samples" begin
+                # since this is symetrical, and the sample is as good as it gets
+                # shifting the sample should make the PICP go down.
+                old_picp = α
+                for shift in (0.0, 0.2, 0.3, 0.5, 1.2, 2, 5)
+                    if dist isa UnivariateDistribution
+                        shifted_samples = samples .+ shift
+                    else # Multivariate
+                        offset = fill(shift, length(dist))
+                        shifted_samples = samples .+ Ref(offset)
+                    end
+
+                    new_picp = picp(α, dist, shifted_samples)
+
+                    @test new_picp <= old_picp * 1.15 # scaling to allow rtol=0.15
+                    old_picp = new_picp
                 end
+            end  # shifted samples
 
-                new_picp = picp(α, dist, shifted_samples)
+            @testset "different form of same distribution implies  same PICP" begin
+                data = rand_out_of_dist(dist, 5_000)
+                @test picp(α, canonform(dist), data) ≈ picp(α, dist, data) rtol=0.05
+            end
 
-                @test new_picp <= old_picp * 1.15 # scaling to allow rtol=0.15
-                old_picp = new_picp
+            @testset "increasing how how different true data is decreases PICP" begin
+                old_picp = α
+                plain_samples = [rand(dist) for _ in 1:6000]
+                corrupt_samples = rand_out_of_dist(dist, 6_000)
+                for n_plain in 6000:-1000:0
+                    data = vcat(
+                        plain_samples[1:n_plain],
+                        corrupt_samples[1+n_plain:end]
+                    )
+                    new_picp = picp(α, dist, data)
+                    @test new_picp <= old_picp * 1.25 # scaling to allow rtol=0.25
+                end
             end
         end  # different α
     end  # @testset Distributions
@@ -90,14 +124,19 @@ end # @testset picp
     end
 
     @testset "Distributions - $typeof(dist)" for dist in testing_distributions
-        samples = [rand(dist) for _ in 1:5_000]
-        @test isequal(
-            [picp(x, dist, samples) for x in 0.2:0.1:0.7],
-            wpicp(0.2:0.1:0.7, dist, samples)
+        ideal_samples =
+        @testset "$name" for (name, samples) in (
+            ("ideal_samples",  [rand(dist) for _ in 1:5_000]),
+            ("nonideal_samples",  rand_out_of_dist(dist, 5_000)),
         )
+            @test isequal(
+                [picp(x, dist, samples) for x in 0.2:0.1:0.7],
+                wpicp(0.2:0.1:0.7, dist, samples)
+            )
 
-        # Test default
-        @test wpicp(0.1:0.05:0.95, dist, samples) == wpicp(dist, samples)
+            # Test default
+            @test wpicp(0.1:0.05:0.95, dist, samples) == wpicp(dist, samples)
+        end
     end  # @testset Distributions
 end # @testset wpicp
 
