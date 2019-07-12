@@ -48,7 +48,7 @@ end
 
 # Multivariate, gaussian
 function picp(α::Float64, dist::AbstractMvNormal, y_trues)
-    # need to calculate how many lay in the ellipoidal Confedence region
+    # need to calculate how many lay in the elliptical confidence region
     # see https://en.wikipedia.org/wiki/Multivariate_normal_distribution#Interval
     # See also https://github.com/JuliaStats/Distributions.jl/issues/569
 
