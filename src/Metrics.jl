@@ -2,7 +2,9 @@ module Metrics
 
 using Distributions
 using LinearAlgebra: dot, norm
+using NamedDims
 
+include("evaluate.jl")
 include("utils.jl")
 include("regression.jl")
 include("financial.jl")

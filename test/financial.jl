@@ -22,6 +22,9 @@ using Metrics: @_dimcheck
             @test expected_shortfall(returns, α) == expected_shortfall(returns_2, α)
             α = 5/16
             @test expected_shortfall(returns, α) != expected_shortfall(returns_2, α)
+
+
+            @test evaluate(expected_shortfall, returns, α) == expected_shortfall(returns, α)
         end
         @testset "erroring" begin
             returns = collect(1:100)

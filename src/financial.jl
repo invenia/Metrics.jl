@@ -15,13 +15,13 @@ function expected_shortfall(returns, α::Float64)
 
     last_index = floor(Int, α * length(returns))
     last_index > 0 || throw(
-        ArgumentError(
-        string(
+        ArgumentError(string(
                 "length(returns)=$(length(returns)) not enough elemnts for α=$α.",
                 " Min length(returns)=$(ceil(Int, 1/α))"
-            )
-        )
+        ))
     )
 
     return mean(partialsort(returns, 1:last_index))
 end
+
+obs_arrangement(::typeof(expected_shortfall)) = IteratorOfObs()

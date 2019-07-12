@@ -1,33 +1,28 @@
 """
-    evaluate(metric, grounds_truths, predictions)
-
-Compute a metric with truths `grounds_truths` and predictions `predictions`
-"""
-evaluate(metric, grounds_truths, predictions) = metric(grounds_truths, predictions)
-
-"""
     squared_error(y_true, y_pred) -> Float64
 
 Compute the total square error between a set of truths `y_true` and predictions `y_pred`.
 """
-
 function squared_error(y_true, y_pred)
     @_dimcheck size(y_true) == size(y_pred)
     return sum((y_true .- y_pred) .^ 2)
 end
 
+obs_arrangement(::typeof(squared_error)) = SingleObs()
 const se = squared_error
+
 
 """
     mean_squared_error(y_true, y_pred) -> Float64
 
 Compute the mean square error between a set of truths `y_true` and predictions `y_pred`.
 """
-function mean_squared_error(y_true::AbstractVector, y_pred::AbstractVector)
+function mean_squared_error(y_true, y_pred)
     @_dimcheck size(y_true) == size(y_pred)
     return mean(squared_error.(y_true, y_pred))
 end
 
+obs_arrangement(::typeof(mean_squared_error)) = IteratorOfObs()
 const mse = mean_squared_error
 
 """
@@ -37,6 +32,7 @@ Compute the root of the mean square error between a set of truths `y_true` and p
 `y_pred`.
 """
 root_mean_squared_error(y_true, y_pred) = √mean_squared_error(y_true, y_pred)
+obs_arrangement(::typeof(root_mean_squared_error)) = IteratorOfObs()
 const rmse = root_mean_squared_error
 
 """
@@ -50,16 +46,17 @@ normalised by the range of `y_true` and it is scaled to unit range.
 https://en.wikipedia.org/wiki/Root-mean-square_deviation#Normalized_root-mean-square_deviation
 """
 function normalised_root_mean_squared_error(y_true, y_pred)
-    y_true_min, y_true_max = extrema(vcat(y_true...))
+    y_trues = reduce(vcat, y_true)
+    y_true_min, y_true_max = extrema(y_trues)
     return root_mean_squared_error(y_true, y_pred) / (y_true_max - y_true_min)
 end
 
 function normalised_root_mean_squared_error(y_true, y_pred, α::Float64)
-    temp = vcat(y_true...)
+    y_trues = reduce(vcat, y_true)
     return root_mean_squared_error(y_true, y_pred) /
-        (quantile(temp, .5 + α) - quantile(temp, .5 - α))
+        (quantile(y_trues, .5 + α) - quantile(y_trues, .5 - α))
 end
-
+obs_arrangement(::typeof(normalised_root_mean_squared_error)) = IteratorOfObs()
 const nrmse = normalised_root_mean_squared_error
 
 """
@@ -71,7 +68,7 @@ Compute the standardized mean square error between a set of truths `y_true` and 
 function standardized_mean_squared_error(y_true, y_pred)
     return mean_squared_error(y_true, y_pred) / var(norm.(y_true))
 end
-
+obs_arrangement(::typeof(standardized_mean_squared_error)) = IteratorOfObs()
 const smse = standardized_mean_squared_error
 
 """
@@ -83,7 +80,7 @@ function absolute_error(y_true, y_pred)
     @_dimcheck size(y_true) == size(y_pred)
     return sum(abs.(y_true .- y_pred))
 end
-
+obs_arrangement(::typeof(absolute_error)) = SingleObs()
 const ae = absolute_error
 
 """
@@ -95,7 +92,7 @@ function mean_absolute_error(y_true::AbstractVector, y_pred::AbstractVector)
     @_dimcheck size(y_true) == size(y_pred)
     return mean(absolute_error.(y_true, y_pred))
 end
-
+obs_arrangement(::typeof(mean_absolute_error)) = IteratorOfObs()
 const mae = mean_absolute_error
 
 """
@@ -109,13 +106,18 @@ probability of the points.
 `marginal_loglikelihood(dist, y_pred) = log(P (dist | y_pred))`
 """
 function marginal_loglikelihood(dist::Distribution{Univariate}, y_pred)
-    return loglikelihood(Normal(mean(dist), std(dist)), y_pred)
+    normalized_dist = Normal(mean(dist), std(dist))
+    return loglikelihood(normalized_dist, y_pred)
 end
 
 function marginal_loglikelihood(dist::Distribution{Multivariate}, y_pred)
-    # We use `.√var` instead of `std` because `std` thorws an error
-    return loglikelihood(MvNormal(mean(dist), .√var(dist)), y_pred)
+    # `std` is not defined on `MvNormal` so we use `sqrt.(var(...))`
+    normalized_dist = MvNormal(mean(dist), sqrt.(var(dist)))
+    return loglikelihood(normalized_dist, y_pred)
 end
+
+obs_arrangement(::typeof(marginal_loglikelihood)) = MatrixColsOfObs()
+
 
 """
     joint_loglikelihood(dist::Distribution{Univariate}, y_pred) -> Float64
@@ -131,19 +133,24 @@ function joint_loglikelihood(dist::Distribution{Univariate}, y_pred)
 end
 
 function joint_loglikelihood(dist::Distribution{Multivariate}, y_pred)
-    return loglikelihood(MvNormal(mean(dist), cov(dist)), y_pred)
+    normalized_dist = MvNormal(mean(dist), cov(dist))
+    return loglikelihood(normalized_dist, y_pred)
 end
+
+joint_loglikelihood(dist::MvNormal, y_pred) = loglikelihood(dist, y_pred)
+
+obs_arrangement(::typeof(joint_loglikelihood)) = MatrixColsOfObs()
 
 
 """
     picp(
-        lower_bound::AbstractVector, upper_bound::AbstractVector, y_true::AbstractVector
+        lower_bound, upper_bound, y_true::AbstractVector
     ) -> Float64
     picp(α::Float64, dist_samples::AbstractMatrix, y_true::AbstractVector) -> Float64
     picp(
         α::Float64,
-        dist::Distribution{Multivariate},
-        y_true::AbstractVector;
+        dist::Distribution{Univariate},
+        y_trues::AbstractVector;
         nsamples::Int=1000,
     ) -> Float64
 
