@@ -26,7 +26,7 @@ function picp end
 """
     picp(y_trues; lower_bound, upper_bound)
 
-Lower-level univariate `picp`, for it the bounds of the credible window are already known.
+Lower-level univariate `picp`, where the bounds of the credible window are already known.
 """
 function picp(y_trues; lower_bound, upper_bound)
     return mean(lower_bound .<= y_trues .<= upper_bound)
