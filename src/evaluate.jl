@@ -1,14 +1,14 @@
 """
     evaluate(metric, args...; [obsdim], kwargs...)
 
-Compute a metric with with the given arguements.
+Compute a metric with the given arguments.
 the `args` are passed to the `metric` function after rearragement (if required)
 to match the expected observation structure used by the given `metric`.
 
 One should thus look at the documentation for the individual metric
 
 ### Keyword Arguments
- - `obsdim`: Which dimension of a array contains the observation.
+ - `obsdim`: Which dimension of an array contains the observation.
 Determined automatically if not provided. Ignored if a metric is not defined
 across multiple observations.
  - all other `kwargs` are passed to the `metric` function
@@ -42,7 +42,9 @@ end
 
 # These are basically scalar quantities and don't (generally) represent observations
 # at all. e.g. threshold parameters.
-# never slice: (avoid even thinking about traits)
+# For these types of data, it doesn't mater what the metric is
+# we will never rearrange them.
+# so we don't even need to check the traits.
 for T in (Distribution, Number, Symbol,)
     @eval arrange_obs(metric, data::$T; obsdim=nothing) = data
 end
@@ -53,7 +55,7 @@ for T in (Any, AbstractVector)
     # Need a iterator and it aleady is an iterator so no need ot change
     @eval arrange_obs(::IteratorOfObs, obs_iter::$T; obsdim=nothing) = obs_iter
 
-    # It is an iterator of observations and we need to arrange it into an Array
+    # It is an iterator of observations and we need to arrange it into an Array (e.g. Matrix)
     @eval function arrange_obs(
         ::ArraySlicesOfObs{D},
         obs_iter::$T;
