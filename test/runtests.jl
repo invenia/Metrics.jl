@@ -1,6 +1,6 @@
 using Distributions
 using Metrics
-using Metrics: IteratorOfObs, MatrixRowsOfObs, MatrixColsOfObs, arrange_obs
+using Metrics: IteratorOfObs, MatrixRowsOfObs, MatrixColsOfObs, organise_obs
 using NamedDims
 using Random: seed!, shuffle!
 using Test

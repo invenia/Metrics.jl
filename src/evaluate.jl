@@ -15,7 +15,7 @@ across multiple observations.
 """
 function evaluate(metric, args...; obsdim=nothing, kwargs...)
     return metric(
-        (arrange_obs(metric, arg; obsdim=obsdim) for arg in args)...;
+        (organise_obs(metric, arg; obsdim=obsdim) for arg in args)...;
         kwargs...
     )
 end
@@ -35,8 +35,8 @@ const MatrixColsOfObs = ArraySlicesOfObs{2}
 
 ## pre-trait
 # trait re-dispatch
-function arrange_obs(metric, data; obsdim=nothing)
-    return arrange_obs(obs_arrangement(metric), data; obsdim=obsdim)
+function organise_obs(metric, data; obsdim=nothing)
+    return organise_obs(obs_arrangement(metric), data; obsdim=obsdim)
 end
 
 
@@ -46,17 +46,17 @@ end
 # we will never rearrange them.
 # so we don't even need to check the traits.
 for T in (Distribution, Number, Symbol,)
-    @eval arrange_obs(metric, data::$T; obsdim=nothing) = data
+    @eval organise_obs(metric, data::$T; obsdim=nothing) = data
 end
 
 ## Two arg forms: obsdim is optional, we may or may not need it.
 
 for T in (Any, AbstractVector)
     # Need a iterator and it aleady is an iterator so no need ot change
-    @eval arrange_obs(::IteratorOfObs, obs_iter::$T; obsdim=nothing) = obs_iter
+    @eval organise_obs(::IteratorOfObs, obs_iter::$T; obsdim=nothing) = obs_iter
 
     # It is an iterator of observations and we need to arrange it into an Array (e.g. Matrix)
-    @eval function arrange_obs(
+    @eval function organise_obs(
         ::ArraySlicesOfObs{D},
         obs_iter::$T;
         obsdim=nothing
@@ -90,7 +90,7 @@ for T in (Any, AbstractVector)
 end
 
 # If it is a single observation than never any need to rearrage
-arrange_obs(::SingleObs, data; obsdim=nothing) = data
+organise_obs(::SingleObs, data; obsdim=nothing) = data
 
 for A in (IteratorOfObs, ArraySlicesOfObs)
     # Handle non-1D AbstractArray data, this means we need to know the obsdim
@@ -98,7 +98,7 @@ for A in (IteratorOfObs, ArraySlicesOfObs)
     # then redispatches to the 3 arg form below.
     # Filling in the observation dimension is the same regardless of if targetting
     # IteratorOfObs, ArraySlicesOfObs
-    @eval function arrange_obs(arrangement::$A, data::AbstractArray; obsdim=nothing)
+    @eval function organise_obs(arrangement::$A, data::AbstractArray; obsdim=nothing)
         if obsdim == nothing
             obsdim = _default_obsdim(data)
         end
@@ -106,7 +106,7 @@ for A in (IteratorOfObs, ArraySlicesOfObs)
             obsdim = NamedDims.dim(data, obsdim)
         end
 
-        return arrange_obs(arrangement, data, obsdim)
+        return organise_obs(arrangement, data, obsdim)
     end
 end
 
@@ -114,13 +114,13 @@ end
 ## These are only needed for (non 1D) arrays
 
 # Slice up the array to get an iterator of observations
-function arrange_obs(::IteratorOfObs, data::AbstractArray, obsdim::Integer)
+function organise_obs(::IteratorOfObs, data::AbstractArray, obsdim::Integer)
     # This is basically eachslice from julia 1.1+
     return (selectdim(data, obsdim, ii) for ii in axes(data, obsdim))
 end
 
 # Permute the array so the observations are on the right dimension
-function arrange_obs(
+function organise_obs(
     ::ArraySlicesOfObs{D},
     data::AbstractArray{<:Any, N},
     obsdim::Integer

@@ -1,5 +1,5 @@
-@testset "arrange_obs" begin
-    c_arrange_obs(args...; kwargs...) = collect(arrange_obs(args...; kwargs...))
+@testset "organise_obs" begin
+    c_organise_obs(args...; kwargs...) = collect(organise_obs(args...; kwargs...))
 
     @testset "simple IteratorOfObs for iterators" begin
         for out in (
@@ -9,7 +9,7 @@
         )
             for transform in (identity, Tuple, x->Base.Generator(identity, x))
                 raw = transform(out)
-                @test out == c_arrange_obs(IteratorOfObs(), raw)
+                @test out == c_organise_obs(IteratorOfObs(), raw)
             end
         end
     end
@@ -22,7 +22,7 @@
 
         for transform in (identity, Tuple, x->Base.Generator(identity, x))
             data_iter = transform(raw)
-            @test out == c_arrange_obs(Arrange, data_iter)
+            @test out == c_organise_obs(Arrange, data_iter)
         end
     end
 
@@ -33,13 +33,13 @@
         (MatrixColsOfObs(), [1 4; 2 5; 3 6]),
     )
         raw = [1 2 3; 4 5 6]
-        @test out == c_arrange_obs(Arrange, raw)  # default is rows
-        @test out == c_arrange_obs(Arrange, raw; obsdim=1)
-        @test out == c_arrange_obs(Arrange, raw'; obsdim=2)
-        @test out == c_arrange_obs(Arrange, NamedDimsArray{(:obs, :var)}(raw))
-        @test out == c_arrange_obs(Arrange, NamedDimsArray{(:var, :obs)}(raw'))
-        @test out == c_arrange_obs(Arrange, NamedDimsArray{(:x, :y)}(raw'); obsdim=:y)
-        @test out == c_arrange_obs(Arrange, NamedDimsArray{(:x, :y)}(raw); obsdim=:x)
+        @test out == c_organise_obs(Arrange, raw)  # default is rows
+        @test out == c_organise_obs(Arrange, raw; obsdim=1)
+        @test out == c_organise_obs(Arrange, raw'; obsdim=2)
+        @test out == c_organise_obs(Arrange, NamedDimsArray{(:obs, :var)}(raw))
+        @test out == c_organise_obs(Arrange, NamedDimsArray{(:var, :obs)}(raw'))
+        @test out == c_organise_obs(Arrange, NamedDimsArray{(:x, :y)}(raw'); obsdim=:y)
+        @test out == c_organise_obs(Arrange, NamedDimsArray{(:x, :y)}(raw); obsdim=:x)
     end
 end
 
