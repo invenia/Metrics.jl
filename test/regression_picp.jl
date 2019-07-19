@@ -147,28 +147,29 @@ end # @testset wpicp
 
     @testset "Normal Distribution" begin
         @testset "ideal estimate" begin
+            # The following invarients are promised only for ideal estimates
             @testset "invarient to mean and spread" begin
                 true_points = rand(Normal(0, 0.5), 1_000_000)
                 estimated_dist = Normal(0, 0.5)
-                @test apicp(estimated_dist, true_points) ≈ 0.65 atol=0.01
+                @test apicp(estimated_dist, true_points) ≈ 1 atol=0.01
 
                 true_points = rand(Normal(3, 0.5), 1_000_000)
                 estimated_dist = Normal(3, 0.5)
-                @test apicp(estimated_dist, true_points) ≈ 0.65 atol=0.01
+                @test apicp(estimated_dist, true_points) ≈ 1 atol=0.01
 
 
                 true_points = rand(Normal(3, 20), 1_000_000)
                 estimated_dist = Normal(3, 20)
-                @test apicp(estimated_dist, true_points) ≈ 0.65 atol=0.01
+                @test apicp(estimated_dist, true_points) ≈ 1 atol=0.01
             end
-            @testset "Not invarient to window selection" begin
+            @testset "invarient (reasonable) window selection" begin
                 true_points = rand(Normal(3, 20), 1_000_000)
                 estimated_dist = Normal(3, 20)
-                @test apicp(0.05:0.05:0.95, estimated_dist, true_points) ≈ 0.65 atol=0.01
+                @test apicp(0.05:0.05:0.95, estimated_dist, true_points) ≈ 1 atol=0.01
 
                 true_points = rand(Normal(3, 20), 1_000_000)
                 estimated_dist = Normal(3, 20)
-                @test apicp(0.05:0.005:0.95, estimated_dist, true_points) ≈ 0.63 atol=0.01
+                @test apicp(0.05:0.005:0.95, estimated_dist, true_points) ≈ 1 atol=0.01
             end
         end
     end
@@ -193,14 +194,5 @@ end # @testset wpicp
                 apicp(Normal(-1, 0.5), true_points); rtol=0.01
             )
         end
-
-        true_points = rand(Normal(3, 0.5), 1_000_000)
-        estimated_dist = Normal(3, 0.5)
-        @test apicp(estimated_dist, true_points) ≈ 0.65 atol=0.01
-
-
-        true_points = rand(Normal(3, 20), 1_000_000)
-        estimated_dist = Normal(3, 20)
-        @test apicp(estimated_dist, true_points) ≈ 0.65 atol=0.01
     end
-end # @testset wpicp
+end # @testset apicp
