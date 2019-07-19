@@ -116,6 +116,6 @@ Source: Eric P. came up with this
 """
 function apicp(α_range::AbstractRange, args...)
     ps = wpicp(α_range, args...)
-    return dot(α_range, ps) / sum(abs, α_range)
+    return dot(α_range, ps) / sum(abs2, α_range)
 end
 apicp(args...) = apicp(0.1:0.05:0.95, args...)
