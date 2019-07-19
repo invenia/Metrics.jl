@@ -1,5 +1,5 @@
 """
-squared_error(y_true, y_pred) -> Float64
+    squared_error(y_true, y_pred) -> Float64
 
 Compute the total square error between a set of truths `y_true` and predictions `y_pred`.
 """
