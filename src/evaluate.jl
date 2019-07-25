@@ -25,11 +25,11 @@ end
 abstract type ObsArrangement end
 
 # Note for implementors: with these traits
-# if the input to your function is a mix of ArraySlicesOfObs 
+# if the input to your function is a mix of ArraySlicesOfObs
 # and IteratorOfObs for 1D,
 # e.g. a matrix with columns as obs and some vector
-# then you sould declare it as 
-# `obs_arrangement(:typeof(mymetric)) = MatrixColsOfObs()` 
+# then you sould declare it as
+# `obs_arrangement(:typeof(mymetric)) = MatrixColsOfObs()`
 # (or MatrixRowsOfObs, if that case, etc)
 # as the `ArraySlicesOfObs` will not rearrange any 1D inputs
 
