@@ -87,7 +87,7 @@ obs_arrangement(::typeof(sharpe_ratio)) = MatrixColsOfObs()
 
 
 """
-    expected_shortfall(returns::AbstractVector, risk_level::Real) -> Number
+    expected_shortfall(returns::AbstractVector; risk_level::Real) -> Number
 
 Calculate the expected shortfall `-𝔼[ r_p | r_p ≤ q_risk_level(r_p) ]`, where `r_p` is
 the portfolio return and `q_risk_level(r_p)` is the lower quantile of the distribution
