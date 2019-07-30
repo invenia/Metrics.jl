@@ -13,11 +13,17 @@ using Random: seed!
 using Statistics
 using StatsUtils: sqrtcov
 using Test
+using Distributions
+using Distributions: Normal, MvNormal
 
+seed!(1)
 @testset "Metrics.jl" begin
     include("evaluate.jl")
     include("utils.jl")
+
     include("regression.jl")
-    include("price_impact.jl")
+    include("regression_picp.jl")
+
     include("financial.jl")
+    include("price_impact.jl")
 end
