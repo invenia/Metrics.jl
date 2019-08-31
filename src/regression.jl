@@ -27,9 +27,6 @@ end
 obs_arrangement(::typeof(mean_squared_error)) = IteratorOfObs()
 const mse = mean_squared_error
 
-mse(y_true, y_pred::AbstractArray{<:Distribution}) = mse(y_true, mean.(y_pred))
-mse(y_true::AbstractArray{<:Distribution}, y_pred) = mse(y_pred, y_true)
-
 
 """
     root_mean_squared_error(y_true, y_pred) -> Float64
@@ -105,9 +102,6 @@ function mean_absolute_error(y_true, y_pred)
 end
 obs_arrangement(::typeof(mean_absolute_error)) = IteratorOfObs()
 const mae = mean_absolute_error
-
-mae(y_true, y_pred::AbstractArray{<:Distribution}) = mae(y_true, mean.(y_pred))
-mae(y_true::AbstractArray{<:Distribution}, y_pred) = mae(y_pred, y_true)
 
 """
     marginal_loglikelihood(dist::Distribution{Univariate}, y_pred) -> Float64
