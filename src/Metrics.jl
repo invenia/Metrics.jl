@@ -31,5 +31,5 @@ export
     expected_return,
     volatility,
     sharpe_ratio,
-    expected_shortfall, es,
+    expected_shortfall, es
 end # module
