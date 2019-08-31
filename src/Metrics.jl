@@ -32,6 +32,4 @@ export
     volatility,
     sharpe_ratio,
     expected_shortfall, es,
-    sample_expected_shortfall, ses,
-    analytic_expected_shortfall, aes
 end # module
