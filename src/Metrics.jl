@@ -1,6 +1,7 @@
 module Metrics
 
 using Distributions
+using HypergeometricFunctions: mFn
 using LinearAlgebra: dot, norm
 using NamedDims
 using StatsUtils: sqrtcov

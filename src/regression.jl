@@ -1,23 +1,48 @@
 """
     squared_error(y_true, y_pred) -> Float64
 
-Compute the total square error between a set of truths `y_true` and predictions `y_pred`.
+Compute the total square error between a set of truths `y_true` and point predictions `y_pred`.
 """
 function squared_error(y_true, y_pred)
     @_dimcheck size(y_true) == size(y_pred)
-    return sum((y_true .- y_pred) .^ 2)
+    return sum(abs2, (y_true .- y_pred))
 end
+
+"""
+    squared_error(y_true, y_pred::Distribution) -> Float64
+
+Compute the square error between true observation `y_true` and the posterior distribution
+over the predicted value `y_pred`.
+
+The mean square error of an estimator of a Normal distribution `x` and the true value `x'`
+is given by MSE(x) = Var(x) + Bias(x, x')^2. In the case of a single observation this is
+equivalent to the square error. Moreover, in the case of zero bias, the MSE of the
+distribution mean is simply the variance of the distribution.
+For more information see: https://en.wikipedia.org/wiki/Mean_squared_error#Estimator
+"""
+function squared_error(y_true, y_pred::Distribution)
+    @_dimcheck size(y_true) == size(y_pred)
+    bias = mean(y_pred) - y_true
+    return sum(var(y_pred)) + sum(abs2, bias)
+end
+
+function squared_error(y_true, y_pred::Distribution{Matrixvariate})
+    # Temporary hack
+    # var and cov not yet defined for MatrixVariates so must be transformed to MultiVariate
+    # can be removed when new Distribution version is tagged
+    # https://github.com/JuliaStats/Distributions.jl/pull/955
+    return squared_error(vec(y_true), vec(y_pred))
+end
+squared_error(y_true::Distribution, y_pred) = squared_error(y_pred, y_true)
 
 obs_arrangement(::typeof(squared_error)) = SingleObs()
 const se = squared_error
 
-se(y_true, y_pred::Distribution) = se(y_true, mean(y_pred))
-se(y_true::Distribution, y_pred) = se(y_pred, y_true)
-
 """
     mean_squared_error(y_true, y_pred) -> Float64
 
-Compute the mean square error between a set of truths `y_true` and predictions `y_pred`.
+Compute the mean square error between a set of truths `y_true` and point predictions `y_pred`.
+
 """
 function mean_squared_error(y_true, y_pred)
     @_dimcheck size(y_true) == size(y_pred)
@@ -26,7 +51,6 @@ end
 
 obs_arrangement(::typeof(mean_squared_error)) = IteratorOfObs()
 const mse = mean_squared_error
-
 
 """
     root_mean_squared_error(y_true, y_pred) -> Float64
@@ -49,13 +73,13 @@ normalised by the range of `y_true` and it is scaled to unit range.
 https://en.wikipedia.org/wiki/Root-mean-square_deviation#Normalized_root-mean-square_deviation
 """
 function normalised_root_mean_squared_error(y_true, y_pred)
-    y_trues = reduce(vcat, y_true)
+    y_trues = reduce(vcat, vcat(y_true...))
     y_true_min, y_true_max = extrema(y_trues)
     return root_mean_squared_error(y_true, y_pred) / (y_true_max - y_true_min)
 end
 
 function normalised_root_mean_squared_error(y_true, y_pred, α::Float64)
-    y_trues = reduce(vcat, y_true)
+    y_trues = reduce(vcat, vcat(y_true...))
     return root_mean_squared_error(y_true, y_pred) /
         (quantile(y_trues, .5 + α) - quantile(y_trues, .5 - α))
 end
@@ -85,11 +109,36 @@ function absolute_error(y_true, y_pred)
     return sum(abs.(y_true .- y_pred))
 end
 
+"""
+    absolute_error(y_true, y_pred::Distribution) -> Float64
+
+Compute the total absolute error between an observation `y_true` and the posterior
+distribution over the predicted value `y_pred`.
+
+The mean absolute error of an estimator of a Normal distribution `x` with non-zero mean is
+given by
+```
+AE(x) = √(2 / π) * σ * _1F_1(-1/2, 1/2, -1/2 * (μ / σ)^2)
+```
+where `_1F_1` is the confluent hypergeometric function of the first kind.
+
+In the case of a single observation this is equivalent to the square error.
+
+For Multivariate and Matrixvariate distributions we compute the absolute error over the
+individual dimensions and sum the result.
+
+For more information see: https://en.wikipedia.org/wiki/Normal_distribution#Moments
+"""
+function absolute_error(y_true, y_pred::Distribution)
+    @_dimcheck size(y_true) == size(y_pred)
+    μ = mean(y_pred) - y_true
+    σ = var(y_pred)
+    return sqrt(2 / π) * dot(σ, _1F1.(μ, σ))
+end
+absolute_error(y_true::Distribution, y_pred) = absolute_error(y_pred, y_true)
+
 obs_arrangement(::typeof(absolute_error)) = SingleObs()
 const ae = absolute_error
-
-ae(y_true, y_pred::Distribution) = ae(y_true,  mean(y_pred))
-ae(y_true::Distribution, y_pred) = ae(y_pred, y_true)
 
 """
     mean_absolute_error(y_true, y_pred) -> Float64
