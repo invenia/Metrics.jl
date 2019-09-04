@@ -32,5 +32,7 @@ export
     expected_return,
     volatility,
     sharpe_ratio,
+    evano,
+    median_return,
     expected_shortfall, es
 end # module

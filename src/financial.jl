@@ -87,6 +87,54 @@ obs_arrangement(::typeof(sharpe_ratio)) = MatrixColsOfObs()
 
 
 """
+    median_return(volumes::AbstractVector, deltas::AbstractMatrix) -> Number
+
+Calculate the median of returns
+"""
+function median_return(volumes::AbstractVector, deltas::AbstractMatrix)
+    volumes = NamedDimsArray(volumes, :nodes)
+    deltas = NamedDimsArray(deltas, (:nodes, :obs))
+    returns = deltas' * volumes
+    return median(returns)
+end
+
+
+"""
+    evano(returns::AbstractVector, args...; kwargs...) -> Number
+    evano(
+        volumes::AbstractVector,
+        deltas::AbstractMatrix,
+        args...;
+        kwargs...
+    ) -> Number
+
+    Calculate the evano metric `median(returns) / expected_shortfall(returns)`
+
+# Arguments
+- `returns::AbstractVector`: The portfolio of returns
+- `volumes::AbstractVector`: The MWs volumes of the portfolio
+- `deltas::AbstractVector`: The sample of price deltas
+- `args`: The [`price impact`](@ref price_impact) arguments (excluding `volumes`).
+
+# Keyword Arguments
+- `kwargs`: The [`expected shortfall`](@ref expected_shortfall) keyword arguments.
+"""
+function evano(returns::AbstractVector, args...; kwargs...)
+    return -median(returns) / expected_shortfall(returns, args...; kwargs...)
+end
+
+function evano(
+    volumes::AbstractVector, deltas::AbstractMatrix, args...; kwargs...
+)
+    m_return = median_return(volumes, deltas)
+    es_return = expected_shortfall(volumes, deltas, args...; kwargs...)
+    return -m_return / es_return
+end
+
+obs_arrangement(::typeof(evano)) = MatrixColsOfObs()
+
+
+"""
     expected_shortfall(returns::AbstractVector; risk_level::Real) -> Number
 
 Calculate the expected shortfall `-𝔼[ r_p | r_p ≤ q_risk_level(r_p) ]`, where `r_p` is
