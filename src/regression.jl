@@ -33,8 +33,8 @@ function squared_error(y_true, y_pred::Distribution{Matrixvariate})
     # https://github.com/JuliaStats/Distributions.jl/pull/955
     return squared_error(vec(y_true), vec(y_pred))
 end
-squared_error(y_true::Distribution, y_pred) = squared_error(y_pred, y_true)
 
+squared_error(y_true::Distribution, y_pred) = squared_error(y_pred, y_true)
 obs_arrangement(::typeof(squared_error)) = SingleObs()
 const se = squared_error
 
@@ -135,8 +135,16 @@ function absolute_error(y_true, y_pred::Distribution)
     σ = var(y_pred)
     return sqrt(2 / π) * dot(σ, _1F1.(μ, σ))
 end
-absolute_error(y_true::Distribution, y_pred) = absolute_error(y_pred, y_true)
 
+function absolute_error(y_true, y_pred::Distribution{Matrixvariate})
+    # Temporary hack
+    # var and cov not yet defined for MatrixVariates so must be transformed to MultiVariate
+    # can be removed when new Distribution version is tagged
+    # https://github.com/JuliaStats/Distributions.jl/pull/955
+    return absolute_error(vec(y_true), vec(y_pred))
+end
+
+absolute_error(y_true::Distribution, y_pred) = squared_error(y_pred, y_true)
 obs_arrangement(::typeof(absolute_error)) = SingleObs()
 const ae = absolute_error
 
@@ -149,6 +157,7 @@ function mean_absolute_error(y_true, y_pred)
     @_dimcheck size(y_true) == size(y_pred)
     return mean(absolute_error.(y_true, y_pred))
 end
+
 obs_arrangement(::typeof(mean_absolute_error)) = IteratorOfObs()
 const mae = mean_absolute_error
 
