@@ -89,7 +89,11 @@ obs_arrangement(::typeof(sharpe_ratio)) = MatrixColsOfObs()
 """
     median_return(volumes::AbstractVector, deltas::AbstractMatrix) -> Number
 
-Calculate the median of returns
+Calculate the median return of a portfolio of `volumes` given a sample of price `deltas`.
+
+## Arguments
+- `volumes::AbstractVector`: The MWs volumes of the portfolio
+- `deltas`::`AbstractMatrix`: The collection of prices deltas 
 """
 function median_return(volumes::AbstractVector, deltas::AbstractMatrix)
     volumes = NamedDimsArray(volumes, :nodes)
@@ -111,9 +115,9 @@ end
     Calculate the evano metric `median(returns) / expected_shortfall(returns)`
 
 # Arguments
-- `returns::AbstractVector`: The portfolio of returns
+- `returns::AbstractVector`: A vector of returns over some time or of some portfolio
 - `volumes::AbstractVector`: The MWs volumes of the portfolio
-- `deltas::AbstractVector`: The sample of price deltas
+- `deltas::AbstractMatrix`: The sample of price deltas
 - `args`: The [`price impact`](@ref price_impact) arguments (excluding `volumes`).
 
 # Keyword Arguments
