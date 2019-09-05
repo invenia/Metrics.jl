@@ -655,6 +655,71 @@
         end
     end
 
+    @testset "mean absolute scaled error" begin
+        @testset "List Input" begin
+            y_true = [10, 20, 30, 40]
+            y_pred = [15, 25, 35, 45]
+            expected = 0.5
+
+            @test mase(y_true, y_pred) == expected
+        end
+
+        @testset "Matrix Input" begin
+            y_true = [10 30; 20 40]
+            y_pred = [15 35; 25 45]
+            expected = 0.5
+
+            @test mase(y_true, y_pred) == expected
+        end
+
+        @testset "SpiderFinancial Example" begin
+            #=
+            Example taken from: https://tinyurl.com/y35p8j63
+            =#
+            y_true = [-2.9, -2.83, -0.95, -0.88, 1.21, -1.67, 0.83, -0.27, 1.36, -0.34, 0.48, -2.83,
+                -0.95, -0.88, 1.21, -1.67, -2.99, 1.24, 0.64]
+            y_pred = [-2.95, -2.7, -1, -0.68, 1.5, -1, 0.9, -0.37, 1.26, -0.54, 0.58, -2.13, -0.75,
+                -0.89, 1.25, -1.65, -3.20, 1.29, 0.6]
+
+            expected = 0.09832904884318767
+
+            @test mase(y_true, y_pred) == expected
+        end
+
+        @testset "DimensionMismatch - Vector different lengths" begin
+            y_true = []
+            y_pred = [1]
+
+            @test_throws DimensionMismatch mase(y_true, y_pred)
+        end
+
+        @testset "DimensionMismatch - Matrices different lengths" begin
+            y_true = [1 ; 2]
+            y_pred = [1]
+
+            @test_throws DimensionMismatch mase(y_true, y_pred)
+        end
+
+        @testset "DimensionMisMatch - One element inputs" begin
+            y_true = y_pred = [1]
+            @test_throws DimensionMismatch mase(y_true, y_pred)
+        end
+
+        @testset "DimensionMismatch - List, Matrix Input" begin
+            y_true = [10, 20, 30, 40]
+            y_pred = [15 35; 25 45]
+
+            @test_throws DimensionMismatch mase(y_true, y_pred)
+        end
+
+        @testset "Non-Symmetrical" begin
+            y_true = [1, 2, 3, 4, 5]
+            y_pred = [15, 25, 35, 45, 55]
+
+            @test mase(y_true, y_pred) != mase(y_pred, y_true)
+        end
+    end
+
     @testset "marginal_loglikelihood" begin
         @testset "scalar point" begin
             dist = Normal(0.1, 2)

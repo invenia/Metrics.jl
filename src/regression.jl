@@ -180,6 +180,38 @@ obs_arrangement(::typeof(mean_absolute_error)) = IteratorOfObs()
 const mae = mean_absolute_error
 
 """
+    mean_absolute_scaled_error(y_true, y_pred) -> Float64
+
+Compute the mean absolute scaled error between a set of truths `y_true` and predictions `y_pred`.
+
+The denominator in the MASE is typically defined in the literature as the mean absolute error of the naive
+one-step forecast on the model training set; that is, a model that assigns preceding values in the
+training set as the forecast for the next observation.
+
+We will instead be computing this quantity on the forecast set, i.e. the target day, (which may be
+different from the training set). This makes the metric slightly less robust on inputs with a small number
+of points, which may result in a denominator approximating zero.
+
+Things to note about the implementation of MASE:
+---
+1. Ensure that the data is time-ordered with seasonality removed
+2. Be aware that division by zero is possible and will result in `Inf`
+3. MASE is non-symmetric to order of data input
+
+https://en.wikipedia.org/wiki/Mean_absolute_scaled_error
+"""
+function mean_absolute_scaled_error(y_true, y_pred)
+    @_dimcheck size(y_true) == size(y_pred)
+    @_dimcheck length(y_true) > 1  # One element inputs would return NaN
+    model_forecast_error = mean_absolute_error(y_true, y_pred)
+    one_step_forecast_error = mean_absolute_error(y_true[2:end], y_true[1:end-1])
+
+    return model_forecast_error / one_step_forecast_error
+end
+obs_arrangement(::typeof(mean_absolute_scaled_error)) = IteratorOfObs()
+const mase = mean_absolute_scaled_error
+
+"""
     marginal_loglikelihood(dist::Distribution{Univariate}, y_pred) -> Float64
     marginal_loglikelihood(dist::Distribution{Multivariate}, y_pred) -> Float64
 
@@ -199,9 +231,7 @@ function marginal_loglikelihood(dist::Distribution{Multivariate}, y_pred)
     normalized_dist = MvNormal(mean(dist), sqrt.(var(dist)))
     return loglikelihood(normalized_dist, y_pred)
 end
-
 obs_arrangement(::typeof(marginal_loglikelihood)) = MatrixColsOfObs()
-
 
 """
     joint_loglikelihood(dist::Distribution{Univariate}, y_pred) -> Float64
@@ -222,5 +252,4 @@ function joint_loglikelihood(dist::Distribution{Multivariate}, y_pred)
 end
 
 joint_loglikelihood(dist::MvNormal, y_pred) = loglikelihood(dist, y_pred)
-
 obs_arrangement(::typeof(joint_loglikelihood)) = MatrixColsOfObs()
