@@ -87,32 +87,40 @@ obs_arrangement(::typeof(sharpe_ratio)) = MatrixColsOfObs()
 
 
 """
-    median_return(volumes::AbstractVector, deltas::AbstractMatrix) -> Number
+    median_return(volumes::AbstractVector, deltas::AbstractMatrix, args...) -> Number
 
 Calculate the median return of a portfolio of `volumes` given a sample of price `deltas`.
 
 ## Arguments
 - `volumes::AbstractVector`: The MWs volumes of the portfolio
-- `deltas`::`AbstractMatrix`: The collection of prices deltas 
+- `deltas`::`AbstractMatrix`: The collection of prices deltas
+- `args`: The [`price impact`](@ref price_impact) arguments (excluding `volumes`).
 """
-function median_return(volumes::AbstractVector, deltas::AbstractMatrix)
+function median_return(volumes::AbstractVector, deltas::AbstractMatrix, args...)
     volumes = NamedDimsArray(volumes, :nodes)
     deltas = NamedDimsArray(deltas, (:nodes, :obs))
     returns = deltas' * volumes
-    return median(returns)
+    pi = price_impact(volumes, args...)
+
+    return median(returns) - pi
 end
 
+obs_arrangement(::typeof(median_return)) = MatrixColsOfObs()
 
 """
-    evano(returns::AbstractVector, args...; kwargs...) -> Number
-    evano(
+    median_over_expected_shortfall(returns::AbstractVector, args...; kwargs...) -> Number
+    median_over_expected_shortfall(
         volumes::AbstractVector,
         deltas::AbstractMatrix,
         args...;
         kwargs...
     ) -> Number
 
-    Calculate the evano metric `median(returns) / expected_shortfall(returns)`
+Calculate the `median(returns) / expected_shortfall(returns)` metric
+
+We currently don't have a working version of this for Multivariate Distributions as there
+are many definitions of `median` which aren't implemented by `Distributions`.
+https://invenia.slack.com/archives/CMMAKP97H/p1567612804011200?thread_ts=1567543537.008300&cid=CMMAKP97H
 
 # Arguments
 - `returns::AbstractVector`: A vector of returns over some time or of some portfolio
@@ -123,19 +131,21 @@ end
 # Keyword Arguments
 - `kwargs`: The [`expected shortfall`](@ref expected_shortfall) keyword arguments.
 """
-function evano(returns::AbstractVector, args...; kwargs...)
-    return -median(returns) / expected_shortfall(returns, args...; kwargs...)
+function median_over_expected_shortfall(returns::AbstractVector, args...; kwargs...)
+    pi = price_impact(returns, args...)
+    return (median(returns) - pi) / expected_shortfall(returns, args...; kwargs...)
 end
 
-function evano(
+function median_over_expected_shortfall(
     volumes::AbstractVector, deltas::AbstractMatrix, args...; kwargs...
 )
-    m_return = median_return(volumes, deltas)
+    m_return = median_return(volumes, deltas, args...)
     es_return = expected_shortfall(volumes, deltas, args...; kwargs...)
-    return -m_return / es_return
+    return m_return / es_return
 end
 
-obs_arrangement(::typeof(evano)) = MatrixColsOfObs()
+obs_arrangement(::typeof(median_over_expected_shortfall)) = MatrixColsOfObs()
+const evano = median_over_expected_shortfall
 
 
 """
