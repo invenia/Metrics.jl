@@ -4,31 +4,31 @@
         @testset "scalar point" begin
             y_true = 1
             y_pred = 1
-            @test squared_error(y_true, y_pred) == 0
-            @test evaluate(squared_error, y_true, y_pred) == 0
+            @test expected_squared_error(y_true, y_pred) == 0
+            @test evaluate(expected_squared_error, y_true, y_pred) == 0
 
             y_true = 4
-            @test squared_error(y_true, y_pred) == 9
-            @test evaluate(squared_error, y_true, y_pred) == 9
+            @test expected_squared_error(y_true, y_pred) == 9
+            @test evaluate(expected_squared_error, y_true, y_pred) == 9
 
             y_true = rand(Int64)
             y_pred = rand(Int64)
-            @test squared_error(y_true, y_pred) == squared_error(y_pred, y_true)
+            @test expected_squared_error(y_true, y_pred) == expected_squared_error(y_pred, y_true)
         end
         @testset "multivariate point" begin
             y_true = [1, 2, 3]
             y_pred = [1, 2, 3]
-            @test squared_error(y_true, y_pred) == 0
-            @test evaluate(squared_error, y_true, y_pred) == 0
+            @test expected_squared_error(y_true, y_pred) == 0
+            @test evaluate(expected_squared_error, y_true, y_pred) == 0
 
             y_true = [2, 2, 2, 2]
             y_pred = [1, 2, 3, 4]
-            @test squared_error(y_true, y_pred) == 6
-            @test evaluate(squared_error, y_true, y_pred) == 6
+            @test expected_squared_error(y_true, y_pred) == 6
+            @test evaluate(expected_squared_error, y_true, y_pred) == 6
 
             y_true = rand(Int64, 7)
             y_pred = rand(Int64, 7)
-            @test squared_error(y_true, y_pred) == squared_error(y_pred, y_true)
+            @test expected_squared_error(y_true, y_pred) == expected_squared_error(y_pred, y_true)
         end
         @testset "matrixvariate point" begin
             y_true = [
@@ -36,28 +36,28 @@
                 1  2  3  4
                 1  2  3  4
             ]
-            @test squared_error(y_true, y_true) == 0
-            @test evaluate(squared_error, y_true, y_true) == 0
+            @test expected_squared_error(y_true, y_true) == 0
+            @test evaluate(expected_squared_error, y_true, y_true) == 0
 
             y_pred = fill(2, 3, 4)
-            @test squared_error(y_true, y_pred) == 18
-            @test evaluate(squared_error, y_true, y_pred) == 18
+            @test expected_squared_error(y_true, y_pred) == 18
+            @test evaluate(expected_squared_error, y_true, y_pred) == 18
 
         end
         @testset "erroring" begin
             y_true = 1
             y_pred = [1, 2, 3]
-            @test_throws DimensionMismatch squared_error(y_true, y_pred)
+            @test_throws DimensionMismatch expected_squared_error(y_true, y_pred)
 
             y_true = [2, 2]
             y_pred = [1, 2, 3, 4]
-            @test_throws DimensionMismatch squared_error(y_true, y_pred)
-            @test_throws DimensionMismatch evaluate(squared_error, y_true, y_pred) == 0
+            @test_throws DimensionMismatch expected_squared_error(y_true, y_pred)
+            @test_throws DimensionMismatch evaluate(expected_squared_error, y_true, y_pred) == 0
 
             y_true = fill(1, 3, 4)
             y_pred = fill(1, 4, 4)
-            @test_throws DimensionMismatch squared_error(y_true, y_pred)
-            @test_throws DimensionMismatch evaluate(squared_error, y_true, y_pred) == 0
+            @test_throws DimensionMismatch expected_squared_error(y_true, y_pred)
+            @test_throws DimensionMismatch evaluate(expected_squared_error, y_true, y_pred) == 0
         end
     end
 
@@ -502,55 +502,78 @@
         @testset "scalar point" begin
             y_true = 1
             y_pred = 5
-            @test absolute_error(y_true, y_true) == 0
-            @test evaluate(absolute_error, y_true, y_true) == 0
-            @test absolute_error(y_true, y_pred) == 4
-            @test evaluate(absolute_error, y_true, y_pred) == 4
-            @test absolute_error([y_true], [y_pred]) == 4
-            @test evaluate(absolute_error, [y_true], [y_pred]) == 4
-
-            dist_pred = Normal(y_pred)
-            @test absolute_error(y_true, dist_pred) == 4.000014290516877
-            @test evaluate(absolute_error, y_true, dist_pred) == 4.000014290516877
+            @test expected_absolute_error(y_true, y_true) == 0
+            @test evaluate(expected_absolute_error, y_true, y_true) == 0
+            @test expected_absolute_error(y_true, y_pred) == 4
+            @test evaluate(expected_absolute_error, y_true, y_pred) == 4
+            @test expected_absolute_error([y_true], [y_pred]) == 4
+            @test evaluate(expected_absolute_error, [y_true], [y_pred]) == 4
 
             y_true = rand(Int64)
             y_pred = rand(Int64)
-            @test absolute_error(y_true, y_pred) == absolute_error(y_pred, y_true)
-            @test absolute_error([y_true], [y_pred]) == absolute_error(y_pred, y_true)
+            @test expected_absolute_error(y_true, y_pred) == expected_absolute_error(y_pred, y_true)
+            @test expected_absolute_error([y_true], [y_pred]) == expected_absolute_error(y_pred, y_true)
         end
         @testset "multivariate point" begin
             y_true = [1, 5, 2, 5, 9]
             y_pred = [5, 3, 2, 1, 1]
-            @test absolute_error(y_true, y_pred) == 18
-            @test evaluate(absolute_error, y_true, y_pred) == 18
-
-            dist_pred = MvNormal(y_pred, 1)
-            @test absolute_error(y_true, dist_pred) == 18.814900382239284
-            @test evaluate(absolute_error, y_true, dist_pred) == 18.814900382239284
+            @test expected_absolute_error(y_true, y_pred) == 18
+            @test evaluate(expected_absolute_error, y_true, y_pred) == 18
 
             y_true = rand(Int64, 7)
             y_pred = rand(Int64, 7)
-            @test absolute_error(y_true, y_pred) == absolute_error(y_pred, y_true)
+            @test expected_absolute_error(y_true, y_pred) == expected_absolute_error(y_pred, y_true)
         end
         @testset "matrixvariate point" begin
             y_true = [1  2;  5  5]
-            @test absolute_error(y_true, y_true) == 0
-            @test evaluate(absolute_error, y_true, y_true) == 0
+            @test expected_absolute_error(y_true, y_true) == 0
+            @test evaluate(expected_absolute_error, y_true, y_true) == 0
 
             y_pred = fill(2, 2, 2)
-            @test absolute_error(y_true, y_pred) == 7
-            @test evaluate(absolute_error, y_true, y_pred) == 7
+            @test expected_absolute_error(y_true, y_pred) == 7
+            @test evaluate(expected_absolute_error, y_true, y_pred) == 7
+        end
+        @testset "univariate distribution" begin
+            y_true = 1
+            y_pred = 5
+            dist_pred = Normal(y_pred)
+            @test expected_absolute_error(y_true, dist_pred) == 4.000014290516877
+            @test evaluate(expected_absolute_error, y_true, dist_pred) == 4.000014290516877
 
+            # test AE(X) = σ√(2/π) when mean(dist_pred) == y_true
+            dist_pred = Normal(y_true)
+            @test expected_absolute_error(y_true, dist_pred) == sqrt(2 * var(dist_pred) / π)
+            @test evaluate(expected_absolute_error, y_true, dist_pred) == sqrt(2 * var(dist_pred) / π)
+        end
+        @testset "multivariate distribution" begin
+            y_true = [1, 5, 2, 5, 9]
+            y_pred = [5, 3, 2, 1, 1]
+            dist_pred = MvNormal(y_pred, 1)
+            @test expected_absolute_error(y_true, dist_pred) == 18.814900382239284
+            @test evaluate(expected_absolute_error, y_true, dist_pred) == 18.814900382239284
+
+            # test AE(X) = σ√(2/π) when mean(dist_pred) == y_true
+            dist_pred = MvNormal(y_true, 1)
+            @test expected_absolute_error(y_true, dist_pred) == sqrt(2 / π) * sum(sqrt, var(dist_pred))
+            @test evaluate(expected_absolute_error, y_true, dist_pred) == sqrt(2 / π) * sum(sqrt, var(dist_pred))
+        end
+        @testset "matrixvariate distribution" begin
+            y_true = [1  2;  5  5]
+            y_pred = fill(2, 2, 2)
             U = [1 2; 2 4.5]
             dist_pred = MatrixNormal(y_pred, U, U)
-            @test absolute_error(y_true, dist_pred) == 25.451334742125702
-            @test evaluate(absolute_error, y_true, dist_pred) == 25.451334742125702
+            @test expected_absolute_error(y_true, dist_pred) == 10.370040141218315
+            @test evaluate(expected_absolute_error, y_true, dist_pred) == 10.370040141218315
 
+            # test AE(X) = σ√(2/π) when mean(dist_pred) == y_true
+            dist_pred = MatrixNormal(y_true, U, U)
+            @test expected_absolute_error(y_true, dist_pred) == sqrt(2 / π) * sum(sqrt, var(vec(dist_pred)))
+            @test evaluate(expected_absolute_error, y_true, dist_pred) == sqrt(2 / π) * sum(sqrt, var(vec(dist_pred)))
         end
         @testset "erroring" begin
             y_true = [2, 2]
             y_pred = [1, 2, 3, 4]
-            @test_throws DimensionMismatch absolute_error(y_true, y_pred)
+            @test_throws DimensionMismatch expected_absolute_error(y_true, y_pred)
         end
     end
 
@@ -609,8 +632,8 @@
             ]
             y_pred = fill(fill(2, 4), 3)
             dist_pred = MvNormal.(y_pred, Ref(2))
-            @test mean_absolute_error(y_true, dist_pred) == 13.35542587399919
-            @test evaluate(mean_absolute_error, y_true, dist_pred) == 13.35542587399919
+            @test mean_absolute_error(y_true, dist_pred) == 7.511403463166924
+            @test evaluate(mean_absolute_error, y_true, dist_pred) == 7.511403463166924
         end
         @testset "matrixvariate distribution" begin
             y_true = [
@@ -622,8 +645,8 @@
             y_pred = fill(fill(2, 2, 2), 3)
             U = [1 2; 2 4.5]
             dist_pred = MatrixNormal.(y_pred, Ref(U ), Ref(U))
-            @test mean_absolute_error(y_true, dist_pred) == 24.671784565643673
-            @test evaluate(mean_absolute_error, y_true, dist_pred) == 24.671784565643673
+            @test mean_absolute_error(y_true, dist_pred) == 8.675796763888826
+            @test evaluate(mean_absolute_error, y_true, dist_pred) == 8.675796763888826
         end
         @testset "erroring" begin
             y_true = [2, 2]
@@ -732,7 +755,7 @@
         @testset "squared_error" begin
             dist = rand()
             y_pred = rand()
-            @test evaluate(squared_error, dist, y_pred) == squared_error(dist, y_pred)
+            @test evaluate(expected_squared_error, dist, y_pred) == expected_squared_error(dist, y_pred)
         end
     end
 end
