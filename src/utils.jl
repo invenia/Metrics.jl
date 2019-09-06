@@ -30,3 +30,7 @@ end
 if VERSION < v"1.1"
     eachrow(A::AbstractVecOrMat) = (view(A, i, :) for i in axes(A, 1))
 end
+
+# wrapper around the generic mFn function in HypergeometricFunctions to generate the
+# 1F1 function = F(a; b; z).
+_1F1(μ, σ) = mFn([-0.5], [0.5], [-0.5 * (μ / σ)^2])
