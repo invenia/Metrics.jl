@@ -541,7 +541,7 @@
             @test evaluate(expected_absolute_error, y_true, dist_pred) == 4.000014290516877
 
             # test AE(X) = σ√(2/π) when mean(dist_pred) == y_true
-            dist_pred = Normal(y_true)
+            dist_pred = Normal(y_true, 2)
             @test expected_absolute_error(y_true, dist_pred) == sqrt(2 * var(dist_pred) / π)
             @test evaluate(expected_absolute_error, y_true, dist_pred) == sqrt(2 * var(dist_pred) / π)
         end
@@ -553,7 +553,7 @@
             @test evaluate(expected_absolute_error, y_true, dist_pred) == 18.814900382239284
 
             # test AE(X) = σ√(2/π) when mean(dist_pred) == y_true
-            dist_pred = MvNormal(y_true, 1)
+            dist_pred = MvNormal(y_true, 2)
             @test expected_absolute_error(y_true, dist_pred) == sqrt(2 / π) * sum(sqrt, var(dist_pred))
             @test evaluate(expected_absolute_error, y_true, dist_pred) == sqrt(2 / π) * sum(sqrt, var(dist_pred))
         end
