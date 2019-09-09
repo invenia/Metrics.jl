@@ -9,9 +9,7 @@ function expected_squared_error(y_true, y_pred)
 end
 
 """
-    expected_squared_error(
-        y_true, Distribution{<:Normal, <:AbstractMvNormal, <:MatrixNormal},
-    ) -> Float64
+    expected_squared_error(y_true, Union{Normal, AbstractMvNormal, MatrixNormal}) -> Float64
 
 Compute the expected square error between an observation `y_true` and the posterior
 distribution over the predicted value `y_pred`.
@@ -30,13 +28,13 @@ squared errors over the individual dimensions and sum the result.
 
 For more information see: https://en.wikipedia.org/wiki/Mean_squared_error#Estimator
 """
-function expected_squared_error(y_true,  y_pred::Distribution{<:Normal, <:AbstractMvNormal})
+function expected_squared_error(y_true,  y_pred::Union{Normal, AbstractMvNormal})
     @_dimcheck size(y_true) == size(y_pred)
     bias = mean(y_pred) - y_true
     return sum(var(y_pred)) + sum(abs2, bias)
 end
 
-function expected_squared_error(y_true, y_pred::Distribution{Matrixvariate})
+function expected_squared_error(y_true, y_pred::MatrixNormal)
     # Temporary hack
     # var and cov not yet defined for MatrixVariates so must be transformed to MultiVariate
     # can be removed when new Distribution version is tagged
@@ -120,9 +118,7 @@ function expected_absolute_error(y_true, y_pred)
 end
 
 """
-    expected_absolute_error(
-        y_true, Distribution{<:Normal, <:AbstractMvNormal, <:MatrixNormal},
-    ) -> Float64
+    expected_absolute_error(y_true, Union{Normal, AbstractMvNormal, MatrixNormal}) -> Float64
 
 Compute the expected absolute error between an observation `y_true` and the posterior
 distribution over the predicted value `y_pred`.
@@ -144,7 +140,7 @@ absolute errors over the individual dimensions and sum the result.
 
 For more information see: https://en.wikipedia.org/wiki/Folded_normal_distribution
 """
-function expected_absolute_error(y_true, y_pred::Distribution{<:Normal, <:AbstractMvNormal})
+function expected_absolute_error(y_true, y_pred::Union{Normal, AbstractMvNormal})
     @_dimcheck size(y_true) == size(y_pred)
     μ = mean(y_pred) - y_true
     σ = sqrt.(var(y_pred))
@@ -156,7 +152,7 @@ function expected_absolute_error(y_true, y_pred::Distribution{<:Normal, <:Abstra
 end
 
 
-function expected_absolute_error(y_true, y_pred::Distribution{MatrixNormal})
+function expected_absolute_error(y_true, y_pred::MatrixNormal)
     # Temporary hack
     # var and cov not yet defined for MatrixVariates so must be transformed to MultiVariate
     # can be removed when new Distribution version is tagged
