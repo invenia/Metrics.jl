@@ -159,6 +159,24 @@ generate_mvnormal(size::Integer) = generate_mvnormal(rand(size), size)
         end
     end
 
+    @testset "median_return" begin
+        # Basic Usage
+        volumes = collect(1:10)
+        deltas = Matrix(I, (10, 10))
+        expected = 5.5
+
+        @test median_return(volumes, deltas) == expected
+        @test evaluate(median_return, volumes, deltas) == expected
+
+        # With Price Impact median_return should be lower
+        nonzero_pi = (supply_pi=fill(0.1, 10), demand_pi=fill(0.1, 10))
+        pi_expected = -33
+
+        @test median_return(volumes, deltas, nonzero_pi...) == pi_expected
+        @test evaluate(median_return, volumes, deltas, nonzero_pi...) == pi_expected
+        @test pi_expected < expected
+    end
+
     @testset "evano" begin
 
         @testset "simple evano" begin
@@ -224,6 +242,7 @@ generate_mvnormal(size::Integer) = generate_mvnormal(rand(size), size)
             # Distributions as there are many definitions of `median` which aren't
             # implemented by `Distributions`.
             # https://invenia.slack.com/archives/CMMAKP97H/p1567612804011200?thread_ts=1567543537.008300&cid=CMMAKP97H
+            # More info: https://www.r-bloggers.com/multivariate-medians/
             seed!(1)
             volumes = [1, -2, 3, -4, 5, -6, 7, -8, 9, -10]
             dense_dist = generate_mvnormal(10)

@@ -116,11 +116,16 @@ obs_arrangement(::typeof(median_return)) = MatrixColsOfObs()
         kwargs...
     ) -> Number
 
-Calculate the `median(returns) / expected_shortfall(returns)` metric
+Calculate the `median(returns) / expected_shortfall(returns)` metric, aka the `evano`
+metric.
+
+For the function that takes in `returns`, we must assume that the price impact has already
+been included.
 
 We currently don't have a working version of this for Multivariate Distributions as there
 are many definitions of `median` which aren't implemented by `Distributions`.
 https://invenia.slack.com/archives/CMMAKP97H/p1567612804011200?thread_ts=1567543537.008300&cid=CMMAKP97H
+More info: https://www.r-bloggers.com/multivariate-medians/
 
 # Arguments
 - `returns::AbstractVector`: A vector of returns over some time or of some portfolio
@@ -131,9 +136,8 @@ https://invenia.slack.com/archives/CMMAKP97H/p1567612804011200?thread_ts=1567543
 # Keyword Arguments
 - `kwargs`: The [`expected shortfall`](@ref expected_shortfall) keyword arguments.
 """
-function median_over_expected_shortfall(returns::AbstractVector, args...; kwargs...)
-    pi = price_impact(returns, args...)
-    return (median(returns) - pi) / expected_shortfall(returns, args...; kwargs...)
+function median_over_expected_shortfall(returns::AbstractVector; kwargs...)
+    return median(returns) / expected_shortfall(returns; kwargs...)
 end
 
 function median_over_expected_shortfall(
