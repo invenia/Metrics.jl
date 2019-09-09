@@ -1,9 +1,9 @@
 module Metrics
 
 using Distributions
-using HypergeometricFunctions: mFn
 using LinearAlgebra: dot, norm
 using NamedDims
+using SpecialFunctions
 using StatsUtils: sqrtcov
 
 include("evaluate.jl")

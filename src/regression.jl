@@ -14,24 +14,27 @@ end
 Compute the expected square error between an observation `y_true` and the posterior
 distribution over the predicted value `y_pred`.
 
-The expected square error of an estimator of a distribution `x` and the true value `x'` is
-given by
-```
-ESE(x) = Var(x) + Bias(x, x')^2
+The expected square error of an estimator of a normal distribution `X` and the true value
+`X'` is given by
+```math
+E[X^2] = Var(X) + Bias(X, X')^2
 ```
 Note: In conventional literature this function is called the "mean squared error" (MSE).
 To avoid confusing this as a metric that computes the "mean" as an average over a collection
 of values, we use the term "expected" to conform with the statistical nomenclature.
 
+For Multivariate and Matrixvariate normal distributions we compute the marginal expected
+squared errors over the individual dimensions and sum the result.
+
 For more information see: https://en.wikipedia.org/wiki/Mean_squared_error#Estimator
 """
-function expected_squared_error(y_true, y_pred::Distribution)
+function expected_squared_error(y_true,  y_pred::Distribution)
     @_dimcheck size(y_true) == size(y_pred)
     bias = mean(y_pred) - y_true
     return sum(var(y_pred)) + sum(abs2, bias)
 end
 
-function expected_squared_error(y_true, y_pred::Distribution{Matrixvariate})
+function expected_squared_error(y_true, y_pred::MatrixNormal)
     # Temporary hack
     # var and cov not yet defined for MatrixVariates so must be transformed to MultiVariate
     # can be removed when new Distribution version is tagged
@@ -115,35 +118,43 @@ function expected_absolute_error(y_true, y_pred)
 end
 
 """
-    expected_absolute_error(y_true, y_pred::Distribution) -> Float64
+    expected_absolute_error(
+        y_true, y_pred::Union{Normal, AbstractMvNormal, MatrixNormal},
+    ) -> Float64
 
 Compute the expected absolute error between an observation `y_true` and the posterior
 distribution over the predicted value `y_pred`.
 
-The expected absolute error of an estimator of a Normal distribution `x` with non-zero mean
-is given by
+Given a normal random variable `X` with mean mean `μ` and standard deviation `σ`, the
+expected absolute value is described by the folded normal distribution with the expected
+value defined by the following function:
+```math
+E[|X|] = μ * erf(μ / (√2 * σ)) + σ * sqrt(2/π) * exp(-μ^2 / 2σ^2)
 ```
-AE(x) = √(2 / π) * σ * _1F_1(-1/2, 1/2, -1/2 * (μ / σ)^2)
-```
-where `_1F_1` is the confluent hypergeometric function of the first kind.
+where `erf` is the error function.
 
-Note: In conventional literature this function is called the "mean absolute error" (MAE).
+Note: In conventional literature this function is often called the "mean absolute error" (MAE).
 To avoid confusing this as a metric that computes the "mean" as an average over a collection
 of values, we use the term "expected" to conform with the statistical nomenclature.
 
-For Multivariate and Matrixvariate distributions we compute the expected absolute error over
-the individual dimensions and sum the result.
+For Multivariate and Matrixvariate normal distributions we compute the marginal expected
+absolute errors over the individual dimensions and sum the result.
 
-For more information see: https://en.wikipedia.org/wiki/Normal_distribution#Moments
+For more information see: https://en.wikipedia.org/wiki/Folded_normal_distribution
 """
-function expected_absolute_error(y_true, y_pred::Distribution)
+function expected_absolute_error(y_true, y_pred::Union{Normal, AbstractMvNormal})
     @_dimcheck size(y_true) == size(y_pred)
     μ = mean(y_pred) - y_true
     σ = sqrt.(var(y_pred))
-    return sqrt(2 / π) * dot(σ, _1F1.(μ, σ))
+
+    mu_term = dot(μ, erf.(μ ./ (sqrt(2) * σ)))
+    sigma_term = sqrt(2/π) * dot(σ, exp.(-μ.^2 ./ 2σ.^2))
+
+    return mu_term + sigma_term
 end
 
-function expected_absolute_error(y_true, y_pred::Distribution{Matrixvariate})
+
+function expected_absolute_error(y_true, y_pred::MatrixNormal)
     # Temporary hack
     # var and cov not yet defined for MatrixVariates so must be transformed to MultiVariate
     # can be removed when new Distribution version is tagged
