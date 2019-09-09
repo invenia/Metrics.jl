@@ -59,6 +59,7 @@ end
 obs_arrangement(::typeof(volatility)) = MatrixColsOfObs()
 
 """
+    sharpe_ratio(returns::AbstractVector) -> Number
     sharpe_ratio(
         volumes::AbstractVector, deltas::Union{MvNormal, AbstractMatrix}, args...,
     ) -> Number
@@ -71,6 +72,7 @@ Formally, the sharpe_ratio is defined between two portfolios but we use the base
 portfolio of _no-bid_ in this metric.
 
 ## Arguments
+- `returns::AbstractVector`: the portfolio of returns
 - 'volumes::AbstractVector': The MWs volumes of the portfolio
 - `deltas::Union{MvNormal, AbstractMatrix}`: The distribution or sample of price deltas
 - `args`: The [`price impact`](@ref price_impact) arguments (excluding `volumes`).
@@ -82,6 +84,8 @@ function sharpe_ratio(
     std_return = volatility(volumes, deltas)
     return mean_return / std_return
 end
+
+sharpe_ratio(returns) =  mean(returns) / std(returns)
 
 obs_arrangement(::typeof(sharpe_ratio)) = MatrixColsOfObs()
 
