@@ -537,8 +537,8 @@
             y_true = 1
             y_pred = 5
             dist_pred = Normal(y_pred)
-            @test expected_absolute_error(y_true, dist_pred) == 4.000014290516877
-            @test evaluate(expected_absolute_error, y_true, dist_pred) == 4.000014290516877
+            @test expected_absolute_error(y_true, dist_pred) ≈ 4.000014290516877
+            @test evaluate(expected_absolute_error, y_true, dist_pred) ≈ 4.000014290516877
 
             # test AE(X) = σ√(2/π) when mean(dist_pred) == y_true
             dist_pred = Normal(y_true, 2)
@@ -549,8 +549,8 @@
             y_true = [1, 5, 2, 5, 9]
             y_pred = [5, 3, 2, 1, 1]
             dist_pred = MvNormal(y_pred, 1)
-            @test expected_absolute_error(y_true, dist_pred) == 18.814900382239284
-            @test evaluate(expected_absolute_error, y_true, dist_pred) == 18.814900382239284
+            @test expected_absolute_error(y_true, dist_pred) ≈ 18.814894547070256
+            @test evaluate(expected_absolute_error, y_true, dist_pred) ≈ 18.814894547070256
 
             # test AE(X) = σ√(2/π) when mean(dist_pred) == y_true
             dist_pred = MvNormal(y_true, 2)
@@ -562,8 +562,8 @@
             y_pred = fill(2, 2, 2)
             U = [1 2; 2 4.5]
             dist_pred = MatrixNormal(y_pred, U, U)
-            @test expected_absolute_error(y_true, dist_pred) == 10.370040141218315
-            @test evaluate(expected_absolute_error, y_true, dist_pred) == 10.370040141218315
+            @test expected_absolute_error(y_true, dist_pred) ≈ 10.370040141218315
+            @test evaluate(expected_absolute_error, y_true, dist_pred) ≈ 10.370040141218315
 
             # test AE(X) = σ√(2/π) when mean(dist_pred) == y_true
             dist_pred = MatrixNormal(y_true, U, U)
@@ -621,8 +621,8 @@
             y_true = [1, 5, 2, 5, 9]
             y_pred = [5, 3, 2, 1, 1]
             dist_pred = Normal.(y_pred)
-            @test mean_absolute_error(y_true, dist_pred) == 3.762980076447856
-            @test evaluate(mean_absolute_error, y_true, dist_pred) == 3.762980076447856
+            @test mean_absolute_error(y_true, dist_pred) ≈ 3.7629789094140507
+            @test evaluate(mean_absolute_error, y_true, dist_pred) ≈ 3.7629789094140507
         end
         @testset "multivariate distribution" begin
             y_true = [
@@ -632,8 +632,8 @@
             ]
             y_pred = fill(fill(2, 4), 3)
             dist_pred = MvNormal.(y_pred, Ref(2))
-            @test mean_absolute_error(y_true, dist_pred) == 7.511403463166924
-            @test evaluate(mean_absolute_error, y_true, dist_pred) == 7.511403463166924
+            @test mean_absolute_error(y_true, dist_pred) ≈ 7.511403463166924
+            @test evaluate(mean_absolute_error, y_true, dist_pred) ≈ 7.511403463166924
         end
         @testset "matrixvariate distribution" begin
             y_true = [
@@ -645,8 +645,8 @@
             y_pred = fill(fill(2, 2, 2), 3)
             U = [1 2; 2 4.5]
             dist_pred = MatrixNormal.(y_pred, Ref(U ), Ref(U))
-            @test mean_absolute_error(y_true, dist_pred) == 8.675796763888826
-            @test evaluate(mean_absolute_error, y_true, dist_pred) == 8.675796763888826
+            @test mean_absolute_error(y_true, dist_pred) ≈ 8.675796763888826
+            @test evaluate(mean_absolute_error, y_true, dist_pred) ≈ 8.675796763888826
         end
         @testset "erroring" begin
             y_true = [2, 2]

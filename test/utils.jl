@@ -1,4 +1,4 @@
-using Metrics: @_dimcheck, _1F1
+using Metrics: @_dimcheck
 @testset "utils.jl" begin
 
     @testset "failing checks" begin
@@ -48,10 +48,4 @@ end
         @test @_dimcheck(size([20,30]) == size([2,3]) == (2,)) isa Any
     end
 
-    @testset "Hypergeometric function" begin
-        @test first(_1F1(0, 1)) == 1.0
-        @test isapprox(first(_1F1(1, 1)), 1.4621550516047812)
-        @test isapprox(first(_1F1(1, 2)), 1.1224595120645373)
-
-    end
 end

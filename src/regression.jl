@@ -120,28 +120,33 @@ end
 Compute the expected absolute error between an observation `y_true` and the posterior
 distribution over the predicted value `y_pred`.
 
-The expected absolute error of an estimator of a Normal distribution `x` with non-zero mean
-is given by
+Given a random variable `x` with mean mean `μ` and standard deviation `σ`, the expected
+absolute value is described by the folded normal distribution via the following function:
 ```
-AE(x) = √(2 / π) * σ * _1F_1(-1/2, 1/2, -1/2 * (μ / σ)^2)
+AE(x) = μ * erf(μ / (√2 * σ)) + σ * sqrt(2/π) * exp(-μ^2 / 2σ^2)
 ```
-where `_1F_1` is the confluent hypergeometric function of the first kind.
+where `erf` is the error function.
 
-Note: In conventional literature this function is called the "mean absolute error" (MAE).
+Note: In conventional literature this function is often called the "mean absolute error" (MAE).
 To avoid confusing this as a metric that computes the "mean" as an average over a collection
 of values, we use the term "expected" to conform with the statistical nomenclature.
 
 For Multivariate and Matrixvariate distributions we compute the expected absolute error over
 the individual dimensions and sum the result.
 
-For more information see: https://en.wikipedia.org/wiki/Normal_distribution#Moments
+For more information see: https://en.wikipedia.org/wiki/Folded_normal_distribution
 """
 function expected_absolute_error(y_true, y_pred::Distribution)
     @_dimcheck size(y_true) == size(y_pred)
     μ = mean(y_pred) - y_true
     σ = sqrt.(var(y_pred))
-    return sqrt(2 / π) * dot(σ, _1F1.(μ, σ))
+
+    mu_term = dot(μ, erf.(μ ./ (sqrt(2) * σ)))
+    sigma_term = sqrt(2/π) * dot(σ, exp.(-μ.^2 ./ 2σ.^2))
+    
+    return mu_term + sigma_term
 end
+
 
 function expected_absolute_error(y_true, y_pred::Distribution{Matrixvariate})
     # Temporary hack
