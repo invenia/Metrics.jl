@@ -9,7 +9,7 @@ function expected_squared_error(y_true, y_pred)
 end
 
 """
-    expected_squared_error(y_true, Union{Normal, AbstractMvNormal, MatrixNormal}) -> Float64
+    expected_squared_error(y_true, y_pred::Distribution) -> Float64
 
 Compute the expected square error between an observation `y_true` and the posterior
 distribution over the predicted value `y_pred`.
@@ -28,7 +28,7 @@ squared errors over the individual dimensions and sum the result.
 
 For more information see: https://en.wikipedia.org/wiki/Mean_squared_error#Estimator
 """
-function expected_squared_error(y_true,  y_pred::Union{Normal, AbstractMvNormal})
+function expected_squared_error(y_true,  y_pred::Distribution)
     @_dimcheck size(y_true) == size(y_pred)
     bias = mean(y_pred) - y_true
     return sum(var(y_pred)) + sum(abs2, bias)
@@ -118,7 +118,9 @@ function expected_absolute_error(y_true, y_pred)
 end
 
 """
-    expected_absolute_error(y_true, Union{Normal, AbstractMvNormal, MatrixNormal}) -> Float64
+    expected_absolute_error(
+        y_true, y_pred::Union{Normal, AbstractMvNormal, MatrixNormal},
+    ) -> Float64
 
 Compute the expected absolute error between an observation `y_true` and the posterior
 distribution over the predicted value `y_pred`.
