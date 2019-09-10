@@ -129,7 +129,6 @@ generate_mvnormal(size::Integer) = generate_mvnormal(rand(size), size)
                 @test sharpe_ratio(returns) ≈ expected
                 @test evaluate(sharpe_ratio, returns) ≈ expected
 
-
                 # zero std with non-zero mean
                 returns = ones(10)
                 @test sharpe_ratio(returns) == Inf
