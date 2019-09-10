@@ -113,49 +113,100 @@ generate_mvnormal(size::Integer) = generate_mvnormal(rand(size), size)
 
     @testset "sharpe ratio" begin
 
-        # using diag cov matrix
-        vol = [0.1, 0.2, -0.3]
-        diag_sqrtcov = Diagonal([5.0, 6.0 ,7.0])
-        diag_dist = MvNormal([0.0, 1.0, 10.0], diag_sqrtcov' * diag_sqrtcov)
-        exp_return = (0.2 + -3.0)
-        exp_vol = sqrt(0.5^2 + 1.2^2 + 2.1^2)
-        @test sharpe_ratio(vol, diag_dist) ≈ exp_return / exp_vol
+        @testset "simple sharpe ratio" begin
+            @testset "vector of returns" begin
+                # basic usage
+                returns = rand(100)
+                mean_returns = mean(returns)
+                std_returns = std(returns)
+                expected = mean_returns / std_returns
 
-        # using dense cov matrix
-        volumes = rand(Uniform(-50,50), 10)
-        dense_dist = generate_mvnormal(10)
-        nonzero_pi = (supply_pi=fill(0.1, 10), demand_pi=fill(0.1, 10))
+                @test sharpe_ratio(returns) ≈ expected
+                @test evaluate(sharpe_ratio, returns) ≈ expected
 
-        @testset "with distribution" begin
-            exp_return = expected_return(volumes, dense_dist)
-            exp_vol = volatility(volumes, dense_dist)
+                # order shouldn't matter
+                shuffle!(returns)
+                @test sharpe_ratio(returns) ≈ expected
+                @test evaluate(sharpe_ratio, returns) ≈ expected
 
-            @test sharpe_ratio(volumes, dense_dist) == exp_return / exp_vol
-            @test evaluate(sharpe_ratio, volumes, dense_dist) == exp_return / exp_vol
+                # zero std with non-zero mean
+                returns = ones(10)
+                @test sharpe_ratio(returns) == Inf
+                @test evaluate(sharpe_ratio, returns) ≈ Inf
 
-            # with price impact
-            @test sharpe_ratio(volumes, dense_dist, nonzero_pi...) < exp_return / exp_vol
-            @test isless(
-                evaluate(sharpe_ratio, volumes, dense_dist, nonzero_pi...),
-                exp_return / exp_vol,
-            )
+                # zero std with zero mean
+                returns = zeros(10)
+                @test isnan(sharpe_ratio(returns))
+                @test isnan(evaluate(sharpe_ratio, returns))
+            end
+
+            @testset "distribution of returns" begin
+                returns = Normal(rand(), rand())
+                mean_returns = mean(returns)
+                std_returns = std(returns)
+                expected = mean_returns / std_returns
+
+                @test sharpe_ratio(returns) == expected
+                @test evaluate(sharpe_ratio, returns) == expected
+
+                # zero std with non-zero mean
+                returns = Normal(rand(), 0)
+                @test sharpe_ratio(returns) == Inf
+                @test evaluate(sharpe_ratio, returns) == Inf
+
+                # zero std with zero mean
+                returns = Normal(0, 0)
+                @test isnan(sharpe_ratio(returns))
+                @test isnan(evaluate(sharpe_ratio, returns))
+
+            end
         end
 
-        @testset "with samples" begin
-            samples = rand(dense_dist, 5)
+        @testset "using volumes and deltas" begin
+            # using diag cov matrix
+            vol = [0.1, 0.2, -0.3]
+            diag_sqrtcov = Diagonal([5.0, 6.0 ,7.0])
+            diag_dist = MvNormal([0.0, 1.0, 10.0], diag_sqrtcov' * diag_sqrtcov)
+            exp_return = (0.2 + -3.0)
+            exp_vol = sqrt(0.5^2 + 1.2^2 + 2.1^2)
+            @test sharpe_ratio(vol, diag_dist) ≈ exp_return / exp_vol
 
-            exp_return = expected_return(volumes, samples)
-            exp_vol = volatility(volumes, samples)
+            # using dense cov matrix
+            volumes = rand(Uniform(-50,50), 10)
+            dense_dist = generate_mvnormal(10)
+            nonzero_pi = (supply_pi=fill(0.1, 10), demand_pi=fill(0.1, 10))
 
-            @test sharpe_ratio(volumes, samples) == exp_return / exp_vol
-            @test evaluate(sharpe_ratio, volumes, samples; obsdim=2) ≈ exp_return / exp_vol
+            @testset "with distribution" begin
+                exp_return = expected_return(volumes, dense_dist)
+                exp_vol = volatility(volumes, dense_dist)
 
-            # with price impact sharpe ratio should decrease
-            @test sharpe_ratio(volumes, samples, nonzero_pi...) < exp_return / exp_vol
-            @test isless(
-                evaluate(sharpe_ratio, volumes, samples, nonzero_pi...; obsdim=2),
-                exp_return / exp_vol,
-            )
+                @test sharpe_ratio(volumes, dense_dist) == exp_return / exp_vol
+                @test evaluate(sharpe_ratio, volumes, dense_dist) == exp_return / exp_vol
+
+                # with price impact
+                @test sharpe_ratio(volumes, dense_dist, nonzero_pi...) < exp_return / exp_vol
+                @test isless(
+                    evaluate(sharpe_ratio, volumes, dense_dist, nonzero_pi...),
+                    exp_return / exp_vol,
+                )
+            end
+
+            @testset "with samples" begin
+                samples = rand(dense_dist, 5)
+
+                exp_return = expected_return(volumes, samples)
+                exp_vol = volatility(volumes, samples)
+
+                @test sharpe_ratio(volumes, samples) == exp_return / exp_vol
+                @test evaluate(sharpe_ratio, volumes, samples; obsdim=2) ≈ exp_return / exp_vol
+
+                # with price impact sharpe ratio should decrease
+                @test sharpe_ratio(volumes, samples, nonzero_pi...) < exp_return / exp_vol
+                @test isless(
+                    evaluate(sharpe_ratio, volumes, samples, nonzero_pi...; obsdim=2),
+                    exp_return / exp_vol,
+                )
+            end
         end
     end
 
