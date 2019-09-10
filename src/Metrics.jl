@@ -1,7 +1,7 @@
 module Metrics
 
 using Distributions
-using LinearAlgebra: dot, norm
+using LinearAlgebra: dot, norm, tr, det
 using NamedDims
 using SpecialFunctions
 using StatsUtils: sqrtcov
@@ -10,6 +10,7 @@ include("evaluate.jl")
 include("utils.jl")
 include("regression.jl")
 include("regression_picp.jl")
+include("divergence.jl")
 include("financial.jl")
 include("price_impact.jl")
 
@@ -29,6 +30,8 @@ export
     picp,
     wpicp,
     apicp,
+    # divergence
+    kullback_leibler, kl,
     # financials
     expected_return,
     volatility,

@@ -21,6 +21,7 @@ seed!(1)
     include("utils.jl")
     include("regression.jl")
     include("regression_picp.jl")
+    include("divergence.jl")
     include("financial.jl")
     include("price_impact.jl")
 end
