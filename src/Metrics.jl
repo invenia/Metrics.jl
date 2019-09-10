@@ -23,6 +23,7 @@ export
     standardized_mean_squared_error, smse,
     expected_absolute_error, ae,
     mean_absolute_error, mae,
+    mean_absolute_scaled_error, mase,
     marginal_loglikelihood,
     joint_loglikelihood,
     picp,
