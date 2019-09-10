@@ -210,6 +210,110 @@ generate_mvnormal(size::Integer) = generate_mvnormal(rand(size), size)
         end
     end
 
+    @testset "median_return" begin
+        # Basic Usage
+        volumes = collect(1:10)
+        deltas = Matrix(I, (10, 10))
+        expected = 5.5
+
+        @test median_return(volumes, deltas) == expected
+        @test evaluate(median_return, volumes, deltas) == expected
+
+        # With Price Impact median_return should be lower
+        nonzero_pi = (supply_pi=fill(0.1, 10), demand_pi=fill(0.1, 10))
+        pi_expected = -33
+
+        @test median_return(volumes, deltas, nonzero_pi...) == pi_expected
+        @test evaluate(median_return, volumes, deltas, nonzero_pi...) == pi_expected
+        @test pi_expected < expected
+    end
+
+    @testset "evano" begin
+
+        @testset "simple evano" begin
+            # Basic usage
+            returns = collect(1:100)
+
+            # Default risk_level is 0.05
+            expected = -16.833333333333332
+            @test evano(returns) == expected
+
+            # Order shouldn't matter
+            shuffle!(returns)
+            @test evano(returns) == expected
+
+            # Testing a different risk_level
+            risk_level = 0.25
+            expected = -3.8846153846153846
+            @test evano(returns; risk_level=risk_level) == expected
+            @test evaluate(evano, returns; risk_level=risk_level) == expected
+        end
+
+        @testset "sample evano" begin
+            # Using samples
+            volumes = [1, -2, 3, -4, 5, -6, 7, -8, 9, -10]
+            samples = Matrix(I, (10, 10))
+            expected = -0.08333333333333333
+            @test evano(volumes, samples; risk_level=0.5) == expected
+            @test evaluate(evano, volumes, samples; risk_level=0.5) == expected
+
+            # using diagonal matrix of samples - requires AbstractArray
+            sample_deltas = Diagonal(1:10)
+            expected = -0.03409090909090909
+            @test evano(volumes, sample_deltas; risk_level=0.5) == expected
+
+            # with price impact evano should decrease since expected shortfall increases
+            nonzero_pi = (supply_pi=fill(0.1, 10), demand_pi=fill(0.1, 10))
+            @test evano(volumes, sample_deltas, nonzero_pi...; risk_level=0.5) < expected
+            @test isless(
+                evaluate(
+                    evano, volumes, sample_deltas, nonzero_pi...; risk_level=0.5, obsdim=2
+                ),
+                expected,
+            )
+
+            # generate samples from distribution of deltas
+            seed!(1234)
+            volumes = repeat([1, -2, 3, -4, 5, -6, 7, -8, 9, -10], 2)
+            samples = rand(MvNormal(ones(20)), 50)
+
+            expected = 0.08900853620347395
+            @test evano(volumes, samples) ≈ expected
+            @test evaluate(evano, volumes, samples; obsdim=2) ≈ expected
+
+            # too few samples
+            @test_throws ArgumentError evano(volumes, samples; risk_level=0.01)
+
+            # single sample should not work given `risk_level=1` but not otherwise.
+            @test_throws MethodError evano([-5], [10]; risk_level=0.99)
+        end
+
+        @testset "analytic evano" begin
+            # We currently don't have a working version of this for Multivariate
+            # Distributions as there are many definitions of `median` which aren't
+            # implemented by `Distributions`.
+            # https://invenia.slack.com/archives/CMMAKP97H/p1567612804011200?thread_ts=1567543537.008300&cid=CMMAKP97H
+            # More info: https://www.r-bloggers.com/multivariate-medians/
+            seed!(1)
+            volumes = [1, -2, 3, -4, 5, -6, 7, -8, 9, -10]
+            dense_dist = generate_mvnormal(10)
+            nonzero_pi = (supply_pi=fill(0.1, 10), demand_pi=fill(0.1, 10))
+
+            # Using an MvNormal won't work since we don't have a good way of calculating the
+            # median yet
+            @test_throws MethodError evano(volumes, dense_dist; risk_level=0.5)
+            @test_throws MethodError evaluate(evano, volumes, dense_dist; risk_level=0.5)
+
+            # with price impact, this should still fail
+            @test_throws MethodError evano(
+                volumes, dense_dist, nonzero_pi...; risk_level=0.01
+            )
+            @test_throws MethodError evaluate(
+                evano, volumes, dense_dist, nonzero_pi...; risk_level=0.01
+            )
+        end
+    end
+
     @testset "expected shortfall" begin
 
         @testset "simple ES" begin
