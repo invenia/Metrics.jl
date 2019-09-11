@@ -1,7 +1,7 @@
 module Metrics
 
 using Distributions
-using LinearAlgebra: dot, norm, tr, det
+using LinearAlgebra: cholesky, det, dot, I, norm, tr
 using NamedDims
 using SpecialFunctions
 using StatsUtils: sqrtcov
