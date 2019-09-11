@@ -10,7 +10,7 @@ include("evaluate.jl")
 include("utils.jl")
 include("regression.jl")
 include("regression_picp.jl")
-include("divergence.jl")
+include("kullback_leibler.jl")
 include("financial.jl")
 include("price_impact.jl")
 
