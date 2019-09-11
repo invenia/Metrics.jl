@@ -36,5 +36,12 @@ function kullback_leibler(a::MvNormal, b::MvNormal)
     return kl
 end
 
+function kullback_leibler(a::Normal, b::Normal)
+    # Convert the Univariate Distributions to 1D Multivariate Distributions
+    mv_a = MvNormal([mean(a)], std(a))
+    mv_b = MvNormal([mean(b)], std(b))
+    return kullback_leibler(mv_a, mv_b)
+end
+
 obs_arrangement(::typeof(kullback_leibler)) = SingleObs()
 const kl = kullback_leibler

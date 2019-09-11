@@ -118,4 +118,12 @@
             end
         end
     end
+    @testset "Univariate Distributions" begin
+        p = Normal(0., 1.)
+        q = Normal(1., 2.)
+
+        expected = 0.4431471805599453
+        @test kullback_leibler(p, q) ≈ expected
+        @test evaluate(kullback_leibler, p, q) ≈ expected
+    end
 end
