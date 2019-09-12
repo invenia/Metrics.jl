@@ -8,6 +8,7 @@ using Metrics:
     organise_obs,
     price_impact
 using NamedDims
+using PSDMats
 using Random
 using Random: seed!
 using Statistics
