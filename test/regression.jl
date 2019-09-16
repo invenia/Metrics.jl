@@ -24,11 +24,22 @@ function is_symmetric(metric, y_true, y_pred)
     point_pred = get_mean(metric, y_pred)
 
     @testset "is symmetric" begin
-    # nrmse and smse are not symmetric so skip these
         @test metric(y_true, point_pred) == metric(point_pred, y_true)
         @test evaluate(metric, y_true, point_pred) == evaluate(metric, point_pred, y_true)
         @test metric(y_true, y_pred) == metric(y_pred, y_true)
         @test evaluate(metric, y_true, y_pred) == evaluate(metric, y_pred, y_true)
+    end
+end
+
+"""metric is not symmetric"""
+function is_not_symmetric(metric, y_true, y_pred)
+    # get mean value(s) of distribution(s)
+    point_pred = get_mean(metric, y_pred)
+
+    # only the point prediction is tested
+    @testset "is not symmetric" begin
+        @test metric(y_true, point_pred) != metric(point_pred, y_true)
+        @test evaluate(metric, y_true, point_pred) != evaluate(metric, point_pred, y_true)
     end
 end
 
@@ -147,6 +158,23 @@ function test_metric_properties(metric::typeof(expected_squared_error), args...)
     dist_error_converges_safely(metric, args...)
     error_increases_as_var_increases(metric, args...)
     errors_correctly(metric, args...)
+
+    y_true, y_pred = args
+    @testset "obeys properties of norm" begin
+        # for point predictions the following holds:
+        # se(y, y') <= ae(y, y')^2 since ||x||_2 <= ||x||_1
+        @test se(y_true, mean(y_pred)) <= ae(y_true, mean(y_pred))^2
+        @test evaluate(se, y_true, mean(y_pred)) <= evaluate(ae, y_true, mean(y_pred))^2
+    end
+
+    if y_pred isa Normal
+        # for univariate distributions the following holds:
+        # se(y, y') >= ae(y, y')^2 since E[X]^2 >=E[|X|]^2
+        @testset "obeys properties of distributions" begin
+            @test se(y_true, y_pred) >= ae(y_true, y_pred)^2
+            @test evaluate(se, y_true, y_pred) >= evaluate(ae, y_true, y_pred)^2
+        end
+    end
 end
 
 """expected_absolute_error"""
@@ -171,6 +199,23 @@ function test_metric_properties(metric::typeof(mean_squared_error), args...)
     dist_error_converges_safely(metric, args...)
     error_increases_as_var_increases(metric, args...)
     errors_correctly(metric, args...)
+
+    y_true, y_pred = args
+    @testset "obeys properties of norm" begin
+        # for point predictions the following holds:
+        # se(y, y') <= ae(y, y')^2 since ||x||_2 <= ||x||_1
+        @test mse(y_true, mean.(y_pred)) <= mean(ae.(y_true, mean.(y_pred)).^2)
+        @test evaluate(mse, y_true, mean.(y_pred)) <= mean(evaluate.(ae, y_true, mean.(y_pred)).^2)
+    end
+
+    if first(y_pred) isa Normal
+        # for univariate distributions the following holds:
+        # mean(se(y, y')) >= mean(ae(y, y')^2) since E[X]^2 >=E[|X|]^2
+        @testset "obeys properties of distributions" begin
+            @test mse(y_true, y_pred) >= mean(ae.(y_true, y_pred).^2)
+            @test evaluate(mse, y_true, y_pred) >= mean(evaluate.(mae, y_true, y_pred).^2)
+        end
+    end
 end
 
 """mean_absolute_error"""
@@ -200,17 +245,25 @@ end
 """normalised_root_mean_squared_error"""
 function test_metric_properties(metric::typeof(normalised_root_mean_squared_error), args...)
     is_strictly_positive(metric, args...)
+    is_not_symmetric(metric, args...)
     is_zero_iff_ypred_is_ytrue(metric, args...)
     error_increases_as_mean_increases(metric, args...)
     dist_returns_larger_errors(metric, args...)
     dist_error_converges_safely(metric, args...)
     error_increases_as_var_increases(metric, args...)
     errors_correctly(metric, args...)
+
+    @testset "equals sqrt(mse)" begin
+        # rmse == sqrt(mse)
+        @test rmse(args...) == √mse(args...)
+        @test evaluate(rmse, args...) == √evaluate(mse, args...)
+    end
 end
 
 """standardized_root_mean_squared_error"""
 function test_metric_properties(metric::typeof(standardized_mean_squared_error), args...)
     is_strictly_positive(metric, args...)
+    is_not_symmetric(metric, args...)
     is_zero_iff_ypred_is_ytrue(metric, args...)
     error_increases_as_mean_increases(metric, args...)
     dist_returns_larger_errors(metric, args...)
@@ -222,12 +275,30 @@ end
 """mean_absolute_scaled_error"""
 function test_metric_properties(metric::typeof(mean_absolute_scaled_error), args...)
     is_strictly_positive(metric, args...)
+    is_not_symmetric(metric, args...)
     is_zero_iff_ypred_is_ytrue(metric, args...)
     error_increases_as_mean_increases(metric, args...)
     dist_returns_larger_errors(metric, args...)
     dist_error_converges_safely(metric, args...)
     error_increases_as_var_increases(metric, args...)
     errors_correctly(metric, args...)
+
+    @testset "SpiderFinancial Example" begin
+        # Example taken from: https://tinyurl.com/y35p8j63
+        y_true = [
+            -2.9, -2.83, -0.95, -0.88, 1.21, -1.67, 0.83, -0.27, 1.36, -0.34,
+            0.48, -2.83, -0.95, -0.88, 1.21, -1.67, -2.99, 1.24, 0.64,
+        ]
+        y_pred = [
+            -2.95, -2.7, -1, -0.68, 1.5, -1, 0.9, -0.37, 1.26, -0.54, 0.58,
+            -2.13, -0.75, -0.89, 1.25, -1.65, -3.20, 1.29, 0.6,
+        ]
+
+        expected = 0.09832904884318767
+
+        @test mase(y_true, y_pred) == expected
+        @test evaluate(mase, y_true, y_pred) == expected
+    end
 end
 
 @testset "regression.jl" begin
@@ -408,49 +479,6 @@ end
                     @test evaluate(m, y_true, y_pred) ≈ expected[typeof(m)]["dist"][type]
                 end
             end
-
         end
-
-        # test relationships between metrics
-        @testset "relational properties" begin
-
-            if arrangement == "single_obs"
-
-                @testset "$type" for (type, (y_true, y_pred)) in forecast_pairs
-                    # for point predictions the following holds:
-                    # se(y, y') <= ae(y, y')^2 since ||x||_2 <= ||x||_1
-                    @test se(y_true, mean(y_pred)) <= ae(y_true, mean(y_pred))^2
-                    @test evaluate(se, y_true, mean(y_pred)) <= evaluate(ae, y_true, mean(y_pred))^2
-
-                    # for univariate distributions the following holds:
-                    # se(y, y') >= ae(y, y')^2 since E[X]^2 >=E[|X|]^2
-                    if type == "scalar"
-                        @test se(y_true, y_pred) >= ae(y_true, y_pred)^2
-                        @test evaluate(se, y_true, y_pred) >= evaluate(ae, y_true, y_pred)^2
-                    end
-                end
-
-            elseif arrangement == "collection_obs"
-
-                @testset "$type" for (type, (y_true, y_pred)) in forecast_pairs
-                    # for point predictions the following holds:
-                    # se(y, y') <= ae(y, y')^2 since ||x||_2 <= ||x||_1
-                    @test mse(y_true, mean.(y_pred)) <= mean(ae.(y_true, mean.(y_pred)).^2)
-                    @test evaluate(mse, y_true, mean.(y_pred)) <= mean(evaluate.(ae, y_true, mean.(y_pred)).^2)
-
-                    # for univariate distributions the following holds:
-                    # mean(se(y, y')) >= mean(ae(y, y')^2) since E[X]^2 >=E[|X|]^2
-                    if type == "scalar"
-                        @test mse(y_true, y_pred) >= mean(ae.(y_true, y_pred).^2)
-                        @test evaluate(mse, y_true, y_pred) >= mean(evaluate.(mae, y_true, y_pred).^2)
-                    end
-
-                    # rmse == sqrt(mse)
-                    @test rmse(y_true, y_pred) == √mse(y_true, y_pred)
-                    @test evaluate(rmse, y_true, y_pred) == √evaluate(mse, y_true, y_pred)
-                end
-            end
-        end  # relational properties
-
     end  # arrangement
 end  # regression.jl
