@@ -1,947 +1,456 @@
-@testset "regression.jl" begin
-    @testset "squared_error" begin
-        @testset "scalar point" begin
-            y_true = 1
-            y_pred = 1
-            @test expected_squared_error(y_true, y_pred) == 0
-            @test evaluate(expected_squared_error, y_true, y_pred) == 0
-
-            y_true = 4
-            @test expected_squared_error(y_true, y_pred) == 9
-            @test evaluate(expected_squared_error, y_true, y_pred) == 9
-
-            y_true = rand(Int64)
-            y_pred = rand(Int64)
-            @test expected_squared_error(y_true, y_pred) == expected_squared_error(y_pred, y_true)
-        end
-
-        @testset "multivariate point" begin
-            y_true = [1, 2, 3]
-            y_pred = [1, 2, 3]
-            @test expected_squared_error(y_true, y_pred) == 0
-            @test evaluate(expected_squared_error, y_true, y_pred) == 0
-
-            y_true = [2, 2, 2, 2]
-            y_pred = [1, 2, 3, 4]
-            @test expected_squared_error(y_true, y_pred) == 6
-            @test evaluate(expected_squared_error, y_true, y_pred) == 6
-
-            y_true = rand(Int64, 7)
-            y_pred = rand(Int64, 7)
-            @test expected_squared_error(y_true, y_pred) == expected_squared_error(y_pred, y_true)
-        end
-
-        @testset "matrixvariate point" begin
-            y_true = [
-                1  2  3  4
-                1  2  3  4
-                1  2  3  4
-            ]
-            @test expected_squared_error(y_true, y_true) == 0
-            @test evaluate(expected_squared_error, y_true, y_true) == 0
-
-            y_pred = fill(2, 3, 4)
-            @test expected_squared_error(y_true, y_pred) == 18
-            @test evaluate(expected_squared_error, y_true, y_pred) == 18
-        end
-
-        @testset "erroring" begin
-            y_true = 1
-            y_pred = [1, 2, 3]
-            @test_throws DimensionMismatch expected_squared_error(y_true, y_pred)
-
-            y_true = [2, 2]
-            y_pred = [1, 2, 3, 4]
-            @test_throws DimensionMismatch expected_squared_error(y_true, y_pred)
-            @test_throws DimensionMismatch evaluate(expected_squared_error, y_true, y_pred) == 0
-
-            y_true = fill(1, 3, 4)
-            y_pred = fill(1, 4, 4)
-            @test_throws DimensionMismatch expected_squared_error(y_true, y_pred)
-            @test_throws DimensionMismatch evaluate(expected_squared_error, y_true, y_pred) == 0
-        end
-    end
-
-    @testset "mean_squared_error" begin
-        @testset "scalar point" begin
-            y_true = [1, 2, 3]
-            @test mean_squared_error(y_true, y_true) == 0
-            @test evaluate(mean_squared_error, y_true, y_true) == 0
-
-            y_true = [2, 2, 2, 2]
-            y_pred = [1, 2, 3, 4]
-            @test mean_squared_error(y_true, y_pred) == 1.5
-            @test evaluate(mean_squared_error, y_true, y_pred) == 1.5
-
-            y_true = rand(Int64, 7)
-            y_pred = rand(Int64, 7)
-            @test mean_squared_error(y_true, y_pred) == mean_squared_error(y_pred, y_true)
-        end
-
-        @testset "multivariate point" begin
-            y_true = [
-                [1,  2,  3,  4],
-                [1,  2,  3,  4],
-                [1,  2,  3,  4],
-            ]
-            @test mean_squared_error(y_true, y_true) == 0
-
-            y_pred = fill(fill(2, 4), 3)
-            @test mean_squared_error(y_true, y_pred) == 6
-            @test evaluate(mean_squared_error, y_true, y_pred) == 6
-
-            y_true_m = [1 2 3 4; 1 2 3 4; 1 2 3 4]
-            y_pred_m = fill(2, (3,4))
-            @test evaluate(mean_squared_error, y_true_m, y_pred_m) == 6
-            @test evaluate(mean_squared_error, y_true_m, y_pred_m; obsdim=1) == 6
-            @test evaluate(mean_squared_error, y_true_m', y_pred_m'; obsdim=2) == 6
-
-            y_true_nda = NamedDimsArray{(:vars, :obs)}(y_true_m')
-            y_pred_nda = NamedDimsArray{(:vars, :obs)}(y_pred_m')
-            @test evaluate(mean_squared_error, y_true_nda, y_pred_nda) == 6
-            @test evaluate(mean_squared_error, y_true_nda', y_pred_nda') == 6
-            @test evaluate(mean_squared_error, y_true_nda', y_pred_nda) == 6
-            @test evaluate(mean_squared_error, y_true_nda, y_pred_nda') == 6
-
-            y_true_nda2 = NamedDimsArray{(:vars, :points)}(y_true_m')
-            y_pred_nda2 = NamedDimsArray{(:vars, :points)}(y_pred_m')
-            @test evaluate(mean_squared_error, y_true_nda2, y_pred_nda2; obsdim=:points) == 6
-        end
-
-        @testset "matrixvariate point" begin
-            y_true = [
-                [1  2;  3  4],
-                [1  2;  3  4],
-                [1  2;  3  4],
-            ]
-            y_pred = fill(fill(2, 2, 2), 3)
-            @test mean_squared_error(y_true, y_pred) == 6
-            @test evaluate(mean_squared_error, y_true, y_pred) == 6
-
-            y_true_m = cat(y_true...; dims=3)
-            y_pred_m = fill(2, (2, 2, 3))
-            @test evaluate(mean_squared_error, y_true_m, y_pred_m; obsdim=3) == 6
-
-        end
-
-        @testset "univariate distribution" begin
-            # multiple observations
-            y_true = [2, 2, 2, 2]
-            y_pred = [1, 2, 3, 4]
-            dist_pred = Normal.(y_pred)
-            @test mean_squared_error(y_true, dist_pred) == 2.5
-            @test evaluate(mean_squared_error, y_true, dist_pred) == 2.5
-
-            # symmetric
-            @test mean_squared_error(y_true, dist_pred) == mean_squared_error(dist_pred, y_true)
-        end
-
-        @testset "multivariate distribution" begin
-            # multiple observations
-            y_true = fill(fill(1, 3), 3)
-            y_pred = [
-                [1, 2, 3],
-                [4, 5, 6],
-                [7, 8, 9],
-            ]
-            dist_pred = MvNormal.(y_pred, 1)
-            @test mean_squared_error(y_true, dist_pred) == 71.0
-            @test evaluate(mean_squared_error, y_true, dist_pred) == 71.0
-
-            # symmetric
-            @test mean_squared_error(y_true, dist_pred) == mean_squared_error(dist_pred, y_true)
-        end
-
-        @testset "matrixvariate distribution" begin
-            # multiple observations
-            y_true = [
-                [1 1; 1 1],
-                [2 2; 2 2],
-                [3 3; 3 3],
-            ]
-            U = [1 2; 2 4.5]
-            y_pred = fill(fill(2, 2, 2), 3)
-            dist_pred = MatrixNormal.(y_pred, Ref(U), Ref(U))
-            @test mean_squared_error(y_true, dist_pred) == 32.916666666666664
-            @test evaluate(mean_squared_error, y_true, dist_pred) == 32.916666666666664
-
-            # symmetric
-            @test mean_squared_error(y_true, dist_pred) == mean_squared_error(dist_pred, y_true)
-        end
-
-        @testset "erroring" begin
-            y_true = [2, 2]
-            y_pred = [1, 2, 3, 4]
-            @test_throws DimensionMismatch mean_squared_error(y_true, y_pred)
-
-            y_true = [2, 2]
-            dist_pred = MvNormal([1, 2, 3, 4], 1)
-            @test_throws DimensionMismatch mean_squared_error(y_true, dist_pred)
-        end
-    end
-
-    @testset "root_mean_squared_error" begin
-        @testset "scalar point" begin
-            y_true = [1, 2, 3]
-            @test root_mean_squared_error(y_true, y_true) == 0
-
-            y_true = [5, 6, 7, 8]
-            y_pred = [1, 2, 3, 4]
-            @test root_mean_squared_error(y_true, y_pred) == 4
-            @test evaluate(root_mean_squared_error, y_true, y_pred) == 4
-
-            y_true = rand(1:100, 7)
-            y_pred = rand(1:100, 7)
-            @test root_mean_squared_error(y_true, y_pred) == root_mean_squared_error(y_pred, y_true)
-        end
-
-        @testset "multivariate point" begin
-            y_true = [
-                [1,  2,  4,  4],
-                [1,  2,  4,  4],
-                [1,  2,  4,  4],
-            ]
-            @test root_mean_squared_error(y_true, y_true) == 0
-
-            y_pred = fill(fill(2, 4), 3)
-            @test root_mean_squared_error(y_true, y_pred) == 3
-            @test evaluate(root_mean_squared_error, y_true, y_pred) == 3
-        end
-
-        @testset "matrixvariate point" begin
-            y_true = [
-                [1  2;  4  4],
-                [1  2;  4  4],
-                [1  2;  4  4],
-            ]
-            y_pred = fill(fill(2, 2, 2), 3)
-            @test root_mean_squared_error(y_true, y_pred) == 3
-            @test evaluate(root_mean_squared_error, y_true, y_pred) == 3
-        end
-
-        @testset "univariate distribution" begin
-            y_true = [5, 6, 7, 8]
-            y_pred = [1, 2, 3, 4]
-            dist_pred = Normal.(y_pred, Ref(1))
-            @test root_mean_squared_error(y_true, dist_pred) == sqrt(17)
-            @test evaluate(root_mean_squared_error, y_true, dist_pred) == sqrt(17)
-
-            # symmetric
-            @test root_mean_squared_error(y_true, dist_pred) ==
-                root_mean_squared_error(dist_pred, y_true)
-        end
-
-        @testset "multivariate distribution" begin
-            # multiple observations
-            y_true = [
-                [1,  2,  4,  4],
-                [1,  2,  4,  4],
-                [1,  2,  4,  4],
-            ]
-            y_pred = fill(fill(2, 4), 3)
-            dist_pred = MvNormal.(y_pred, Ref(2))
-            @test root_mean_squared_error(y_true, dist_pred) == 5.0
-            @test evaluate(root_mean_squared_error, y_true, dist_pred) == 5.0
-
-            # symmetric
-            @test root_mean_squared_error(y_true, dist_pred) == root_mean_squared_error(dist_pred, y_true)
-        end
-
-        @testset "matrixvariate distribution" begin
-            # multiple observations
-            y_true = [
-                [1  2;  4  4],
-                [1  2;  1  1],
-                [2  1;  4  2],
-            ]
-            U = [1 2; 2 4.5]
-            y_pred = fill(fill(2, 2, 2), 3)
-            dist_pred = MatrixNormal.(y_pred, Ref(U), Ref(U))
-            @test root_mean_squared_error(y_true, dist_pred) == 5.993051532121734
-            @test evaluate(root_mean_squared_error, y_true, dist_pred) == 5.993051532121734
-
-            # symmetric
-            @test root_mean_squared_error(y_true, dist_pred) == root_mean_squared_error(dist_pred, y_true)
-        end
-
-        @testset "erroring" begin
-            y_true = [2, 2]
-            y_pred = [1, 2, 3, 4]
-            @test_throws DimensionMismatch root_mean_squared_error(y_true, y_pred)
-
-            y_true = [2, 2]
-            dist_pred = MvNormal([1, 2, 3, 4], 1)
-            @test_throws DimensionMismatch root_mean_squared_error(y_true, dist_pred)
-        end
-    end
-
-    @testset "normalised_root_mean_squared_error" begin
-        @testset "min and max of `y_true`" begin
-            y_true = [1, 2, 3]
-            @test normalised_root_mean_squared_error(y_true, y_true) == 0
-            @test evaluate(normalised_root_mean_squared_error, y_true, y_true) == 0
-
-            y_true = [5, 6, 7, 8, 9, 10, 11, 12, 13]
-            y_pred = [1, 2, 3, 4, 5,  6,  7,  8,  9]
-            @test normalised_root_mean_squared_error(y_true, y_pred) == 4/8
-            @test evaluate(normalised_root_mean_squared_error, y_true, y_pred) == 4/8
-        end
-
-        @testset "using quantile" begin
-            y_true = [5, 6, 7, 8, 9, 10, 11, 12, 13]
-            y_pred = [1, 2, 3, 4, 5,  6,  7,  8,  9]
-            α = .25
-            @test normalised_root_mean_squared_error(y_true, y_pred, α) == 4/4
-            @test evaluate(normalised_root_mean_squared_error, y_true, y_pred, α) == 4/4
-
-            y_true = [5, 6, 7, 8, 9, 10, 11, 12, 13]
-            dist_pred  = Normal.(y_pred)
-        end
-
-        @testset "multivariate point" begin
-            y_true = [
-                [1,  2,  4,  4],
-                [1,  2,  4,  4],
-                [1,  2,  4,  4],
-            ]
-            @test normalised_root_mean_squared_error(y_true, y_true) == 0
-            @test evaluate(normalised_root_mean_squared_error, y_true, y_true) == 0
-
-            y_pred = fill(fill(2, 4), 3)
-            @test normalised_root_mean_squared_error(y_true, y_pred) == 1
-            @test evaluate(normalised_root_mean_squared_error, y_true, y_pred) == 1
-
-            y_true = [
-                [1,  2,  4,  4],
-                [2,  3,  5,  5],
-                [3,  4,  6,  6],
-            ]
-            y_pred = [
-                [2,  2,  2,  2],
-                [3,  3,  3,  3],
-                [4,  4,  4,  4],
-            ]
-            @test normalised_root_mean_squared_error(y_true, y_pred) == 0.6
-            @test evaluate(normalised_root_mean_squared_error, y_true, y_pred) == 0.6
-
-            α = 0.5
-            @test normalised_root_mean_squared_error(y_true, y_pred, α) == 0.6
-            @test evaluate(normalised_root_mean_squared_error, y_true, y_pred, α) == 0.6
-
-            α = 0.25
-            @test normalised_root_mean_squared_error(y_true, y_pred, α) == 4/3
-            @test evaluate(normalised_root_mean_squared_error, y_true, y_pred, α) == 4/3
-        end
-
-        @testset "matrixvariate point" begin
-            y_true = [
-                [1  2;  4  4],
-                [1  2;  4  4],
-                [1  2;  4  4],
-            ]
-            y_pred = fill(fill(2, 2, 2), 3)
-            @test normalised_root_mean_squared_error(y_true, y_pred) == 1
-            @test evaluate(normalised_root_mean_squared_error, y_true, y_pred) == 1
-
-            α = 0.5
-            @test normalised_root_mean_squared_error(y_true, y_pred, α) == 1
-            @test evaluate(normalised_root_mean_squared_error, y_true, y_pred, α) == 1
-
-            α = 0.25
-            @test normalised_root_mean_squared_error(y_true, y_pred, α) == 4/3
-            @test evaluate(normalised_root_mean_squared_error, y_true, y_pred, α) == 4/3
-        end
-
-        @testset "univariate distribution" begin
-            y_true = [5, 6, 7, 8, 9, 10, 11, 12, 13]
-            y_pred = [1, 2, 3, 4, 5,  6,  7,  8,  9]
-            dist_pred = Normal.(y_pred)
-            @test normalised_root_mean_squared_error(y_true, dist_pred) == 0.5153882032022076
-            @test evaluate(normalised_root_mean_squared_error, y_true, dist_pred) == 0.5153882032022076
-
-            α = 0.5
-            @test normalised_root_mean_squared_error(y_true, dist_pred, α) == 0.5153882032022076
-            @test evaluate(normalised_root_mean_squared_error, y_true, dist_pred, α) == 0.5153882032022076
-        end
-
-        @testset "multivariate distribution" begin
-            y_true = [
-                [1,  2,  4,  4],
-                [2,  3,  5,  5],
-                [3,  4,  6,  6],
-            ]
-            y_pred = [
-                [2,  2,  2,  2],
-                [3,  3,  3,  3],
-                [4,  4,  4,  4],
-            ]
-            dist_pred = MvNormal.(y_pred, Ref(2))
-            @test normalised_root_mean_squared_error(y_true, dist_pred) == 1.0
-            @test evaluate(normalised_root_mean_squared_error, y_true, dist_pred) == 1.0
-
-            α = 0.5
-            @test normalised_root_mean_squared_error(y_true, dist_pred, α) == 1.0
-            @test evaluate(normalised_root_mean_squared_error, y_true, dist_pred, α) == 1.0
-
-            α = 0.25
-            @test normalised_root_mean_squared_error(y_true, dist_pred, α) == 2.2222222222222223
-            @test evaluate(normalised_root_mean_squared_error, y_true, dist_pred, α) == 2.2222222222222223
-        end
-
-        @testset "matrixvariate distribution" begin
-            y_true = [
-                [1  2;  4  4],
-                [1  2;  4  4],
-                [1  2;  4  4],
-            ]
-            y_pred = fill(fill(2, 2, 2), 3)
-
-            U = [1 2; 2 4.5]
-            dist_pred = MatrixNormal.(y_pred, Ref(U), Ref(U))
-            @test normalised_root_mean_squared_error(y_true, dist_pred) == 2.088327347690278
-            @test evaluate(normalised_root_mean_squared_error, y_true, dist_pred) == 2.088327347690278
-
-            α = 0.5
-            @test normalised_root_mean_squared_error(y_true, dist_pred, α) == 2.088327347690278
-            @test evaluate(normalised_root_mean_squared_error, y_true, dist_pred, α) == 2.088327347690278
-
-            α = 0.25
-            @test normalised_root_mean_squared_error(y_true, dist_pred, α) == 2.784436463587037
-            @test evaluate(normalised_root_mean_squared_error, y_true, dist_pred, α) == 2.784436463587037
-        end
-
-        @testset "erroring" begin
-            y_true = [2, 2]
-            y_pred = [1, 2, 3, 4]
-            @test_throws DimensionMismatch normalised_root_mean_squared_error(y_true, y_pred)
-            α = .25
-            @test_throws(
-                DimensionMismatch, normalised_root_mean_squared_error(y_true, y_pred, α)
-            )
-            y_true = [2, 2]
-            dist_pred = MvNormal(y_pred, 2)
-            @test_throws DimensionMismatch normalised_root_mean_squared_error(y_true, dist_pred)
-        end
-    end
-
-    @testset "standardized_mean_squared_error" begin
-        @testset "scalar point" begin
-            y_true = [1, 2, 3]
-            @test standardized_mean_squared_error(y_true, y_true) == 0
-            @test evaluate(standardized_mean_squared_error, y_true, y_true) == 0
-
-            y_true = [5, 6, 7, 8, 9, 10, 11, 12]
-            y_pred = [1, 2, 3, 4, 5,  6,  7,  8]
-            @test standardized_mean_squared_error(y_true, y_pred) == 16/6
-            @test evaluate(standardized_mean_squared_error, y_true, y_pred) == 16/6
-        end
-
-        @testset "multivariate point" begin
-            y_true = [
-                [3, -2,  0,  6],
-                [2,  3,  5,  5],
-                [0,  1,  3,  3],
-            ]
-            @test standardized_mean_squared_error(y_true, y_true) == 0
-            @test evaluate(standardized_mean_squared_error, y_true, y_true) == 0
-
-            y_pred = fill(fill(2, 4), 3)
-            @test standardized_mean_squared_error(y_true, y_pred) == 6.099189032370461
-            @test evaluate(standardized_mean_squared_error, y_true, y_pred) == 6.099189032370461
-
-            y_pred = [
-                [2,  2,  2,  2],
-                [3,  3,  3,  3],
-                [4,  4,  4,  4],
-            ]
-            @test standardized_mean_squared_error(y_true, y_pred) == 7.067314275603867
-            @test evaluate(standardized_mean_squared_error, y_true, y_pred) == 7.067314275603867
-        end
-
-        @testset "matrixvariate point" begin
-            y_true = [
-                [1  2;  5  5],
-                [1  2;  4  4],
-                [1  2;  3  3],
-            ]
-            y_pred = fill(fill(2, 2, 2), 3)
-            @test evaluate(standardized_mean_squared_error, y_true, y_pred) == 6.019086780960899
-        end
-
-        @testset "univariate distribution" begin
-            y_true = [5, 6, 7, 8, 9, 10, 11, 12]
-            y_pred = [1, 2, 3, 4, 5,  6,  7,  8]
-
-            dist_pred = Normal.(y_pred)
-            @test standardized_mean_squared_error(y_true, dist_pred) == 2.8333333333333335
-            @test evaluate(standardized_mean_squared_error, y_true, dist_pred) == 2.8333333333333335
-        end
-
-        @testset "multivariate distribution" begin
-            y_true = [
-                [3, -2,  0,  6],
-                [2,  3,  5,  5],
-                [0,  1,  3,  3],
-            ]
-            y_pred = [
-                [2,  2,  2,  2],
-                [3,  3,  3,  3],
-                [4,  4,  4,  4],
-            ]
-            dist_pred = MvNormal.(y_pred, Ref(2))
-            @test standardized_mean_squared_error(y_true, dist_pred) == 11.71431544312422
-            @test evaluate(standardized_mean_squared_error, y_true, dist_pred) == 11.71431544312422
-        end
-
-        @testset "matrixvariate distribution" begin
-            y_true = [
-                [1  2;  5  5],
-                [1  2;  4  4],
-                [1  2;  3  3],
-            ]
-            y_pred = fill(fill(2, 2, 2), 3)
-
-            U = [1 2; 2 4.5]
-            dist_pred = MatrixNormal.(y_pred, Ref(U), Ref(U))
-            @test standardized_mean_squared_error(y_true, dist_pred) == 23.63947792199966
-            @test evaluate(standardized_mean_squared_error, y_true, dist_pred) == 23.63947792199966
-        end
-
-        @testset "erroring" begin
-            y_true = [2, 2]
-            y_pred = [1, 2, 3, 4]
-            @test_throws DimensionMismatch standardized_mean_squared_error(y_true, y_pred)
-
-            dist_pred = MvNormal(y_pred, 2)
-            @test_throws DimensionMismatch standardized_mean_squared_error(y_true, dist_pred)
-        end
-    end
-
-    @testset "absolute_error" begin
-        @testset "scalar point" begin
-            y_true = 1
-            y_pred = 5
-            @test expected_absolute_error(y_true, y_true) == 0
-            @test evaluate(expected_absolute_error, y_true, y_true) == 0
-            @test expected_absolute_error(y_true, y_pred) == 4
-            @test evaluate(expected_absolute_error, y_true, y_pred) == 4
-            @test expected_absolute_error([y_true], [y_pred]) == 4
-            @test evaluate(expected_absolute_error, [y_true], [y_pred]) == 4
-
-            y_true = rand(Int64)
-            y_pred = rand(Int64)
-            @test expected_absolute_error(y_true, y_pred) == expected_absolute_error(y_pred, y_true)
-            @test expected_absolute_error([y_true], [y_pred]) == expected_absolute_error(y_pred, y_true)
-        end
-
-        @testset "multivariate point" begin
-            y_true = [1, 5, 2, 5, 9]
-            y_pred = [5, 3, 2, 1, 1]
-            @test expected_absolute_error(y_true, y_pred) == 18
-            @test evaluate(expected_absolute_error, y_true, y_pred) == 18
-
-            y_true = rand(Int64, 7)
-            y_pred = rand(Int64, 7)
-            @test expected_absolute_error(y_true, y_pred) == expected_absolute_error(y_pred, y_true)
-        end
-
-        @testset "matrixvariate point" begin
-            y_true = [1  2;  5  5]
-            @test expected_absolute_error(y_true, y_true) == 0
-            @test evaluate(expected_absolute_error, y_true, y_true) == 0
-
-            y_pred = fill(2, 2, 2)
-            @test expected_absolute_error(y_true, y_pred) == 7
-            @test evaluate(expected_absolute_error, y_true, y_pred) == 7
-        end
-
-        @testset "univariate distribution" begin
-            y_true = 1
-            y_pred = 5
-            dist_pred = Normal(y_pred)
-            @test expected_absolute_error(y_true, dist_pred) ≈ 4.000014290516877
-            @test evaluate(expected_absolute_error, y_true, dist_pred) ≈ 4.000014290516877
-
-            # test AE(X) = σ√(2/π) when mean(dist_pred) == y_true
-            dist_pred = Normal(y_true, 2)
-            @test expected_absolute_error(y_true, dist_pred) == sqrt(2 * var(dist_pred) / π)
-            @test evaluate(expected_absolute_error, y_true, dist_pred) == sqrt(2 * var(dist_pred) / π)
-        end
-
-        @testset "multivariate distribution" begin
-            y_true = [1, 5, 2, 5, 9]
-            y_pred = [5, 3, 2, 1, 1]
-            dist_pred = MvNormal(y_pred, 1)
-            @test expected_absolute_error(y_true, dist_pred) ≈ 18.814894547070256
-            @test evaluate(expected_absolute_error, y_true, dist_pred) ≈ 18.814894547070256
-
-            # test AE(X) = σ√(2/π) when mean(dist_pred) == y_true
-            dist_pred = MvNormal(y_true, 2)
-            @test expected_absolute_error(y_true, dist_pred) == sqrt(2 / π) * sum(sqrt, var(dist_pred))
-            @test evaluate(expected_absolute_error, y_true, dist_pred) == sqrt(2 / π) * sum(sqrt, var(dist_pred))
-        end
-
-        @testset "matrixvariate distribution" begin
-            y_true = [1  2;  5  5]
-            y_pred = fill(2, 2, 2)
-            U = [1 2; 2 4.5]
-            dist_pred = MatrixNormal(y_pred, U, U)
-            @test expected_absolute_error(y_true, dist_pred) ≈ 10.370040141218315
-            @test evaluate(expected_absolute_error, y_true, dist_pred) ≈ 10.370040141218315
-
-            # test AE(X) = σ√(2/π) when mean(dist_pred) == y_true
-            dist_pred = MatrixNormal(y_true, U, U)
-            @test expected_absolute_error(y_true, dist_pred) ≈ sqrt(2 / π) * sum(sqrt, var(vec(dist_pred)))
-            @test evaluate(expected_absolute_error, y_true, dist_pred) ≈ sqrt(2 / π) * sum(sqrt, var(vec(dist_pred)))
-        end
-
-        @testset "erroring" begin
-            y_true = [2, 2]
-            y_pred = [1, 2, 3, 4]
-            @test_throws DimensionMismatch expected_absolute_error(y_true, y_pred)
-        end
-    end
-
-    @testset "mean_absolute_error" begin
-        @testset "scalar point" begin
-            y_true = [1, 5, 2, 5, 9]
-            @test mean_absolute_error(y_true, y_true) == 0
-            @test evaluate(mean_absolute_error, y_true, y_true) ==0
-
-            y_pred = [5, 3, 2, 1, 1]
-            @test mean_absolute_error(y_true, y_pred) == 3.6
-            @test evaluate(mean_absolute_error, y_true, y_pred) == 3.6
-
-            y_true = rand(Int64, 7)
-            y_pred = rand(Int64, 7)
-            @test mean_absolute_error(y_true, y_pred) == mean_absolute_error(y_pred, y_true)
-        end
-
-        @testset "multivariate point" begin
-            y_true = [
-                [1,  2,  3,  4],
-                [1,  2,  3,  4],
-                [1,  2,  3,  4],
-            ]
-            @test mean_absolute_error(y_true, y_true) == 0
-            @test evaluate(mean_absolute_error, y_true, y_true) == 0
-
-            y_pred = fill(fill(2, 4), 3)
-            @test mean_absolute_error(y_true, y_pred) == 4
-            @test evaluate(mean_absolute_error, y_true, y_pred) == 4
-        end
-
-        @testset "matrixvariate point" begin
-            y_true = [
-                [1  2;  3  4],
-                [1  2;  3  4],
-                [1  2;  3  4],
-            ]
-            @test mean_absolute_error(y_true, y_true) == 0
-            @test evaluate(mean_absolute_error, y_true, y_true) == 0
-
-            y_pred = fill(fill(2, 2, 2), 3)
-            @test mean_absolute_error(y_true, y_pred) == 4
-            @test evaluate(mean_absolute_error, y_true, y_pred) == 4
-        end
-
-        @testset "univariate distribution" begin
-            y_true = [1, 5, 2, 5, 9]
-            y_pred = [5, 3, 2, 1, 1]
-            dist_pred = Normal.(y_pred)
-            @test mean_absolute_error(y_true, dist_pred) ≈ 3.7629789094140507
-            @test evaluate(mean_absolute_error, y_true, dist_pred) ≈ 3.7629789094140507
-        end
-
-        @testset "multivariate distribution" begin
-            y_true = [
-                [1,  2,  3,  4],
-                [1,  2,  3,  4],
-                [1,  2,  3,  4],
-            ]
-            y_pred = fill(fill(2, 4), 3)
-            dist_pred = MvNormal.(y_pred, Ref(2))
-            @test mean_absolute_error(y_true, dist_pred) ≈ 7.511403463166924
-            @test evaluate(mean_absolute_error, y_true, dist_pred) ≈ 7.511403463166924
-        end
-
-        @testset "matrixvariate distribution" begin
-            y_true = [
-                [1  2;  3  4],
-                [1  2;  3  4],
-                [1  2;  3  4],
-            ]
-
-            y_pred = fill(fill(2, 2, 2), 3)
-            U = [1 2; 2 4.5]
-            dist_pred = MatrixNormal.(y_pred, Ref(U ), Ref(U))
-            @test mean_absolute_error(y_true, dist_pred) ≈ 8.675796763888826
-            @test evaluate(mean_absolute_error, y_true, dist_pred) ≈ 8.675796763888826
-        end
-
-        @testset "erroring" begin
-            y_true = [2, 2]
-            y_pred = [1, 2, 3, 4]
-            @test_throws DimensionMismatch mean_absolute_error(y_true, y_pred)
-        end
-    end
-
-    @testset "mean absolute scaled error" begin
-        @testset "List Input" begin
-            y_true = [10, 20, 30, 40]
-            y_pred = [15, 25, 35, 45]
-            expected = 0.5
-
-            @test mase(y_true, y_pred) == expected
-        end
-
-        @testset "Matrix Input" begin
-            y_true = [10 30; 20 40]
-            y_pred = [15 35; 25 45]
-            expected = 0.5
-
-            @test mase(y_true, y_pred) == expected
-        end
-
-        @testset "SpiderFinancial Example" begin
-            #=
-            Example taken from: https://tinyurl.com/y35p8j63
-            =#
-            y_true = [-2.9, -2.83, -0.95, -0.88, 1.21, -1.67, 0.83, -0.27, 1.36, -0.34, 0.48, -2.83,
-                -0.95, -0.88, 1.21, -1.67, -2.99, 1.24, 0.64]
-            y_pred = [-2.95, -2.7, -1, -0.68, 1.5, -1, 0.9, -0.37, 1.26, -0.54, 0.58, -2.13, -0.75,
-                -0.89, 1.25, -1.65, -3.20, 1.29, 0.6]
-
-            expected = 0.09832904884318767
-
-            @test mase(y_true, y_pred) == expected
-        end
-
-        @testset "DimensionMismatch - Vector different lengths" begin
-            y_true = []
-            y_pred = [1]
-
-            @test_throws DimensionMismatch mase(y_true, y_pred)
-        end
-
-        @testset "DimensionMismatch - Matrices different lengths" begin
-            y_true = [1 ; 2]
-            y_pred = [1]
-
-            @test_throws DimensionMismatch mase(y_true, y_pred)
-        end
-
-        @testset "DimensionMisMatch - One element inputs" begin
-            y_true = y_pred = [1]
-            @test_throws DimensionMismatch mase(y_true, y_pred)
-        end
-
-        @testset "DimensionMismatch - List, Matrix Input" begin
-            y_true = [10, 20, 30, 40]
-            y_pred = [15 35; 25 45]
-
-            @test_throws DimensionMismatch mase(y_true, y_pred)
-        end
-
-        @testset "Non-Symmetrical" begin
-            y_true = [1, 2, 3, 4, 5]
-            y_pred = [15, 25, 35, 45, 55]
-
-            @test mase(y_true, y_pred) != mase(y_pred, y_true)
-        end
-    end
-
-    @testset "marginal_loglikelihood" begin
-        @testset "scalar point" begin
-            dist = Normal(0.1, 2)
-            y_pred = [0.1, 0.2, 0.3]
-            y_mean = [0.1, 0.1, 0.1]
-
-            @test marginal_loglikelihood(dist, y_pred) < 0.0 # logprobs always negative
-
-            # y_pred is less likely than y_mean
-            @test marginal_loglikelihood(dist, y_pred) < marginal_loglikelihood(dist, y_mean)
-
-            # test arrangements
-            expected = marginal_loglikelihood(dist, y_pred)
-            @test expected == evaluate(marginal_loglikelihood, dist, y_pred)
-            @test expected == evaluate(marginal_loglikelihood, dist, Tuple(y_pred))
-        end
-        @testset "vector point" begin
-            dist = MvNormal(3, 1.5)
-            y_pred = [
-                8.  10   9  11
-                10   5   7  12
-                10   7  10  1
-            ]
-            y_mean = zeros(3, 4)
-
-            @test marginal_loglikelihood(dist, y_pred) < 0.0 # logprobs always negative
-            # y_pred is less likely than y_mean
-            @test marginal_loglikelihood(dist, y_pred) < marginal_loglikelihood(dist, y_mean)
-
-            # using the alternative Canonical form should not change results
-            @test marginal_loglikelihood(dist, y_pred) ≈ marginal_loglikelihood(canonform(dist), y_pred)
-
-            # Test observation rearragement
-            expected = marginal_loglikelihood(dist, y_pred)
-            @test expected == evaluate(marginal_loglikelihood, dist, y_pred, obsdim=2)
-            obs_iter = [[8., 10, 10], [10., 5, 7], [9., 7, 10], [11., 12, 1]]
-            @test expected == evaluate(marginal_loglikelihood, dist, obs_iter)
-            @test expected == evaluate(marginal_loglikelihood, dist, y_pred'; obsdim=1)
-            @test expected == evaluate(marginal_loglikelihood, dist, y_pred')
-        end
-    end
-
-    @testset "joint_loglikelihood" begin
-        @testset "scalar point" begin
-            dist = Normal(0.1, 2)
-            y_pred = [.1, .2, .3]
-            y_mean = [0.1, 0.1, 0.1]
-
-            @test joint_loglikelihood(dist, y_pred) < 0.0  # logprobs always negative
-
-            # y_pred is less likely than y_mean
-            @test joint_loglikelihood(dist, y_pred) < joint_loglikelihood(dist, y_mean)
-
-            # For unviariate markingal and joint are the same, it is just the normalized likelyhood.
-            @test joint_loglikelihood(dist, y_pred) ≈ marginal_loglikelihood(dist, y_pred)
-
-            # test arrangements
-            expected = joint_loglikelihood(dist, y_pred)
-            @test expected == evaluate(joint_loglikelihood, dist, y_pred)
-            @test expected == evaluate(joint_loglikelihood, dist, Tuple(y_pred))
-        end
-
-        sqrtcov = rand(3, 3)
-        @testset "vector point" for dist in (MvNormal(3, 1.5), MvNormal(zeros(3), sqrtcov*sqrtcov'))
-            y_pred = [
-                8.  10   9  11
-                10   5   7  12
-                10   7  10  1
-            ]
-            y_mean = zeros(3, 4)
-
-            @test joint_loglikelihood(dist, y_pred) < 0.0  # logprobs always negative
-            # y_pred is less likely than y_mean
-            @test joint_loglikelihood(dist, y_pred) < joint_loglikelihood(dist, y_mean)
-
-            if dist isa ZeroMeanIsoNormal
-                # For IsoNormal joint and marginal are the same, it is just the normalized likelyhood.
-                @test joint_loglikelihood(dist, y_pred) ≈ marginal_loglikelihood(dist, y_pred)
-            else
-                @test joint_loglikelihood(dist, y_pred) != marginal_loglikelihood(dist, y_pred)
-            end
-
-            # using the alternative canonical form should not change the results
-            @test joint_loglikelihood(dist, y_pred) ≈ joint_loglikelihood(canonform(dist), y_pred)
-
-
-            # Test observation rearragement
-            expected = joint_loglikelihood(dist, y_pred)
-            @test expected == evaluate(joint_loglikelihood, dist, y_pred, obsdim=2)
-            obs_iter = [[8., 10, 10], [10., 5, 7], [9., 7, 10], [11., 12, 1]]
-            @test expected == evaluate(joint_loglikelihood, dist, obs_iter)
-            @test expected == evaluate(joint_loglikelihood, dist, y_pred'; obsdim=1)
-            @test expected == evaluate(joint_loglikelihood, dist, y_pred')
-        end
-    end
-
-    @testset "evaluate" begin
-        @testset "squared_error" begin
-            dist = rand()
-            y_pred = rand()
-            @test evaluate(expected_squared_error, dist, y_pred) == expected_squared_error(dist, y_pred)
-        end
-    end
-
-    @testset "Regression Summaries" begin
-        function generate_expected_values(y_true, y_pred)
-            expected = Dict()
-
-            for metric in REGRESSION_METRICS
-                expected[metric] = metric(y_true, y_pred)
-            end
-
-            return expected
-        end
-
-        @testset "Scalar" begin
-            y_true = [1,2,3,4]
-            y_pred = [5,6,7,8]
-
-            expected = generate_expected_values(y_true, y_pred)
-            summary = regression_summary(y_true, y_pred)
-
-            @test !isempty(summary)
-            @test isequal(expected, summary)
-        end
-
-        @testset "Scalar - Indexed Values" begin
-            y_true = [1,2,3,4]
-            y_pred = [5,6,7,8]
-
-            expected = generate_expected_values(y_true, y_pred)
-            summary = regression_summary(y_true, y_pred)
-
-            @test !isempty(summary)
-            @test isequal(expected[mse], summary[mse])
-            @test isequal(expected[rmse], summary[rmse])
-            @test isequal(expected[nrmse], summary[nrmse])
-            @test isequal(expected[smse], summary[smse])
-            @test isequal(expected[mase], summary[mase])
-        end
-
-        @testset "Vector" begin
-            y_true = [[1,2,3], [4,5,6], [7,8,9]]
-            y_pred = [[10, 11, 12], [13, 14, 15], [16, 17, 18]]
-
-            expected = generate_expected_values(y_true, y_pred)
-            summary = regression_summary(y_true, y_pred)
-
-            @test !isempty(summary)
-            @test isequal(expected, summary)
-        end
-
-        @testset "Vector - Indexed Values" begin
-            y_true = [[1,2,3], [4,5,6], [7,8,9]]
-            y_pred = [[10, 11, 12], [13, 14, 15], [16, 17, 18]]
-
-            expected = generate_expected_values(y_true, y_pred)
-            summary = regression_summary(y_true, y_pred)
-
-            @test !isempty(summary)
-            @test isequal(expected[mse], summary[mse])
-            @test isequal(expected[rmse], summary[rmse])
-            @test isequal(expected[nrmse], summary[nrmse])
-            @test isequal(expected[smse], summary[smse])
-            @test isequal(expected[mase], summary[mase])
-        end
-
-        @testset "Matrix" begin
-            y_true = [[1 2; 3 4], [3 4; 5 6], [5 6; 7 8]]
-            y_pred = [[7 8; 9 10], [9 10; 11 12], [11 12; 13 14]]
-
-            expected = generate_expected_values(y_true, y_pred)
-            summary = regression_summary(y_true, y_pred)
-
-            @test !isempty(summary)
-            @test isequal(expected, summary)
-        end
-
-        @testset "Matrix - Indexed Values" begin
-            y_true = [[1 2; 3 4], [3 4; 5 6], [5 6; 7 8]]
-            y_pred = [[7 8; 9 10], [9 10; 11 12], [11 12; 13 14]]
-
-            expected = generate_expected_values(y_true, y_pred)
-            summary = regression_summary(y_true, y_pred)
-
-            @test !isempty(summary)
-            @test isequal(expected[mse], summary[mse])
-            @test isequal(expected[rmse], summary[rmse])
-            @test isequal(expected[nrmse], summary[nrmse])
-            @test isequal(expected[smse], summary[smse])
-            @test isequal(expected[mase], summary[mase])
-        end
+# These tests are arranged such that they test the expected properties of a metrics.
+# Each property gets a function which evaluates the behaviour of the metric and input data.
+# Each metric then gets assigned a test_metric_properties function which contains the list of
+# relevant tests (functions) it should obey.
+# To test a new property, add a function with the appropriate tests and then add a call to
+# that function in the metrics that should obey it.
+
+"""metric is strictly positive"""
+function is_strictly_positive(metric, y_true, y_pred)
+    # get mean value(s) of distribution(s)
+    point_pred = get_mean(metric, y_pred)
+
+    @testset "is strictly positive" begin
+        @test metric(y_true, point_pred) >= 0
+        @test evaluate(metric, y_true, point_pred) >= 0
+        @test metric(y_true, y_pred) >= 0
+        @test evaluate(metric, y_true, y_pred) >= 0
     end
 end
+
+"""metric is symmetric"""
+function is_symmetric(metric, y_true, y_pred)
+    # get mean value(s) of distribution(s)
+    point_pred = get_mean(metric, y_pred)
+
+    @testset "is symmetric" begin
+    # nrmse and smse are not symmetric so skip these
+        @test metric(y_true, point_pred) == metric(point_pred, y_true)
+        @test evaluate(metric, y_true, point_pred) == evaluate(metric, point_pred, y_true)
+        @test metric(y_true, y_pred) == metric(y_pred, y_true)
+        @test evaluate(metric, y_true, y_pred) == evaluate(metric, y_pred, y_true)
+    end
+end
+
+"""metric = 0 iff y_pred == y_true"""
+function is_zero_iff_ypred_is_ytrue(metric, y_true, y_pred)
+    @testset "is zero iff y_pred == y_true" begin
+        @test metric(y_true, y_true) == 0
+        @test evaluate(metric, y_true, y_true) == 0
+    end
+end
+
+"""error increases as mean increases"""
+function error_increases_as_mean_increases(metric, y_true, y_pred)
+    @testset "error increases as mean increases" begin
+        y_pred0 = relocate(y_pred, 2. * y_true)
+        y_pred1 = relocate(y_pred, 3 .* y_true)
+        y_pred2 = relocate(y_pred, 4 .* y_true)
+
+        # distribution errors
+        error_d0 = metric(y_true, y_pred0)
+        error_d1 = metric(y_true, y_pred1)
+        error_d2 = metric(y_true, y_pred2)
+
+        # point errors
+        error_p0 = metric(y_true, get_mean(metric, y_pred0))
+        error_p1 = metric(y_true, get_mean(metric, y_pred1))
+        error_p2 = metric(y_true, get_mean(metric, y_pred2))
+
+        @test error_d2 > error_d1 > error_d0
+        @test error_p2 > error_p1 > error_p0
+    end
+end
+
+"""distributions return larger errors than point predictions"""
+function dist_returns_larger_errors(metric, y_true, y_pred)
+    # get mean value(s) of distribution(s)
+    point_pred = get_mean(metric, y_pred)
+
+    # generate new distribution(s) with mean = y_true
+    y_true_dist = relocate(y_pred, y_true)
+
+    @testset "distributions return larger errors" begin
+        # a distribution about the truth has metric >0
+        # (whereas the true point was 0, tested above)
+        @test metric(y_true, y_true_dist) > 0
+        @test evaluate(metric, y_true, y_true_dist) > 0
+
+        # distributions give larger errors in general
+        @test metric(y_true, y_pred) >= metric(y_true, point_pred)
+        @test evaluate(metric, y_true, y_pred) >= evaluate(metric, y_true, point_pred)
+    end
+end
+
+"""distribution errors converge to point errors correctly"""
+function dist_error_converges_safely(metric, y_true, y_pred)
+    # get mean value(s) of distribution(s)
+    point_pred = get_mean(metric, y_pred)
+
+    # generate new distribution(s) with var = 0
+    y_pred_var0 = rescale(y_pred, 0)
+
+    @testset "distribution error converges when var = 0 " begin
+        @test metric(y_true, y_pred_var0) ≈ metric(y_true, point_pred)
+        @test evaluate(metric, y_true, y_pred_var0) ≈ evaluate(metric, y_true, point_pred)
+    end
+
+    @testset "does not return nan when y_pred = y_true " begin
+        @test !isnan(metric(point_pred, y_pred_var0))
+        @test !isnan(evaluate(metric, point_pred, y_pred_var0))
+    end
+end
+
+"""error increases only if variance increases"""
+function error_increases_as_var_increases(metric, y_true, y_pred)
+    @testset "error increases as variance increase" begin
+        y_pred0 = rescale(y_pred, 1)
+        y_pred1 = rescale(y_pred, 2)
+        y_pred2 = rescale(y_pred, 3)
+
+        # distribution errors
+        error_d0 = metric(y_true, y_pred0)
+        error_d1 = metric(y_true, y_pred1)
+        error_d2 = metric(y_true, y_pred2)
+
+        # point errors
+        error_p0 = metric(y_true, get_mean(metric, y_pred0))
+        error_p1 = metric(y_true, get_mean(metric, y_pred1))
+        error_p2 = metric(y_true, get_mean(metric, y_pred2))
+
+        @test error_d2 > error_d1 > error_d0
+        @test error_p2 == error_p1 == error_p0
+    end
+end
+
+"""erroring behaviour"""
+function errors_correctly(metric, y_true, y_pred)
+    @testset "erroring" begin
+        # errors if trying to compute on 2 distributions
+        @test_throws MethodError metric(y_pred, y_pred)
+        @test_throws MethodError evaluate(metric, y_pred, y_pred)
+
+        # errors on dimension mismatch
+        y_too_long = [y_true; y_true]
+        @test_throws DimensionMismatch metric(y_too_long, y_pred)
+        @test_throws DimensionMismatch evaluate(metric, y_too_long, y_pred)
+    end
+end
+
+"""expected_squared_error"""
+function test_metric_properties(metric::typeof(expected_squared_error), args...)
+    is_strictly_positive(metric, args...)
+    is_symmetric(metric, args...)
+    is_zero_iff_ypred_is_ytrue(metric, args...)
+    error_increases_as_mean_increases(metric, args...)
+    dist_returns_larger_errors(metric, args...)
+    dist_error_converges_safely(metric, args...)
+    error_increases_as_var_increases(metric, args...)
+    errors_correctly(metric, args...)
+end
+
+"""expected_absolute_error"""
+function test_metric_properties(metric::typeof(expected_absolute_error), args...)
+    is_strictly_positive(metric, args...)
+    is_symmetric(metric, args...)
+    is_zero_iff_ypred_is_ytrue(metric, args...)
+    error_increases_as_mean_increases(metric, args...)
+    dist_returns_larger_errors(metric, args...)
+    dist_error_converges_safely(metric, args...)
+    error_increases_as_var_increases(metric, args...)
+    errors_correctly(metric, args...)
+end
+
+"""mean_squared_error"""
+function test_metric_properties(metric::typeof(mean_squared_error), args...)
+    is_strictly_positive(metric, args...)
+    is_symmetric(metric, args...)
+    is_zero_iff_ypred_is_ytrue(metric, args...)
+    error_increases_as_mean_increases(metric, args...)
+    dist_returns_larger_errors(metric, args...)
+    dist_error_converges_safely(metric, args...)
+    error_increases_as_var_increases(metric, args...)
+    errors_correctly(metric, args...)
+end
+
+"""mean_absolute_error"""
+function test_metric_properties(metric::typeof(mean_absolute_error), args...)
+    is_strictly_positive(metric, args...)
+    is_symmetric(metric, args...)
+    is_zero_iff_ypred_is_ytrue(metric, args...)
+    error_increases_as_mean_increases(metric, args...)
+    dist_returns_larger_errors(metric, args...)
+    dist_error_converges_safely(metric, args...)
+    error_increases_as_var_increases(metric, args...)
+    errors_correctly(metric, args...)
+end
+
+"""root_mean_squared_error"""
+function test_metric_properties(metric::typeof(root_mean_squared_error), args...)
+    is_strictly_positive(metric, args...)
+    is_symmetric(metric, args...)
+    is_zero_iff_ypred_is_ytrue(metric, args...)
+    error_increases_as_mean_increases(metric, args...)
+    dist_returns_larger_errors(metric, args...)
+    dist_error_converges_safely(metric, args...)
+    error_increases_as_var_increases(metric, args...)
+    errors_correctly(metric, args...)
+end
+
+"""normalised_root_mean_squared_error"""
+function test_metric_properties(metric::typeof(normalised_root_mean_squared_error), args...)
+    is_strictly_positive(metric, args...)
+    is_zero_iff_ypred_is_ytrue(metric, args...)
+    error_increases_as_mean_increases(metric, args...)
+    dist_returns_larger_errors(metric, args...)
+    dist_error_converges_safely(metric, args...)
+    error_increases_as_var_increases(metric, args...)
+    errors_correctly(metric, args...)
+end
+
+"""standardized_root_mean_squared_error"""
+function test_metric_properties(metric::typeof(standardized_mean_squared_error), args...)
+    is_strictly_positive(metric, args...)
+    is_zero_iff_ypred_is_ytrue(metric, args...)
+    error_increases_as_mean_increases(metric, args...)
+    dist_returns_larger_errors(metric, args...)
+    dist_error_converges_safely(metric, args...)
+    error_increases_as_var_increases(metric, args...)
+    errors_correctly(metric, args...)
+end
+
+"""mean_absolute_scaled_error"""
+function test_metric_properties(metric::typeof(mean_absolute_scaled_error), args...)
+    is_strictly_positive(metric, args...)
+    is_zero_iff_ypred_is_ytrue(metric, args...)
+    error_increases_as_mean_increases(metric, args...)
+    dist_returns_larger_errors(metric, args...)
+    dist_error_converges_safely(metric, args...)
+    error_increases_as_var_increases(metric, args...)
+    errors_correctly(metric, args...)
+end
+
+@testset "regression.jl" begin
+
+    Σ = [2 1 1; 1 2.2 2; 1 2 3]
+    U = [1 2; 2 4.5]
+    V = [1 2 3; 2 5.5 10.2; 3 10.2 24]
+
+    metric_data = Dict(
+        "single_obs" => Dict(
+            "metrics" => (expected_squared_error, expected_absolute_error),
+            "y_true" => Dict("scalar" => 2, "vector" => [2, 3, 4], "matrix" => [1 2 3; 4 5 6]),
+            "y_pred" => Dict(
+                "scalar" => Normal(5, 2.2),
+                "vector" => MvNormal([7, 6, 5], Σ),
+                "matrix" => MatrixNormal([1 3 5; 7 9 11], U, V),
+            ),
+            "expected" => Dict(
+                typeof(expected_squared_error) => Dict(
+                    "dist" => Dict(
+                        "scalar" => 9 + 2.2^2,
+                        "vector" => 35 + (2 + 2.2 + 3),
+                        "matrix" => 55 + 167.75,
+                    ),
+                    "point" => Dict(
+                        "scalar" => 9,
+                        "vector" => 35,
+                        "matrix" => 55,
+                    )
+                ),
+                typeof(expected_absolute_error) => Dict(
+                    "dist" => Dict(
+                        "scalar" => 3.174703901266667,
+                        "vector" => 9.62996118474158,
+                        "matrix" => 24.638584200445532,
+                    ),
+                    "point" => Dict(
+                        "scalar" => 3,
+                        "vector" => 9,
+                        "matrix" => 15,
+                    )
+                ),
+            ),
+        ),
+        "collection_obs" => Dict(
+            "metrics" => (
+                mean_squared_error,
+                root_mean_squared_error,
+                normalised_root_mean_squared_error,
+                standardized_mean_squared_error,
+                mean_absolute_error,
+                mean_absolute_scaled_error,
+            ),
+            "y_true" => Dict(
+                "scalar" => [2, -3, 6],
+                "vector" => [[2, 3, 0], [-9, 6, 4], [10, -2, 11]],
+                "matrix" => [[1 2 3; 4 5 6], [4 -3 2; 1 0 -1], [2 9 0; 6 5 6]],
+            ),
+            "y_pred" => Dict(
+                "scalar" => Normal.([1, 0, -2], Ref(2.2)),
+                "vector" => MvNormal.([[7, 6, 5], [-4, 0, -1], [7, 8, 5]], Ref(Σ)),
+                "matrix" => MatrixNormal.([[1 3 5; 7 9 11], [0 0 2; 1 9 11], [-2 8 5; 7 5 3]], Ref(U), Ref(V)),
+            ),
+            "expected" => Dict(
+                typeof(mean_squared_error) => Dict(
+                    "dist" => Dict(
+                        "scalar" => 74 / 3 + 2.2^2,
+                        "vector" => 290 / 3 + (2 + 2.2 + 3),
+                        "matrix" => 357 / 3 + 167.75,
+                    ),
+                    "point" => Dict(
+                        "scalar" => 74 / 3,
+                        "vector" => 290 / 3,
+                        "matrix" => 357 / 3,
+                    )
+                ),
+                typeof(root_mean_squared_error) => Dict(
+                    "dist" => Dict(
+                        "scalar" => sqrt(74 / 3 + 2.2^2),
+                        "vector" => sqrt(290 / 3 + (2 + 2.2 + 3)),
+                        "matrix" => sqrt(357 / 3 + 167.75),
+                    ),
+                    "point" => Dict(
+                        "scalar" => sqrt(74 / 3),
+                        "vector" => sqrt(290 / 3),
+                        "matrix" => sqrt(357 / 3),
+                    )
+                ),
+                typeof(normalised_root_mean_squared_error) => Dict(
+                    "dist" => Dict(
+                        "scalar" => sqrt(74 / 3 + 2.2^2) / 9,
+                        "vector" => sqrt(290 / 3 + (2 + 2.2 + 3)) / 20,
+                        "matrix" => sqrt(357 / 3 + 167.75) / 12,
+                    ),
+                    "point" => Dict(
+                        "scalar" => sqrt(74 / 3) / 9,
+                        "vector" => sqrt(290 / 3) / 20,
+                        "matrix" => sqrt(357 / 3) / 12,
+                    )
+                ),
+                typeof(standardized_mean_squared_error) => Dict(
+                    "dist" => Dict(
+                        "scalar" => (74 / 3 + 2.2^2) / 4.333333333333334,
+                        "vector" => (290 / 3 + (2 + 2.2 + 3)) / 34.115682058464884,
+                        "matrix" => (357 / 3 + 167.75) / 15.693410363878222,
+                    ),
+                    "point" => Dict(
+                        "scalar" => (74 / 3) / 4.333333333333334,
+                        "vector" => (290 / 3) / 34.115682058464884,
+                        "matrix" => (357 / 3) / 15.693410363878222,
+                    )
+                ),
+                typeof(mean_absolute_error) => Dict(
+                    "dist" => Dict(
+                        "scalar" => 4.369492269221085,
+                        "vector" => 16.015137998532605,
+                        "matrix" => 28.728598682194946,
+                    ),
+                    "point" => Dict(
+                        "scalar" => 12 / 3,
+                        "vector" => 48 / 3,
+                        "matrix" => 57 / 3,
+                    ),
+                ),
+                typeof(mean_absolute_scaled_error) => Dict(
+                    "dist" => Dict(
+                        "scalar" => 4.369492269221085 / 7,
+                        "vector" => 16.015137998532605 / 26.0,
+                        "matrix" => 28.728598682194946 / 28.5,
+                    ),
+                    "point" => Dict(
+                        "scalar" => 12 / 21,
+                        "vector" => 48 / 78,
+                        "matrix" => 57 / 85.5,
+                    ),
+                ),
+            ),
+        ),
+    )
+
+    @testset "$arrangement" for arrangement in keys(metric_data)
+
+        test_config = metric_data[arrangement]
+
+        metrics_list = test_config["metrics"]
+
+        y_trues = test_config["y_true"]
+        y_preds = test_config["y_pred"]
+        expected = test_config["expected"]
+
+        forecast_pairs = (
+            ("scalar", (y_trues["scalar"], y_preds["scalar"])),
+            ("vector", (y_trues["vector"], y_preds["vector"])),
+            ("matrix", (y_trues["matrix"], y_preds["matrix"])),
+        )
+
+        @testset "$m" for m in metrics_list
+
+            # test properties on all metrics and argument types
+            @testset "$type properties" for (type, args) in forecast_pairs
+                test_metric_properties(m, args...)
+            end
+
+            # test expected results on all metrics and argument types
+            @testset "$type expected result" for (type, (y_true, y_pred)) in forecast_pairs
+
+                y_means = get_mean(m, y_pred)
+
+                # compute metric on point predictions
+                @testset "point prediction" begin
+                    @test m(y_true, y_means) ≈ expected[typeof(m)]["point"][type]
+                    @test evaluate(m, y_true, y_means) ≈ expected[typeof(m)]["point"][type]
+                end
+
+                # compute metric on distribution predictions
+                @testset "dist prediction" begin
+                    @test m(y_true, y_pred) ≈ expected[typeof(m)]["dist"][type]
+                    @test evaluate(m, y_true, y_pred) ≈ expected[typeof(m)]["dist"][type]
+                end
+            end
+
+        end
+
+        # test relationships between metrics
+        @testset "relational properties" begin
+
+            if arrangement == "single_obs"
+
+                @testset "$type" for (type, (y_true, y_pred)) in forecast_pairs
+                    # for point predictions the following holds:
+                    # se(y, y') <= ae(y, y')^2 since ||x||_2 <= ||x||_1
+                    @test se(y_true, mean(y_pred)) <= ae(y_true, mean(y_pred))^2
+                    @test evaluate(se, y_true, mean(y_pred)) <= evaluate(ae, y_true, mean(y_pred))^2
+
+                    # for univariate distributions the following holds:
+                    # se(y, y') >= ae(y, y')^2 since E[X]^2 >=E[|X|]^2
+                    if type == "scalar"
+                        @test se(y_true, y_pred) >= ae(y_true, y_pred)^2
+                        @test evaluate(se, y_true, y_pred) >= evaluate(ae, y_true, y_pred)^2
+                    end
+                end
+
+            elseif arrangement == "collection_obs"
+
+                @testset "$type" for (type, (y_true, y_pred)) in forecast_pairs
+                    # for point predictions the following holds:
+                    # se(y, y') <= ae(y, y')^2 since ||x||_2 <= ||x||_1
+                    @test mse(y_true, mean.(y_pred)) <= mean(ae.(y_true, mean.(y_pred)).^2)
+                    @test evaluate(mse, y_true, mean.(y_pred)) <= mean(evaluate.(ae, y_true, mean.(y_pred)).^2)
+
+                    # for univariate distributions the following holds:
+                    # mean(se(y, y')) >= mean(ae(y, y')^2) since E[X]^2 >=E[|X|]^2
+                    if type == "scalar"
+                        @test mse(y_true, y_pred) >= mean(ae.(y_true, y_pred).^2)
+                        @test evaluate(mse, y_true, y_pred) >= mean(evaluate.(mae, y_true, y_pred).^2)
+                    end
+
+                    # rmse == sqrt(mse)
+                    @test rmse(y_true, y_pred) == √mse(y_true, y_pred)
+                    @test evaluate(rmse, y_true, y_pred) == √evaluate(mse, y_true, y_pred)
+                end
+            end
+        end  # relational properties
+
+    end  # arrangement
+end  # regression.jl
