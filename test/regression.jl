@@ -54,9 +54,11 @@ end
 """error increases as mean increases"""
 function error_increases_as_mean_increases(metric, y_true, y_pred)
     @testset "error increases as mean increases" begin
-        y_pred0 = relocate(y_pred, 2. * y_true)
-        y_pred1 = relocate(y_pred, 3 .* y_true)
-        y_pred2 = relocate(y_pred, 4 .* y_true)
+        v = ones.(size.(y_true))
+
+        y_pred0 = relocate(y_pred, y_true .+ 1v)
+        y_pred1 = relocate(y_pred, y_true .+ 2v)
+        y_pred2 = relocate(y_pred, y_true .+ 3v)
 
         # distribution errors
         error_d0 = metric(y_true, y_pred0)
