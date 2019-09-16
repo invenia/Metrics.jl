@@ -166,7 +166,10 @@ function expected_absolute_error(y_true, y_pred::MatrixNormal)
     # var and cov not yet defined for MatrixVariates so must be transformed to MultiVariate
     # can be removed when new Distribution version is tagged
     # https://github.com/JuliaStats/Distributions.jl/pull/955
-    return expected_absolute_error(vec(y_true), vec(y_pred))
+    return expected_absolute_error(
+        vec(y_true),
+        MvNormal(vec(y_pred.M), PSDMat(kron(y_pred.V.mat, y_pred.U.mat))),
+    )
 end
 
 expected_absolute_error(y_true::Distribution, y_pred) = expected_absolute_error(y_pred, y_true)
