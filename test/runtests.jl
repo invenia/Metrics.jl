@@ -5,6 +5,7 @@ using Metrics:
     IteratorOfObs,
     MatrixRowsOfObs,
     MatrixColsOfObs,
+    SingleObs,
     organise_obs,
     price_impact
 using NamedDims
@@ -14,7 +15,8 @@ using Random: seed!
 using Statistics
 using StatsUtils: sqrtcov
 using Test
-using Distributions
+
+include("test_utils.jl")
 
 # Include test_utils
 include("test_utils.jl")
