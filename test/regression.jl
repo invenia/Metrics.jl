@@ -591,8 +591,8 @@
 
             # test AE(X) = σ√(2/π) when mean(dist_pred) == y_true
             dist_pred = MatrixNormal(y_true, U, U)
-            @test expected_absolute_error(y_true, dist_pred) == sqrt(2 / π) * sum(sqrt, var(vec(dist_pred)))
-            @test evaluate(expected_absolute_error, y_true, dist_pred) == sqrt(2 / π) * sum(sqrt, var(vec(dist_pred)))
+            @test expected_absolute_error(y_true, dist_pred) ≈ sqrt(2 / π) * sum(sqrt, var(vec(dist_pred)))
+            @test evaluate(expected_absolute_error, y_true, dist_pred) ≈ sqrt(2 / π) * sum(sqrt, var(vec(dist_pred)))
         end
 
         @testset "erroring" begin

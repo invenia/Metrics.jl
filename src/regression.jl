@@ -149,11 +149,15 @@ function expected_absolute_error(y_true, y_pred::Union{Normal, AbstractMvNormal}
     @_dimcheck size(y_true) == size(y_pred)
     μ = mean(y_pred) - y_true
     σ = sqrt.(var(y_pred))
+    z = μ ./ σ
 
-    mu_term = dot(μ, erf.(μ ./ (sqrt(2) * σ)))
-    sigma_term = sqrt(2/π) * dot(σ, exp.(-μ.^2 ./ 2σ.^2))
+    # compute the absolute error over each dimension
+    abs_err = (μ .* erf.(z / √2)) + sqrt(2 / π) * (σ .* exp.(-0.5 * z.^2))
 
-    return mu_term + sigma_term
+    # we can get NaNs if μ=σ=0 so we skip these when returning the result
+    # this is reasonable because μ=σ=0 implies a perfect forecast in that dimension
+    return all(isnan.(abs_err)) ? 0 : sum(abs_err[.!isnan.(abs_err)])
+
 end
 
 
