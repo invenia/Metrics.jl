@@ -18,26 +18,14 @@
     # Proper full KL calculation to test certain cases against
     kl_full = kullback_leibler(MvNormal(μ0, Σ0), MvNormal(μ1, Σ1))
 
+    # KL Full should be greater than 0
+    @test kl_full > 0
+
     # Generate a covariance matrix where det(Σ) == 0
     Σ_singular = PSDMat(cholesky(zeros(3, 3), Val(true); check=false))
 
     # Generate a covariance matrix where Σ = 0̂
     m0̂  = Matrix(zeros(3, 3))
-
-    @testset "equal distributions" begin
-        # If both distributions are the same, the divergence should be 0
-        p = MvNormal(μ0, Σ0)
-        q = generate_mvnormal(10)
-        expected = 0
-
-        # Using diagonal cov matrix
-        @test isapprox(kullback_leibler(p, p), expected; atol=1e-12)
-        @test isapprox(evaluate(kullback_leibler, p, p), expected; atol=1e-12)
-
-        # Using random symmetric MvNormal
-        @test isapprox(kullback_leibler(q, q), expected; atol=1e-12)
-        @test isapprox(evaluate(kullback_leibler, q, q), expected; atol=1e-12)
-    end
 
     @testset "is not symmetric" begin
         # The kullback leibler divergence of p||q is not equal to the kullback leibler
@@ -46,44 +34,6 @@
         q = MvNormal(μ0, Σ1)
 
         @test kullback_leibler(p, q) != kullback_leibler(q, p)
-    end
-
-    @testset "equal means - varying covariances" begin
-        # Diagonal
-        p = MvNormal(μ0, Σ0)
-        q = MvNormal(μ0, Σ1)
-
-        expected = 0.5 * (tr(cov(q) \ cov(p)) - k + log(det(cov(q)) / det(cov(p))))
-        @test kullback_leibler(p, q) ≈ expected
-        @test evaluate(kullback_leibler, p, q) ≈ expected
-
-        # Random
-        p = generate_mvnormal(μ0, 3)
-        q = generate_mvnormal(μ0, 3)
-
-        expected = 0.5 * (tr(cov(q) \ cov(p)) - k + log(det(cov(q)) / det(cov(p))))
-        @test kullback_leibler(p, q) ≈ expected
-        @test evaluate(kullback_leibler, p, q) ≈ expected
-    end
-
-    @testset "equal covariances - varying means" begin
-        # Diagonal
-        p = MvNormal(μ0, Σ0)
-        q = MvNormal(μ1, Σ0)
-        diff = p.μ .- q.μ
-
-        expected = 0.5 * diff' * (cov(q) \ diff)
-        @test kullback_leibler(p, q) ≈ expected
-        @test evaluate(kullback_leibler, p, q) ≈ expected
-
-        # Random
-        p = MvNormal(rand(3), Σ0)
-        q = MvNormal(rand(3), Σ0)
-        diff = p.μ .- q.μ
-
-        expected = 0.5 * diff' * (cov(q) \ diff)
-        @test kullback_leibler(p, q) ≈ expected
-        @test evaluate(kullback_leibler, p, q) ≈ expected
     end
 
     @testset "different distribution dimensions" begin
@@ -115,6 +65,21 @@
             @test 0.5 * μdiff' * (Σ1 \ μdiff) ≈ kl
             @test kl < kl_full
             @test kl ≈ kullback_leibler(q, p)
+        end
+
+        @testset "μ0 = μ1 and Σ0 = Σ1 (and is symmetric)" begin
+            # If both distributions are the same, the divergence should be 0
+            p = MvNormal(μ0, Σ0)
+            q = generate_mvnormal(10)
+            expected = 0
+
+            # Using diagonal cov matrix
+            @test isapprox(kullback_leibler(p, p), expected; atol=1e-12)
+            @test isapprox(evaluate(kullback_leibler, p, p), expected; atol=1e-12)
+
+            # Using random symmetric MvNormal
+            @test isapprox(kullback_leibler(q, q), expected; atol=1e-12)
+            @test isapprox(evaluate(kullback_leibler, q, q), expected; atol=1e-12)
         end
 
         @testset "μ0 != μ1 and Σ0 = Σ1 = 1̂ (and is symmetric)" begin
@@ -168,7 +133,7 @@
         q = MvNormal(zeros(10), Diagonal(diag1))
 
         @test kullback_leibler(p, q) ≈ 0.5 * (
-            sum(diag0 ./ diag1) - 10 + log(prod(diag1)/prod(diag0))
+            sum(diag0 ./ diag1) - 10 + log(prod(diag1) / prod(diag0))
         )
 
         diag0 = rand(0.1:1e-3:1.0, 10).^2
@@ -186,7 +151,7 @@
         p = Normal(0., 1.)
         q = Normal(1., 2.)
 
-        expected = 0.4431471805599453
+        expected = 0.5 * ((q.σ^2 \ p.σ^2) + (q.μ - p.μ)^2 / q.σ^2 - 1 + log(q.σ^2 / p.σ^2))
         @test kullback_leibler(p, q) ≈ expected
         @test evaluate(kullback_leibler, p, q) ≈ expected
     end
