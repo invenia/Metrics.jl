@@ -19,6 +19,10 @@ The expected square error of an estimator of a normal distribution `X` and the t
 ```math
 E[X^2] = Var(X) + Bias(X, X')^2
 ```
+
+Note: The expected squared error for a predictive distribution is always greater than the
+point prediction error computed from the distribution mean.
+
 Note: In conventional literature this function is called the "mean squared error" (MSE).
 To avoid confusing this as a metric that computes the "mean" as an average over a collection
 of values, we use the term "expected" to conform with the statistical nomenclature.
@@ -135,6 +139,9 @@ value defined by the following function:
 E[|X|] = μ * erf(μ / (√2 * σ)) + σ * sqrt(2/π) * exp(-μ^2 / 2σ^2)
 ```
 where `erf` is the error function.
+
+Note: The expected absolute error for a predictive distribution is always greater than the
+point prediction error computed from the distribution mean.
 
 Note: In conventional literature this function is often called the "mean absolute error" (MAE).
 To avoid confusing this as a metric that computes the "mean" as an average over a collection
