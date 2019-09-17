@@ -26,8 +26,6 @@ rescale(d::MatrixNormal, U_sf) = rescale(d::MatrixNormal, U_sf, U_sf)
 
 # broadcast automatically
 rescale(v::AbstractVector{<:Distribution}, scale_factor) = rescale.(v, Ref(scale_factor))
-# rescale(v::AbstractVector{<:Distribution}, scale_factor::Number) = rescale.(v, Ref(scale_factor))
-# rescale(v::AbstractVector{MatrixNormal}, U_sf, U_sf) = rescale.(v, U_sf, U_sf)
 
 function get_mean(metric, y_pred)
     if Metrics.obs_arrangement(metric) == SingleObs()
