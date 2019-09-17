@@ -11,9 +11,8 @@ relocate(d::Normal, new_μ) = Normal(new_μ, d.σ)
 relocate(d::MvNormal, new_μ) = MvNormal(new_μ, d.Σ)
 relocate(d::MatrixNormal, new_μ) = MatrixNormal(new_μ, d.U, d.V)
 
-# broadcast automatically
+# broadcast sensibly if passed a vector of distributions
 relocate(v::AbstractVector{<:Distribution}, new_mu) = relocate.(v, new_mu)
-relocate(v::AbstractVector{<:Distribution}, new_mu::Number) = relocate.(v, Ref(new_mu))
 
 # rescale a distribution variance by scale_factor
 rescale(d::Normal, scale_factor) = Normal(d.μ, scale_factor * d.σ)
@@ -24,10 +23,10 @@ function rescale(d::MatrixNormal, U_sf::Number, V_sf::Number)
 end
 rescale(d::MatrixNormal, U_sf) = rescale(d::MatrixNormal, U_sf, U_sf)
 
-# broadcast automatically
+# broadcast sensibly if passed a vector of distributions
 rescale(v::AbstractVector{<:Distribution}, scale_factor) = rescale.(v, Ref(scale_factor))
 
-# If metric is a SingleObs mean should return the mean of the distribution
-# If metric is an IteratorOfObs, mean should return means of the elements
+# If metric is a SingleObs then return the mean of the distribution
+# If metric is an IteratorOfObs then return means of the distributions in the vector
 Statistics.mean(arrangement::SingleObs, y_pred) = mean(y_pred)
 Statistics.mean(arrangement::IteratorOfObs, y_pred) = mean.(y_pred)
