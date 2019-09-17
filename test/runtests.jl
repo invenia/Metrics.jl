@@ -6,6 +6,7 @@ using Metrics:
     MatrixRowsOfObs,
     MatrixColsOfObs,
     SingleObs,
+    obs_arrangement,
     organise_obs,
     price_impact
 using NamedDims
@@ -15,6 +16,8 @@ using Random: seed!
 using Statistics
 using StatsUtils: sqrtcov
 using Test
+
+import Statistics.mean
 
 include("test_utils.jl")
 

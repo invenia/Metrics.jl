@@ -27,10 +27,7 @@ rescale(d::MatrixNormal, U_sf) = rescale(d::MatrixNormal, U_sf, U_sf)
 # broadcast automatically
 rescale(v::AbstractVector{<:Distribution}, scale_factor) = rescale.(v, Ref(scale_factor))
 
-function get_mean(metric, y_pred)
-    if Metrics.obs_arrangement(metric) == SingleObs()
-        return mean(y_pred)
-    else
-        return mean.(y_pred)
-    end
-end
+# If metric is a SingleObs mean should return the mean of the distribution
+# If metric is an IteratorOfObs, mean should return means of the elements
+Statistics.mean(arrangement::SingleObs, y_pred) = mean(y_pred)
+Statistics.mean(arrangement::IteratorOfObs, y_pred) = mean.(y_pred)
