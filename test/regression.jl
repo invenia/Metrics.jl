@@ -1,5 +1,4 @@
 @testset "regression.jl" begin
-
     @testset "squared_error" begin
         @testset "scalar point" begin
             y_true = 1
@@ -15,6 +14,7 @@
             y_pred = rand(Int64)
             @test expected_squared_error(y_true, y_pred) == expected_squared_error(y_pred, y_true)
         end
+
         @testset "multivariate point" begin
             y_true = [1, 2, 3]
             y_pred = [1, 2, 3]
@@ -30,6 +30,7 @@
             y_pred = rand(Int64, 7)
             @test expected_squared_error(y_true, y_pred) == expected_squared_error(y_pred, y_true)
         end
+
         @testset "matrixvariate point" begin
             y_true = [
                 1  2  3  4
@@ -42,8 +43,8 @@
             y_pred = fill(2, 3, 4)
             @test expected_squared_error(y_true, y_pred) == 18
             @test evaluate(expected_squared_error, y_true, y_pred) == 18
-
         end
+
         @testset "erroring" begin
             y_true = 1
             y_pred = [1, 2, 3]
@@ -76,6 +77,7 @@
             y_pred = rand(Int64, 7)
             @test mean_squared_error(y_true, y_pred) == mean_squared_error(y_pred, y_true)
         end
+
         @testset "multivariate point" begin
             y_true = [
                 [1,  2,  3,  4],
@@ -105,6 +107,7 @@
             y_pred_nda2 = NamedDimsArray{(:vars, :points)}(y_pred_m')
             @test evaluate(mean_squared_error, y_true_nda2, y_pred_nda2; obsdim=:points) == 6
         end
+
         @testset "matrixvariate point" begin
             y_true = [
                 [1  2;  3  4],
@@ -189,9 +192,9 @@
 
             y_true = rand(1:100, 7)
             y_pred = rand(1:100, 7)
-            @test root_mean_squared_error(y_true, y_pred) ==
-                root_mean_squared_error(y_pred, y_true)
+            @test root_mean_squared_error(y_true, y_pred) == root_mean_squared_error(y_pred, y_true)
         end
+
         @testset "multivariate point" begin
             y_true = [
                 [1,  2,  4,  4],
@@ -204,6 +207,7 @@
             @test root_mean_squared_error(y_true, y_pred) == 3
             @test evaluate(root_mean_squared_error, y_true, y_pred) == 3
         end
+
         @testset "matrixvariate point" begin
             y_true = [
                 [1  2;  4  4],
@@ -214,6 +218,7 @@
             @test root_mean_squared_error(y_true, y_pred) == 3
             @test evaluate(root_mean_squared_error, y_true, y_pred) == 3
         end
+
         @testset "univariate distribution" begin
             y_true = [5, 6, 7, 8]
             y_pred = [1, 2, 3, 4]
@@ -222,8 +227,10 @@
             @test evaluate(root_mean_squared_error, y_true, dist_pred) == sqrt(17)
 
             # symmetric
-            @test root_mean_squared_error(y_true, dist_pred) == root_mean_squared_error(dist_pred, y_true)
+            @test root_mean_squared_error(y_true, dist_pred) ==
+                root_mean_squared_error(dist_pred, y_true)
         end
+
         @testset "multivariate distribution" begin
             # multiple observations
             y_true = [
@@ -239,6 +246,7 @@
             # symmetric
             @test root_mean_squared_error(y_true, dist_pred) == root_mean_squared_error(dist_pred, y_true)
         end
+
         @testset "matrixvariate distribution" begin
             # multiple observations
             y_true = [
@@ -255,6 +263,7 @@
             # symmetric
             @test root_mean_squared_error(y_true, dist_pred) == root_mean_squared_error(dist_pred, y_true)
         end
+
         @testset "erroring" begin
             y_true = [2, 2]
             y_pred = [1, 2, 3, 4]
@@ -276,8 +285,8 @@
             y_pred = [1, 2, 3, 4, 5,  6,  7,  8,  9]
             @test normalised_root_mean_squared_error(y_true, y_pred) == 4/8
             @test evaluate(normalised_root_mean_squared_error, y_true, y_pred) == 4/8
-
         end
+
         @testset "using quantile" begin
             y_true = [5, 6, 7, 8, 9, 10, 11, 12, 13]
             y_pred = [1, 2, 3, 4, 5,  6,  7,  8,  9]
@@ -288,6 +297,7 @@
             y_true = [5, 6, 7, 8, 9, 10, 11, 12, 13]
             dist_pred  = Normal.(y_pred)
         end
+
         @testset "multivariate point" begin
             y_true = [
                 [1,  2,  4,  4],
@@ -322,6 +332,7 @@
             @test normalised_root_mean_squared_error(y_true, y_pred, α) == 4/3
             @test evaluate(normalised_root_mean_squared_error, y_true, y_pred, α) == 4/3
         end
+
         @testset "matrixvariate point" begin
             y_true = [
                 [1  2;  4  4],
@@ -340,6 +351,7 @@
             @test normalised_root_mean_squared_error(y_true, y_pred, α) == 4/3
             @test evaluate(normalised_root_mean_squared_error, y_true, y_pred, α) == 4/3
         end
+
         @testset "univariate distribution" begin
             y_true = [5, 6, 7, 8, 9, 10, 11, 12, 13]
             y_pred = [1, 2, 3, 4, 5,  6,  7,  8,  9]
@@ -351,6 +363,7 @@
             @test normalised_root_mean_squared_error(y_true, dist_pred, α) == 0.5153882032022076
             @test evaluate(normalised_root_mean_squared_error, y_true, dist_pred, α) == 0.5153882032022076
         end
+
         @testset "multivariate distribution" begin
             y_true = [
                 [1,  2,  4,  4],
@@ -374,6 +387,7 @@
             @test normalised_root_mean_squared_error(y_true, dist_pred, α) == 2.2222222222222223
             @test evaluate(normalised_root_mean_squared_error, y_true, dist_pred, α) == 2.2222222222222223
         end
+
         @testset "matrixvariate distribution" begin
             y_true = [
                 [1  2;  4  4],
@@ -395,6 +409,7 @@
             @test normalised_root_mean_squared_error(y_true, dist_pred, α) == 2.784436463587037
             @test evaluate(normalised_root_mean_squared_error, y_true, dist_pred, α) == 2.784436463587037
         end
+
         @testset "erroring" begin
             y_true = [2, 2]
             y_pred = [1, 2, 3, 4]
@@ -419,8 +434,8 @@
             y_pred = [1, 2, 3, 4, 5,  6,  7,  8]
             @test standardized_mean_squared_error(y_true, y_pred) == 16/6
             @test evaluate(standardized_mean_squared_error, y_true, y_pred) == 16/6
-
         end
+
         @testset "multivariate point" begin
             y_true = [
                 [3, -2,  0,  6],
@@ -441,8 +456,8 @@
             ]
             @test standardized_mean_squared_error(y_true, y_pred) == 7.067314275603867
             @test evaluate(standardized_mean_squared_error, y_true, y_pred) == 7.067314275603867
-
         end
+
         @testset "matrixvariate point" begin
             y_true = [
                 [1  2;  5  5],
@@ -452,6 +467,7 @@
             y_pred = fill(fill(2, 2, 2), 3)
             @test evaluate(standardized_mean_squared_error, y_true, y_pred) == 6.019086780960899
         end
+
         @testset "univariate distribution" begin
             y_true = [5, 6, 7, 8, 9, 10, 11, 12]
             y_pred = [1, 2, 3, 4, 5,  6,  7,  8]
@@ -460,6 +476,7 @@
             @test standardized_mean_squared_error(y_true, dist_pred) == 2.8333333333333335
             @test evaluate(standardized_mean_squared_error, y_true, dist_pred) == 2.8333333333333335
         end
+
         @testset "multivariate distribution" begin
             y_true = [
                 [3, -2,  0,  6],
@@ -475,6 +492,7 @@
             @test standardized_mean_squared_error(y_true, dist_pred) == 11.71431544312422
             @test evaluate(standardized_mean_squared_error, y_true, dist_pred) == 11.71431544312422
         end
+
         @testset "matrixvariate distribution" begin
             y_true = [
                 [1  2;  5  5],
@@ -488,6 +506,7 @@
             @test standardized_mean_squared_error(y_true, dist_pred) == 23.63947792199966
             @test evaluate(standardized_mean_squared_error, y_true, dist_pred) == 23.63947792199966
         end
+
         @testset "erroring" begin
             y_true = [2, 2]
             y_pred = [1, 2, 3, 4]
@@ -514,6 +533,7 @@
             @test expected_absolute_error(y_true, y_pred) == expected_absolute_error(y_pred, y_true)
             @test expected_absolute_error([y_true], [y_pred]) == expected_absolute_error(y_pred, y_true)
         end
+
         @testset "multivariate point" begin
             y_true = [1, 5, 2, 5, 9]
             y_pred = [5, 3, 2, 1, 1]
@@ -524,6 +544,7 @@
             y_pred = rand(Int64, 7)
             @test expected_absolute_error(y_true, y_pred) == expected_absolute_error(y_pred, y_true)
         end
+
         @testset "matrixvariate point" begin
             y_true = [1  2;  5  5]
             @test expected_absolute_error(y_true, y_true) == 0
@@ -533,6 +554,7 @@
             @test expected_absolute_error(y_true, y_pred) == 7
             @test evaluate(expected_absolute_error, y_true, y_pred) == 7
         end
+
         @testset "univariate distribution" begin
             y_true = 1
             y_pred = 5
@@ -545,6 +567,7 @@
             @test expected_absolute_error(y_true, dist_pred) == sqrt(2 * var(dist_pred) / π)
             @test evaluate(expected_absolute_error, y_true, dist_pred) == sqrt(2 * var(dist_pred) / π)
         end
+
         @testset "multivariate distribution" begin
             y_true = [1, 5, 2, 5, 9]
             y_pred = [5, 3, 2, 1, 1]
@@ -557,6 +580,7 @@
             @test expected_absolute_error(y_true, dist_pred) == sqrt(2 / π) * sum(sqrt, var(dist_pred))
             @test evaluate(expected_absolute_error, y_true, dist_pred) == sqrt(2 / π) * sum(sqrt, var(dist_pred))
         end
+
         @testset "matrixvariate distribution" begin
             y_true = [1  2;  5  5]
             y_pred = fill(2, 2, 2)
@@ -570,6 +594,7 @@
             @test expected_absolute_error(y_true, dist_pred) == sqrt(2 / π) * sum(sqrt, var(vec(dist_pred)))
             @test evaluate(expected_absolute_error, y_true, dist_pred) == sqrt(2 / π) * sum(sqrt, var(vec(dist_pred)))
         end
+
         @testset "erroring" begin
             y_true = [2, 2]
             y_pred = [1, 2, 3, 4]
@@ -591,6 +616,7 @@
             y_pred = rand(Int64, 7)
             @test mean_absolute_error(y_true, y_pred) == mean_absolute_error(y_pred, y_true)
         end
+
         @testset "multivariate point" begin
             y_true = [
                 [1,  2,  3,  4],
@@ -604,6 +630,7 @@
             @test mean_absolute_error(y_true, y_pred) == 4
             @test evaluate(mean_absolute_error, y_true, y_pred) == 4
         end
+
         @testset "matrixvariate point" begin
             y_true = [
                 [1  2;  3  4],
@@ -617,6 +644,7 @@
             @test mean_absolute_error(y_true, y_pred) == 4
             @test evaluate(mean_absolute_error, y_true, y_pred) == 4
         end
+
         @testset "univariate distribution" begin
             y_true = [1, 5, 2, 5, 9]
             y_pred = [5, 3, 2, 1, 1]
@@ -624,6 +652,7 @@
             @test mean_absolute_error(y_true, dist_pred) ≈ 3.7629789094140507
             @test evaluate(mean_absolute_error, y_true, dist_pred) ≈ 3.7629789094140507
         end
+
         @testset "multivariate distribution" begin
             y_true = [
                 [1,  2,  3,  4],
@@ -635,6 +664,7 @@
             @test mean_absolute_error(y_true, dist_pred) ≈ 7.511403463166924
             @test evaluate(mean_absolute_error, y_true, dist_pred) ≈ 7.511403463166924
         end
+
         @testset "matrixvariate distribution" begin
             y_true = [
                 [1  2;  3  4],
@@ -648,6 +678,7 @@
             @test mean_absolute_error(y_true, dist_pred) ≈ 8.675796763888826
             @test evaluate(mean_absolute_error, y_true, dist_pred) ≈ 8.675796763888826
         end
+
         @testset "erroring" begin
             y_true = [2, 2]
             y_pred = [1, 2, 3, 4]
@@ -821,6 +852,96 @@
             dist = rand()
             y_pred = rand()
             @test evaluate(expected_squared_error, dist, y_pred) == expected_squared_error(dist, y_pred)
+        end
+    end
+
+    @testset "Regression Summaries" begin
+        function generate_expected_values(y_true, y_pred)
+            expected = Dict()
+
+            for metric in REGRESSION_METRICS
+                expected[metric] = metric(y_true, y_pred)
+            end
+
+            return expected
+        end
+
+        @testset "Scalar" begin
+            y_true = [1,2,3,4]
+            y_pred = [5,6,7,8]
+
+            expected = generate_expected_values(y_true, y_pred)
+            summary = regression_summary(y_true, y_pred)
+
+            @test !isempty(summary)
+            @test isequal(expected, summary)
+        end
+
+        @testset "Scalar - Indexed Values" begin
+            y_true = [1,2,3,4]
+            y_pred = [5,6,7,8]
+
+            expected = generate_expected_values(y_true, y_pred)
+            summary = regression_summary(y_true, y_pred)
+
+            @test !isempty(summary)
+            @test isequal(expected[mse], summary[mse])
+            @test isequal(expected[rmse], summary[rmse])
+            @test isequal(expected[nrmse], summary[nrmse])
+            @test isequal(expected[smse], summary[smse])
+            @test isequal(expected[mase], summary[mase])
+        end
+
+        @testset "Vector" begin
+            y_true = [[1,2,3], [4,5,6], [7,8,9]]
+            y_pred = [[10, 11, 12], [13, 14, 15], [16, 17, 18]]
+
+            expected = generate_expected_values(y_true, y_pred)
+            summary = regression_summary(y_true, y_pred)
+
+            @test !isempty(summary)
+            @test isequal(expected, summary)
+        end
+
+        @testset "Vector - Indexed Values" begin
+            y_true = [[1,2,3], [4,5,6], [7,8,9]]
+            y_pred = [[10, 11, 12], [13, 14, 15], [16, 17, 18]]
+
+            expected = generate_expected_values(y_true, y_pred)
+            summary = regression_summary(y_true, y_pred)
+
+            @test !isempty(summary)
+            @test isequal(expected[mse], summary[mse])
+            @test isequal(expected[rmse], summary[rmse])
+            @test isequal(expected[nrmse], summary[nrmse])
+            @test isequal(expected[smse], summary[smse])
+            @test isequal(expected[mase], summary[mase])
+        end
+
+        @testset "Matrix" begin
+            y_true = [[1 2; 3 4], [3 4; 5 6], [5 6; 7 8]]
+            y_pred = [[7 8; 9 10], [9 10; 11 12], [11 12; 13 14]]
+
+            expected = generate_expected_values(y_true, y_pred)
+            summary = regression_summary(y_true, y_pred)
+
+            @test !isempty(summary)
+            @test isequal(expected, summary)
+        end
+
+        @testset "Matrix - Indexed Values" begin
+            y_true = [[1 2; 3 4], [3 4; 5 6], [5 6; 7 8]]
+            y_pred = [[7 8; 9 10], [9 10; 11 12], [11 12; 13 14]]
+
+            expected = generate_expected_values(y_true, y_pred)
+            summary = regression_summary(y_true, y_pred)
+
+            @test !isempty(summary)
+            @test isequal(expected[mse], summary[mse])
+            @test isequal(expected[rmse], summary[rmse])
+            @test isequal(expected[nrmse], summary[nrmse])
+            @test isequal(expected[smse], summary[smse])
+            @test isequal(expected[mase], summary[mase])
         end
     end
 end

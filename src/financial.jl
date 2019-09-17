@@ -1,4 +1,3 @@
-
 """
     expected_return(volumes::AbstractVector, deltas::AbstractVector, args...) -> Number
     expected_return(volumes::AbstractVector, deltas::AbstractMatrix, args...) -> Number
@@ -30,7 +29,7 @@ end
 function expected_return(volumes::AbstractVector, deltas::MvNormal, args...)
     return expected_return(volumes, mean(deltas), args...)
 end
-
+expected_return(returns::AbstractVector) = mean(returns)
 obs_arrangement(::typeof(expected_return)) = MatrixColsOfObs()
 
 
@@ -55,7 +54,7 @@ function volatility(volumes::AbstractVector, deltas::MvNormal)
     # function is calculating a unique scalar: `sqrt(volume' * cov(delta) * volume)`
     return norm(sqrtcov(deltas) * volumes, 2)
 end
-
+volatility(returns::AbstractVector) = std(returns)
 obs_arrangement(::typeof(volatility)) = MatrixColsOfObs()
 
 """
@@ -261,4 +260,44 @@ function expected_shortfall(volumes::AbstractVector, deltas::MvNormal, args...; 
     sigma_returns = volatility(volumes, deltas)
     return_dist = Normal(mean_returns, sigma_returns)
     return expected_shortfall(return_dist; kwargs...)
+end
+
+"""
+    financial_summary(volume::AbstractArray, deltas::Union{MvNormal, AbstractMatrix}, args...; kwargs...)
+
+Calculate the summary of; @ref[`expected_return`], @ref[`expected_shortfall`], @ref[`sharpe_ratio`]
+and @ref[`volatility`].
+
+`args...` and `kwargs...` are inputs for the functions above.
+
+Returns a Dictionary where the `Key` is the function, and the `Value` is the result of the function.
+"""
+function financial_summary(
+    volumes::AbstractArray, deltas::Union{MvNormal, AbstractMatrix}, args...;
+    kwargs...
+)
+    return Dict(
+        expected_return => expected_return(volumes, deltas, args...),
+        expected_shortfall => expected_shortfall(volumes, deltas, args...; kwargs...),
+        sharpe_ratio => sharpe_ratio(volumes, deltas, args...),
+        volatility => volatility(volumes, deltas)
+    )
+end
+
+"""
+    financial_summary(returns::AbstractVector; risk_level::Real=0.05)
+
+Calculate the summary of; @ref[`expected_return`], @ref[`expected_shortfall`],
+@ref[`median_over_expected_shortfall`], @ref[`sharpe_ratio`], and @ref[`volatility`].
+
+Returns a Dictionary where the `Key` is the function, and the `Value` is the result of the function.
+"""
+function financial_summary(returns::AbstractVector; risk_level::Real=0.05)
+    return Dict(
+        expected_return => expected_return(returns),
+        expected_shortfall => expected_shortfall(returns; risk_level=risk_level),
+        median_over_expected_shortfall => median_over_expected_shortfall(returns; risk_level=risk_level),
+        sharpe_ratio => sharpe_ratio(returns),
+        volatility => volatility(returns),
+    )
 end
