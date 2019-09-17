@@ -89,7 +89,8 @@ function dist_returns_larger_errors(metric, y_true, y_pred)
         @test metric(y_true, y_true_dist) > 0
         @test evaluate(metric, y_true, y_true_dist) > 0
 
-        # distributions give larger errors in general
+        # distributions give larger errors for convex metrics by Jensen's inequality
+        # https://en.wikipedia.org/wiki/Jensen%27s_inequality
         @test metric(y_true, y_pred) >= metric(y_true, point_pred)
         @test evaluate(metric, y_true, y_pred) >= evaluate(metric, y_true, point_pred)
     end
@@ -164,17 +165,23 @@ function test_metric_properties(metric::typeof(expected_squared_error), args...)
     y_true, y_pred = args
     @testset "obeys properties of norm" begin
         # for point predictions the following holds:
-        # se(y, y') <= ae(y, y')^2 since ||x||_2 <= ||x||_1
-        @test se(y_true, mean(y_pred)) <= ae(y_true, mean(y_pred))^2
-        @test evaluate(se, y_true, mean(y_pred)) <= evaluate(ae, y_true, mean(y_pred))^2
+        # squared_error(y, y') <= absolute_error(y, y')^2 since ||x||_2 <= ||x||_1
+        @test expected_squared_error(y_true, mean(y_pred)) <= expected_absolute_error(y_true, mean(y_pred))^2
+        @test evaluate(expected_squared_error, y_true, mean(y_pred)) <= evaluate(expected_absolute_error, y_true, mean(y_pred))^2
     end
 
     if y_pred isa Normal
         # for univariate distributions the following holds:
-        # se(y, y') >= ae(y, y')^2 since E[X]^2 >=E[|X|]^2
+        # squared_error(y, y') >= absolute_error(y, y')^2 since E[X]^2 >=E[|X|]^2
         @testset "obeys properties of distributions" begin
-            @test se(y_true, y_pred) >= ae(y_true, y_pred)^2
-            @test evaluate(se, y_true, y_pred) >= evaluate(ae, y_true, y_pred)^2
+            @test isless(
+                expected_absolute_error(y_true, y_pred)^2,
+                expected_squared_error(y_true, y_pred),
+            )
+            @test isless(
+                evaluate(expected_absolute_error, y_true, y_pred)^2,
+                evaluate(expected_squared_error, y_true, y_pred),
+            )
         end
     end
 end

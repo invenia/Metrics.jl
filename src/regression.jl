@@ -20,8 +20,12 @@ The expected square error of an estimator of a normal distribution `X` and the t
 E[X^2] = Var(X) + Bias(X, X')^2
 ```
 
-Note: The expected squared error for a predictive distribution is always greater than the
-point prediction error computed from the distribution mean.
+Note: Jenen's inequality provides that a convex metric computed over a distribution is
+greater than or equal to that of the point prediction taken from the distribution mean, thus:
+```math
+E[X^2] >= E[X]^2
+```
+See : https://en.wikipedia.org/wiki/Jensen%27s_inequality
 
 Note: In conventional literature this function is called the "mean squared error" (MSE).
 To avoid confusing this as a metric that computes the "mean" as an average over a collection
@@ -136,12 +140,16 @@ Given a normal random variable `X` with mean mean `μ` and standard deviation `�
 expected absolute value is described by the folded normal distribution with the expected
 value defined by the following function:
 ```math
-E[|X|] = μ * erf(μ / (√2 * σ)) + σ * sqrt(2/π) * exp(-μ^2 / 2σ^2)
+E[|X|] = X * erf(X / (√2 * σ)) + σ * sqrt(2/π) * exp(-X^2 / 2σ^2)
 ```
 where `erf` is the error function.
 
-Note: The expected absolute error for a predictive distribution is always greater than the
-point prediction error computed from the distribution mean.
+Note: Jenen's inequality provides that a convex metric computed over a distribution is
+greater than or equal to that of the point prediction taken from the distribution mean, thus:
+```math
+E[|X|] >= |E[X]|
+```
+See : https://en.wikipedia.org/wiki/Jensen%27s_inequality
 
 Note: In conventional literature this function is often called the "mean absolute error" (MAE).
 To avoid confusing this as a metric that computes the "mean" as an average over a collection
