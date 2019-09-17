@@ -43,11 +43,11 @@ function is_not_symmetric(metric, y_true, y_pred)
     end
 end
 
-"""metric = 0 iff y_pred == y_true"""
-function is_zero_iff_ypred_is_ytrue(metric, y_true, y_pred)
-    @testset "is zero iff y_pred == y_true" begin
-        @test metric(y_true, y_true) == 0
-        @test evaluate(metric, y_true, y_true) == 0
+"""metric = 0 if y_pred == y_true"""
+function is_zero_if_ypred_equals_ytrue(metric, y_true, y_pred)
+    @testset "is zero if y_pred == y_true" begin
+        @test iszero(metric(y_true, y_true))
+        @test iszero(evaluate(metric, y_true, y_true))
     end
 end
 
@@ -154,7 +154,7 @@ end
 function test_metric_properties(metric::typeof(expected_squared_error), args...)
     is_strictly_positive(metric, args...)
     is_symmetric(metric, args...)
-    is_zero_iff_ypred_is_ytrue(metric, args...)
+    is_zero_if_ypred_equals_ytrue(metric, args...)
     error_increases_as_bias_increases(metric, args...)
     dist_returns_larger_errors(metric, args...)
     dist_error_converges_safely(metric, args...)
@@ -183,7 +183,7 @@ end
 function test_metric_properties(metric::typeof(expected_absolute_error), args...)
     is_strictly_positive(metric, args...)
     is_symmetric(metric, args...)
-    is_zero_iff_ypred_is_ytrue(metric, args...)
+    is_zero_if_ypred_equals_ytrue(metric, args...)
     error_increases_as_bias_increases(metric, args...)
     dist_returns_larger_errors(metric, args...)
     dist_error_converges_safely(metric, args...)
@@ -195,7 +195,7 @@ end
 function test_metric_properties(metric::typeof(mean_squared_error), args...)
     is_strictly_positive(metric, args...)
     is_symmetric(metric, args...)
-    is_zero_iff_ypred_is_ytrue(metric, args...)
+    is_zero_if_ypred_equals_ytrue(metric, args...)
     error_increases_as_bias_increases(metric, args...)
     dist_returns_larger_errors(metric, args...)
     dist_error_converges_safely(metric, args...)
@@ -224,7 +224,7 @@ end
 function test_metric_properties(metric::typeof(mean_absolute_error), args...)
     is_strictly_positive(metric, args...)
     is_symmetric(metric, args...)
-    is_zero_iff_ypred_is_ytrue(metric, args...)
+    is_zero_if_ypred_equals_ytrue(metric, args...)
     error_increases_as_bias_increases(metric, args...)
     dist_returns_larger_errors(metric, args...)
     dist_error_converges_safely(metric, args...)
@@ -236,7 +236,7 @@ end
 function test_metric_properties(metric::typeof(root_mean_squared_error), args...)
     is_strictly_positive(metric, args...)
     is_symmetric(metric, args...)
-    is_zero_iff_ypred_is_ytrue(metric, args...)
+    is_zero_if_ypred_equals_ytrue(metric, args...)
     error_increases_as_bias_increases(metric, args...)
     dist_returns_larger_errors(metric, args...)
     dist_error_converges_safely(metric, args...)
@@ -248,7 +248,7 @@ end
 function test_metric_properties(metric::typeof(normalised_root_mean_squared_error), args...)
     is_strictly_positive(metric, args...)
     is_not_symmetric(metric, args...)
-    is_zero_iff_ypred_is_ytrue(metric, args...)
+    is_zero_if_ypred_equals_ytrue(metric, args...)
     error_increases_as_bias_increases(metric, args...)
     dist_returns_larger_errors(metric, args...)
     dist_error_converges_safely(metric, args...)
@@ -266,7 +266,7 @@ end
 function test_metric_properties(metric::typeof(standardized_mean_squared_error), args...)
     is_strictly_positive(metric, args...)
     is_not_symmetric(metric, args...)
-    is_zero_iff_ypred_is_ytrue(metric, args...)
+    is_zero_if_ypred_equals_ytrue(metric, args...)
     error_increases_as_bias_increases(metric, args...)
     dist_returns_larger_errors(metric, args...)
     dist_error_converges_safely(metric, args...)
@@ -278,7 +278,7 @@ end
 function test_metric_properties(metric::typeof(mean_absolute_scaled_error), args...)
     is_strictly_positive(metric, args...)
     is_not_symmetric(metric, args...)
-    is_zero_iff_ypred_is_ytrue(metric, args...)
+    is_zero_if_ypred_equals_ytrue(metric, args...)
     error_increases_as_bias_increases(metric, args...)
     dist_returns_larger_errors(metric, args...)
     dist_error_converges_safely(metric, args...)
