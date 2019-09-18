@@ -237,47 +237,48 @@ obs_arrangement(::typeof(mean_absolute_scaled_error)) = IteratorOfObs()
 const mase = mean_absolute_scaled_error
 
 """
-    marginal_loglikelihood(dist::Distribution{Univariate}, y_pred) -> Float64
-    marginal_loglikelihood(dist::Distribution{Multivariate}, y_pred) -> Float64
+    marginal_gaussian_loglikelihood(dist::Distribution{Univariate}, y_pred) -> Float64
+    marginal_gaussian_loglikelihood(dist::Distribution{Multivariate}, y_pred) -> Float64
 
-Computes the marginal loglikelihood of the distribution `dist` given some data `y_pred`
-which takes only the diagonal elements of the covariance matrix when calculating the
-probability of the points.
+Computes the marginal loglikelihood of a Gaussian distribution with a mean and std acquired
+from the input `dist` and some data `y_pred`. This function takes only the diagonal
+elements of the covariance matrix when calculating the probability of the points.
 
-`marginal_loglikelihood(dist, y_pred) = log(P (dist | y_pred))`
+`marginal_gaussian_loglikelihood(dist, y_pred) = log(P (dist | y_pred))`
 """
-function marginal_loglikelihood(dist::Distribution{Univariate}, y_pred)
+function marginal_gaussian_loglikelihood(dist::Distribution{Univariate}, y_pred)
     normalized_dist = Normal(mean(dist), std(dist))
     return loglikelihood(normalized_dist, y_pred)
 end
 
-function marginal_loglikelihood(dist::Distribution{Multivariate}, y_pred)
+function marginal_gaussian_loglikelihood(dist::Distribution{Multivariate}, y_pred)
     # `std` is not defined on `MvNormal` so we use `sqrt.(var(...))`
     normalized_dist = MvNormal(mean(dist), sqrt.(var(dist)))
     return loglikelihood(normalized_dist, y_pred)
 end
-obs_arrangement(::typeof(marginal_loglikelihood)) = MatrixColsOfObs()
+obs_arrangement(::typeof(marginal_gaussian_loglikelihood)) = MatrixColsOfObs()
 
 """
-    joint_loglikelihood(dist::Distribution{Univariate}, y_pred) -> Float64
-    joint_loglikelihood(dist::Distribution{Multivariate}, y_pred) -> Float64
+    joint_gaussian_loglikelihood(dist::Distribution{Univariate}, y_pred) -> Float64
+    joint_gaussian_loglikelihood(dist::Distribution{Multivariate}, y_pred) -> Float64
 
-Computes the joint loglikelihood of the distribution `dist` given some data `y_pred` which
-takes the full covariance matrix when calculating the joint probability of the points.
+Computes the joint loglikelihood of a Gaussian distribution with a mean and std acquired
+from the input `dist` and some data `y_pred`. This function takes the full covariance matrix
+when calculating the joint probability of the points.
 
-`joint_loglikelihood(dist, y_pred) = log(P (dist | y_pred))`
+`joint_gaussian_loglikelihood(dist, y_pred) = log(P (dist | y_pred))`
 """
-function joint_loglikelihood(dist::Distribution{Univariate}, y_pred)
-    return marginal_loglikelihood(dist, y_pred)
+function joint_gaussian_loglikelihood(dist::Distribution{Univariate}, y_pred)
+    return marginal_gaussian_loglikelihood(dist, y_pred)
 end
 
-function joint_loglikelihood(dist::Distribution{Multivariate}, y_pred)
+function joint_gaussian_loglikelihood(dist::Distribution{Multivariate}, y_pred)
     normalized_dist = MvNormal(mean(dist), cov(dist))
     return loglikelihood(normalized_dist, y_pred)
 end
 
-joint_loglikelihood(dist::MvNormal, y_pred) = loglikelihood(dist, y_pred)
-obs_arrangement(::typeof(joint_loglikelihood)) = MatrixColsOfObs()
+joint_gaussian_loglikelihood(dist::MvNormal, y_pred) = loglikelihood(dist, y_pred)
+obs_arrangement(::typeof(joint_gaussian_loglikelihood)) = MatrixColsOfObs()
 
 """
     regression_summary(y_true, y_pred, args...)
