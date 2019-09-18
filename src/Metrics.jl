@@ -30,9 +30,9 @@ export
     mean_absolute_scaled_error, mase,
     marginal_loglikelihood,
     joint_loglikelihood,
-    picp,
-    wpicp,
-    apicp,
+    prediction_interval_coverage_probability, picp,
+    window_prediction_interval_coverage_probability, wpicp,
+    adjusted_prediction_interval_coverage_probability, apicp,
     regression_summary, REGRESSION_METRICS,
     # divergence
     kullback_leibler, kl,
