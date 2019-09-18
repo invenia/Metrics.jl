@@ -1,9 +1,9 @@
 """
     prediction_interval_coverage_probability(α, distribution|samples, y_trues)
 
-Prediction Interval Coverage Probability (PICP).
-Suitable for assessing an estimated distribution against a set of true observations which is
-less impacted by outliers than loglikelihoods.
+Compute the Prediction Interval Coverage Probability (PICP), which is suitable for assessing
+an estimated distribution against a set of true observations and is less impacted by
+outliers than loglikelihoods.
 A `picp` that is closer to α is bettter.
 If it is below α it means the distribution is too narrow,
 If it is above α it means the distribution is too wide.
@@ -67,7 +67,7 @@ const picp = prediction_interval_coverage_probability
 """
     window_prediction_interval_coverage_probability([α_range], distribution|samples, y_trues)
 
-Compute the @ref['picp'] over a window of quantiles, specified by `α_range` and returns a
+Compute the @ref['picp'] over a window of quantiles, specified by `α_range` and return a
 vector with all PICP values. If `α_range` is not provided this defaults to `0.1:0.05:0.95`.
 
 This is useful either for plotting, or as a partway step for calculating @ref['apicp'].
@@ -117,8 +117,8 @@ passes through the origin. If `α_range` is not provided this defaults to `0.1:0
 
 This is a kind of normalizized @ref[`picp`].
 
-A negative PICP means you have overall too much spread,
-a positive PICP means you have too little.
+A negative APICP means you have overall too much spread, while a positive APICP means you
+have too little.
 
 Source: Eric P. came up with this
 """
