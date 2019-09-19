@@ -7,20 +7,18 @@
     # To test a new property, add a function with the appropriate tests and then add a call
     # to that function in the metrics that should obey it.
 
-    """metric is strictly positive"""
     function is_strictly_positive(metric, y_true, y_pred)
         # get mean value(s) of distribution(s)
         point_pred = mean(obs_arrangement(metric), y_pred)
 
         @testset "is strictly positive" begin
-            @test metric(y_true, point_pred) >= 0
-            @test evaluate(metric, y_true, point_pred) >= 0
-            @test metric(y_true, y_pred) >= 0
-            @test evaluate(metric, y_true, y_pred) >= 0
+            @test metric(y_true, point_pred) > 0
+            @test evaluate(metric, y_true, point_pred) > 0
+            @test metric(y_true, y_pred) > 0
+            @test evaluate(metric, y_true, y_pred) > 0
         end
     end
 
-    """metric is symmetric"""
     function is_symmetric(metric, y_true, y_pred)
         # get mean value(s) of distribution(s)
         point_pred = mean(obs_arrangement(metric), y_pred)
@@ -33,7 +31,6 @@
         end
     end
 
-    """metric is not symmetric"""
     function is_not_symmetric(metric, y_true, y_pred)
         # get mean value(s) of distribution(s)
         point_pred = mean(obs_arrangement(metric), y_pred)
@@ -45,7 +42,6 @@
         end
     end
 
-    """metric = 0 if y_pred == y_true"""
     function is_zero_if_ypred_equals_ytrue(metric, y_true, y_pred)
         @testset "is zero if y_pred == y_true" begin
             @test iszero(metric(y_true, y_true))
@@ -53,7 +49,6 @@
         end
     end
 
-    """error increases as bias increases"""
     function error_increases_as_bias_increases(metric, y_true, y_pred)
         @testset "error increases as bias increases" begin
             v = ones.(size.(y_true))
@@ -77,7 +72,6 @@
         end
     end
 
-    """distributions return larger errors than point predictions"""
     function dist_returns_larger_errors(metric, y_true, y_pred)
         # get mean value(s) of distribution(s)
         point_pred = mean(obs_arrangement(metric), y_pred)
@@ -98,7 +92,6 @@
         end
     end
 
-    """distribution errors converge to point errors correctly"""
     function dist_error_converges_safely(metric, y_true, y_pred)
         # get mean value(s) of distribution(s)
         point_pred = mean(obs_arrangement(metric), y_pred)
@@ -117,7 +110,6 @@
         end
     end
 
-    """error increases only if variance increases"""
     function error_increases_as_var_increases(metric, y_true, y_pred)
         @testset "error increases as variance increase" begin
             y_pred0 = rescale(y_pred, 1)
@@ -139,7 +131,6 @@
         end
     end
 
-    """erroring behaviour"""
     function errors_correctly(metric, y_true, y_pred)
         @testset "erroring" begin
             # errors if trying to compute on 2 distributions

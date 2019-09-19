@@ -20,7 +20,7 @@ The expected square error of an estimator of a normal distribution `X` and the t
 E[X^2] = Var(X) + Bias(X, X')^2
 ```
 
-Note: Jenen's inequality provides that a convex metric computed over a distribution is
+Note: Jensen's inequality provides that a convex metric computed over a distribution is
 greater than or equal to that of the point prediction taken from the distribution mean, thus:
 ```math
 E[X^2] >= E[X]^2
@@ -144,7 +144,7 @@ E[|X|] = X * erf(X / (√2 * σ)) + σ * sqrt(2/π) * exp(-X^2 / 2σ^2)
 ```
 where `erf` is the error function.
 
-Note: Jenen's inequality provides that a convex metric computed over a distribution is
+Note: Jensen's inequality provides that a convex metric computed over a distribution is
 greater than or equal to that of the point prediction taken from the distribution mean, thus:
 ```math
 E[|X|] >= |E[X]|
