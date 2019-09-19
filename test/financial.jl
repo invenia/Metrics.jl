@@ -1,11 +1,8 @@
 using Metrics: split_volume
 
 @testset "financial.jl" begin
-
     @testset "expected return" begin
-
         @testset "basic properties" begin
-
             # simple use of base function
             volumes = [0, 1, -10, 100]
             deltas = [0.1, 0.2, 0.3, 0.4]
@@ -40,7 +37,6 @@ using Metrics: split_volume
 
         end
 
-
         # using dense cov matrix
         num_nodes = 20
         volumes = rand(Uniform(-50,50), num_nodes)
@@ -72,10 +68,23 @@ using Metrics: split_volume
             )
         end
 
+        @testset "AbstractVector" begin
+            sample = [1,2,3,4,5]
+            expected = 3.0
+
+            @test expected_return(sample) == expected
+        end
+
+        @testset "Single value - MethodError" begin
+            @test_throws MethodError expected_return(1)
+        end
+
+        @testset "Empty vector - MethodError" begin
+            @test_throws MethodError expected_return([])
+        end
      end
 
     @testset "volatility" begin
-
         # using diagonal cov matrix
         diag_sqrtcov = Diagonal([5.0, 6.0 ,7.0])
         diag_dist = MvNormal(rand(3), diag_sqrtcov' * diag_sqrtcov)
@@ -101,10 +110,23 @@ using Metrics: split_volume
             @test evaluate(volatility, volumes, samples; obsdim=2) ≈ expected
         end
 
+        @testset "AbstractVector" begin
+            sample = [1,2,3,4,5]
+            expected = 1.5811388300841898
+
+            @test volatility(sample) ≈ expected
+        end
+
+        @testset "Single value - MethodError" begin
+            @test_throws MethodError volatility(0)
+        end
+
+        @testset "Empty vector - MethodError" begin
+            @test_throws MethodError volatility([])
+        end
     end
 
     @testset "sharpe ratio" begin
-
         @testset "simple sharpe ratio" begin
             @testset "vector of returns" begin
                 # basic usage
@@ -221,7 +243,6 @@ using Metrics: split_volume
     end
 
     @testset "evano" begin
-
         @testset "simple evano" begin
             # Basic usage
             returns = collect(1:100)
@@ -307,9 +328,7 @@ using Metrics: split_volume
     end
 
     @testset "expected shortfall" begin
-
         @testset "simple ES" begin
-
             # basic usage
             returns = collect(1:100)
 
@@ -333,7 +352,6 @@ using Metrics: split_volume
         end
 
         @testset "sample ES" begin
-
             # using samples
             volumes = [1, -2, 3, -4, 5, -6, 7, -8, 9, -10]
             samples = Matrix(I, (10, 10))
@@ -372,7 +390,6 @@ using Metrics: split_volume
         end
 
         @testset "analytic ES" begin
-
             seed!(1)
             volumes = [1, -2, 3, -4, 5, -6, 7, -8, 9, -10]
             dense_dist = generate_mvnormal(10)
@@ -406,7 +423,6 @@ using Metrics: split_volume
         end
 
         @testset "erroring" begin
-
             returns = collect(1:100)
             risk_level = 1  # wants Float64
             @test_throws ArgumentError expected_shortfall(returns; risk_level=risk_level)
@@ -453,7 +469,42 @@ using Metrics: split_volume
             @test_throws AssertionError expected_shortfall(volumes, deltas, bad_args...)
             @test_throws AssertionError expected_shortfall(volumes, samples, bad_args...)
             @test_throws AssertionError expected_shortfall(volumes, delta_dist, bad_args...)
+        end
+    end
 
+    @testset "Financial Summaries" begin
+        @testset "volumes::AbstractVector, deltas::Union{MvNormal, AbstractMatrix}" begin
+            num_nodes = 20
+            volumes = rand(Uniform(-50,50), num_nodes)
+            mean_deltas = rand(num_nodes)
+            deltas = generate_mvnormal(mean_deltas, num_nodes)
+
+            expected = Dict()
+            expected[expected_return] = expected_return(volumes, deltas)
+            expected[expected_shortfall] = expected_shortfall(volumes, deltas)
+            expected[sharpe_ratio] = sharpe_ratio(volumes, deltas)
+            expected[volatility] = volatility(volumes, deltas)
+
+            summary = financial_summary(volumes, deltas)
+
+            @test isequal(expected, summary)
+       end
+
+        @testset "returns::AbstractVector; risk_level::Real=0.5" begin
+            returns = rand(20)
+            risk_level = 0.05
+
+            expected = Dict()
+            expected[expected_return] = expected_return(returns)
+            expected[expected_shortfall] = expected_shortfall(returns; risk_level=risk_level)
+            expected[median_over_expected_shortfall] =
+                median_over_expected_shortfall(returns; risk_level=risk_level)
+            expected[sharpe_ratio] = sharpe_ratio(returns)
+            expected[volatility] = volatility(returns)
+
+            summary = financial_summary(returns; risk_level=risk_level)
+
+            @test isequal(expected, summary)
         end
     end
 end

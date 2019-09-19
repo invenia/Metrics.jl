@@ -253,3 +253,22 @@ end
 
 joint_loglikelihood(dist::MvNormal, y_pred) = loglikelihood(dist, y_pred)
 obs_arrangement(::typeof(joint_loglikelihood)) = MatrixColsOfObs()
+
+"""
+    regression_summary(y_true, y_pred, args...)
+
+Calculate a summary of; @ref[`mean_squared_error`], @ref[`root_mean_squared_error`],
+@ref[`normalised_root_mean_squared_error`], @ref[`standardized_mean_squared_error`],
+@ref[`expected_absolute_error`], @ref[`mean_absolute_error`].
+
+Returns a Dictionary where the `Key` is the function, and the `Value` is the result of the function.
+"""
+function regression_summary(args...)
+    summary = Dict()
+
+    for metric in REGRESSION_METRICS
+        summary[metric] = evaluate(metric, args...)
+    end
+
+    return summary
+end

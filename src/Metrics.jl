@@ -14,6 +14,8 @@ include("kullback_leibler.jl")
 include("financial.jl")
 include("price_impact.jl")
 
+const REGRESSION_METRICS = (mse, rmse, nrmse, smse, mae, mase)
+
 export
     evaluate,
     # regression
@@ -30,6 +32,7 @@ export
     picp,
     wpicp,
     apicp,
+    regression_summary, REGRESSION_METRICS,
     # divergence
     kullback_leibler, kl,
     # financials
@@ -38,5 +41,6 @@ export
     sharpe_ratio,
     median_over_expected_shortfall, evano,
     median_return,
-    expected_shortfall, es
+    expected_shortfall, es,
+    financial_summary
 end # module
