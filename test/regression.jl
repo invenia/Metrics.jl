@@ -509,6 +509,97 @@
         end
     end  # collection of obs
 
+
+        @testset "Regression Summaries" begin
+            function generate_expected_values(y_true, y_pred)
+                expected = Dict()
+
+                for metric in REGRESSION_METRICS
+                    expected[metric] = metric(y_true, y_pred)
+                end
+
+                return expected
+            end
+
+            @testset "Scalar" begin
+                y_true = [1,2,3,4]
+                y_pred = [5,6,7,8]
+
+                expected = generate_expected_values(y_true, y_pred)
+                summary = regression_summary(y_true, y_pred)
+
+                @test !isempty(summary)
+                @test isequal(expected, summary)
+            end
+
+            @testset "Scalar - Indexed Values" begin
+                y_true = [1,2,3,4]
+                y_pred = [5,6,7,8]
+
+                expected = generate_expected_values(y_true, y_pred)
+                summary = regression_summary(y_true, y_pred)
+
+                @test !isempty(summary)
+                @test isequal(expected[mse], summary[mse])
+                @test isequal(expected[rmse], summary[rmse])
+                @test isequal(expected[nrmse], summary[nrmse])
+                @test isequal(expected[smse], summary[smse])
+                @test isequal(expected[mase], summary[mase])
+            end
+
+            @testset "Vector" begin
+                y_true = [[1,2,3], [4,5,6], [7,8,9]]
+                y_pred = [[10, 11, 12], [13, 14, 15], [16, 17, 18]]
+
+                expected = generate_expected_values(y_true, y_pred)
+                summary = regression_summary(y_true, y_pred)
+
+                @test !isempty(summary)
+                @test isequal(expected, summary)
+            end
+
+            @testset "Vector - Indexed Values" begin
+                y_true = [[1,2,3], [4,5,6], [7,8,9]]
+                y_pred = [[10, 11, 12], [13, 14, 15], [16, 17, 18]]
+
+                expected = generate_expected_values(y_true, y_pred)
+                summary = regression_summary(y_true, y_pred)
+
+                @test !isempty(summary)
+                @test isequal(expected[mse], summary[mse])
+                @test isequal(expected[rmse], summary[rmse])
+                @test isequal(expected[nrmse], summary[nrmse])
+                @test isequal(expected[smse], summary[smse])
+                @test isequal(expected[mase], summary[mase])
+            end
+
+            @testset "Matrix" begin
+                y_true = [[1 2; 3 4], [3 4; 5 6], [5 6; 7 8]]
+                y_pred = [[7 8; 9 10], [9 10; 11 12], [11 12; 13 14]]
+
+                expected = generate_expected_values(y_true, y_pred)
+                summary = regression_summary(y_true, y_pred)
+
+                @test !isempty(summary)
+                @test isequal(expected, summary)
+            end
+
+            @testset "Matrix - Indexed Values" begin
+                y_true = [[1 2; 3 4], [3 4; 5 6], [5 6; 7 8]]
+                y_pred = [[7 8; 9 10], [9 10; 11 12], [11 12; 13 14]]
+
+                expected = generate_expected_values(y_true, y_pred)
+                summary = regression_summary(y_true, y_pred)
+
+                @test !isempty(summary)
+                @test isequal(expected[mse], summary[mse])
+                @test isequal(expected[rmse], summary[rmse])
+                @test isequal(expected[nrmse], summary[nrmse])
+                @test isequal(expected[smse], summary[smse])
+                @test isequal(expected[mase], summary[mase])
+            end
+        end
+
     @testset "marginal_loglikelihood" begin
         @testset "scalar point" begin
             dist = Normal(0.1, 2)
