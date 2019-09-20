@@ -14,6 +14,7 @@ include("regression_picp.jl")
 include("kullback_leibler.jl")
 include("financial.jl")
 include("price_impact.jl")
+include("deprecated.jl")
 
 const REGRESSION_METRICS = (mse, rmse, nrmse, smse, mae, mase)
 
@@ -28,11 +29,11 @@ export
     expected_absolute_error, ae,
     mean_absolute_error, mae,
     mean_absolute_scaled_error, mase,
-    marginal_loglikelihood,
-    joint_loglikelihood,
-    picp,
-    wpicp,
-    apicp,
+    marginal_gaussian_loglikelihood,
+    joint_gaussian_loglikelihood,
+    prediction_interval_coverage_probability, picp,
+    window_prediction_interval_coverage_probability, wpicp,
+    adjusted_prediction_interval_coverage_probability, apicp,
     regression_summary, REGRESSION_METRICS,
     # divergence
     kullback_leibler, kl,

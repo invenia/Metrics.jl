@@ -194,7 +194,8 @@ const ae = expected_absolute_error
 """
     mean_absolute_error(y_true, y_pred) -> Float64
 
-Compute the mean absolute error between a set of observations `y_true` and point predictions `y_pred`.
+Compute the mean absolute error between a set of observations `y_true` and point predictions
+`y_pred`.
 """
 function mean_absolute_error(y_true, y_pred)
     @_dimcheck size(y_true) == size(y_pred)
@@ -209,13 +210,13 @@ const mae = mean_absolute_error
 
 Compute the mean absolute scaled error between a set of truths `y_true` and predictions `y_pred`.
 
-The denominator in the MASE is typically defined in the literature as the mean absolute error of the naive
-one-step forecast on the model training set; that is, a model that assigns preceding values in the
-training set as the forecast for the next observation.
+The denominator in the MASE is typically defined in the literature as the mean absolute
+error of the naive one-step forecast on the model training set; that is, a model that
+assigns preceding values in the training set as the forecast for the next observation.
 
-We will instead be computing this quantity on the forecast set, i.e. the target day, (which may be
-different from the training set). This makes the metric slightly less robust on inputs with a small number
-of points, which may result in a denominator approximating zero.
+We will instead be computing this quantity on the forecast set, i.e. the target day, (which
+may be different from the training set). This makes the metric slightly less robust on
+inputs with a small number of points, which may result in a denominator approximating zero.
 
 Things to note about the implementation of MASE:
 ---
@@ -237,47 +238,49 @@ obs_arrangement(::typeof(mean_absolute_scaled_error)) = IteratorOfObs()
 const mase = mean_absolute_scaled_error
 
 """
-    marginal_loglikelihood(dist::Distribution{Univariate}, y_pred) -> Float64
-    marginal_loglikelihood(dist::Distribution{Multivariate}, y_pred) -> Float64
+    marginal_gaussian_loglikelihood(dist::Distribution{Univariate}, y_pred) -> Float64
+    marginal_gaussian_loglikelihood(dist::Distribution{Multivariate}, y_pred) -> Float64
 
-Computes the marginal loglikelihood of the distribution `dist` given some data `y_pred`
-which takes only the diagonal elements of the covariance matrix when calculating the
-probability of the points.
+Compute the marginal log likelihood of the data `y_pred` assuming a Gaussian distribution
+that is built via moment matching with the arbitrary input distribution `dist`. This function
+takes only the diagonal elements of the covariance matrix when calculating the probability
+of the points.
 
-`marginal_loglikelihood(dist, y_pred) = log(P (dist | y_pred))`
+`marginal_gaussian_loglikelihood(dist, y_pred) = log(P (dist | y_pred))`
 """
-function marginal_loglikelihood(dist::Distribution{Univariate}, y_pred)
+function marginal_gaussian_loglikelihood(dist::Distribution{Univariate}, y_pred)
     normalized_dist = Normal(mean(dist), std(dist))
     return loglikelihood(normalized_dist, y_pred)
 end
 
-function marginal_loglikelihood(dist::Distribution{Multivariate}, y_pred)
+function marginal_gaussian_loglikelihood(dist::Distribution{Multivariate}, y_pred)
     # `std` is not defined on `MvNormal` so we use `sqrt.(var(...))`
     normalized_dist = MvNormal(mean(dist), sqrt.(var(dist)))
     return loglikelihood(normalized_dist, y_pred)
 end
-obs_arrangement(::typeof(marginal_loglikelihood)) = MatrixColsOfObs()
+obs_arrangement(::typeof(marginal_gaussian_loglikelihood)) = MatrixColsOfObs()
 
 """
-    joint_loglikelihood(dist::Distribution{Univariate}, y_pred) -> Float64
-    joint_loglikelihood(dist::Distribution{Multivariate}, y_pred) -> Float64
+    joint_gaussian_loglikelihood(dist::Distribution{Univariate}, y_pred) -> Float64
+    joint_gaussian_loglikelihood(dist::Distribution{Multivariate}, y_pred) -> Float64
 
-Computes the joint loglikelihood of the distribution `dist` given some data `y_pred` which
+Compute the joint loglikelihood of the data `y_pred` assuming a Gaussian distribution that
+is built via moment matching with the arbitrary input distribution `dist`. This function
 takes the full covariance matrix when calculating the joint probability of the points.
 
-`joint_loglikelihood(dist, y_pred) = log(P (dist | y_pred))`
+`joint_gaussian_loglikelihood(dist, y_pred) = log(P (dist | y_pred))`
 """
-function joint_loglikelihood(dist::Distribution{Univariate}, y_pred)
-    return marginal_loglikelihood(dist, y_pred)
+function joint_gaussian_loglikelihood(dist::Distribution{Univariate}, y_pred)
+    return marginal_gaussian_loglikelihood(dist, y_pred)
 end
 
-function joint_loglikelihood(dist::Distribution{Multivariate}, y_pred)
+function joint_gaussian_loglikelihood(dist::Distribution{Multivariate}, y_pred)
     normalized_dist = MvNormal(mean(dist), cov(dist))
     return loglikelihood(normalized_dist, y_pred)
 end
 
-joint_loglikelihood(dist::MvNormal, y_pred) = loglikelihood(dist, y_pred)
-obs_arrangement(::typeof(joint_loglikelihood)) = MatrixColsOfObs()
+joint_gaussian_loglikelihood(dist::MvNormal, y_pred) = loglikelihood(dist, y_pred)
+obs_arrangement(::typeof(joint_gaussian_loglikelihood)) = MatrixColsOfObs()
 
 """
     regression_summary(y_true, y_pred, args...)

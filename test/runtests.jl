@@ -33,4 +33,5 @@ seed!(1)
     include("kullback_leibler.jl")
     include("financial.jl")
     include("price_impact.jl")
+    include("deprecated.jl")
 end
