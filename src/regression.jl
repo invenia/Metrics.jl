@@ -19,6 +19,14 @@ The expected square error of an estimator of a normal distribution `X` and the t
 ```math
 E[X^2] = Var(X) + Bias(X, X')^2
 ```
+
+Note: Jensen's inequality provides that a convex metric computed over a distribution is
+greater than or equal to that of the point prediction taken from the distribution mean, thus:
+```math
+E[X^2] >= E[X]^2
+```
+See : https://en.wikipedia.org/wiki/Jensen%27s_inequality
+
 Note: In conventional literature this function is called the "mean squared error" (MSE).
 To avoid confusing this as a metric that computes the "mean" as an average over a collection
 of values, we use the term "expected" to conform with the statistical nomenclature.
@@ -39,7 +47,10 @@ function expected_squared_error(y_true, y_pred::MatrixNormal)
     # var and cov not yet defined for MatrixVariates so must be transformed to MultiVariate
     # can be removed when new Distribution version is tagged
     # https://github.com/JuliaStats/Distributions.jl/pull/955
-    return expected_squared_error(vec(y_true), vec(y_pred))
+    return expected_squared_error(
+        vec(y_true),
+        MvNormal(vec(y_pred.M), PSDMat(kron(y_pred.V.mat, y_pred.U.mat))),
+    )
 end
 
 expected_squared_error(y_true::Distribution, y_pred) = expected_squared_error(y_pred, y_true)
@@ -129,9 +140,16 @@ Given a normal random variable `X` with mean mean `μ` and standard deviation `�
 expected absolute value is described by the folded normal distribution with the expected
 value defined by the following function:
 ```math
-E[|X|] = μ * erf(μ / (√2 * σ)) + σ * sqrt(2/π) * exp(-μ^2 / 2σ^2)
+E[|X|] = X * erf(X / (√2 * σ)) + σ * sqrt(2/π) * exp(-X^2 / 2σ^2)
 ```
 where `erf` is the error function.
+
+Note: Jensen's inequality provides that a convex metric computed over a distribution is
+greater than or equal to that of the point prediction taken from the distribution mean, thus:
+```math
+E[|X|] >= |E[X]|
+```
+See : https://en.wikipedia.org/wiki/Jensen%27s_inequality
 
 Note: In conventional literature this function is often called the "mean absolute error" (MAE).
 To avoid confusing this as a metric that computes the "mean" as an average over a collection
@@ -146,11 +164,15 @@ function expected_absolute_error(y_true, y_pred::Union{Normal, AbstractMvNormal}
     @_dimcheck size(y_true) == size(y_pred)
     μ = mean(y_pred) - y_true
     σ = sqrt.(var(y_pred))
+    z = μ ./ σ
 
-    mu_term = dot(μ, erf.(μ ./ (sqrt(2) * σ)))
-    sigma_term = sqrt(2/π) * dot(σ, exp.(-μ.^2 ./ 2σ.^2))
+    # compute the absolute error over each dimension
+    abs_err = (μ .* erf.(z / √2)) + sqrt(2 / π) * (σ .* exp.(-0.5 * z.^2))
 
-    return mu_term + sigma_term
+    # we can get NaNs if μ=σ=0 so we skip these when returning the result
+    # this is reasonable because μ=σ=0 implies a perfect forecast in that dimension
+    return all(isnan.(abs_err)) ? 0 : sum(abs_err[.!isnan.(abs_err)])
+
 end
 
 
@@ -159,7 +181,10 @@ function expected_absolute_error(y_true, y_pred::MatrixNormal)
     # var and cov not yet defined for MatrixVariates so must be transformed to MultiVariate
     # can be removed when new Distribution version is tagged
     # https://github.com/JuliaStats/Distributions.jl/pull/955
-    return expected_absolute_error(vec(y_true), vec(y_pred))
+    return expected_absolute_error(
+        vec(y_true),
+        MvNormal(vec(y_pred.M), PSDMat(kron(y_pred.V.mat, y_pred.U.mat))),
+    )
 end
 
 expected_absolute_error(y_true::Distribution, y_pred) = expected_absolute_error(y_pred, y_true)

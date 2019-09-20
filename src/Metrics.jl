@@ -3,6 +3,7 @@ module Metrics
 using Distributions
 using LinearAlgebra: cholesky, det, dot, I, norm, tr
 using NamedDims
+using PSDMats
 using SpecialFunctions
 using StatsUtils: sqrtcov
 
