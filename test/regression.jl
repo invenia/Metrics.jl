@@ -391,38 +391,12 @@
                 @testset "point prediction" begin
                     @test mse(y_true, y_means) ≈ expected[typeof(se)]["point"][type] / length(y_true)
                     @test mae(y_true, y_means) ≈ expected[typeof(ae)]["point"][type] / length(y_true)
-
-                    # evaluate will mess up the matrix thinking it is a collection of vectors
-                    if type != "matrix"
-                        @test isapprox(
-                            evaluate(mse, y_true, y_means),
-                            expected[typeof(se)]["point"][type] / length(y_true)
-                        )
-
-                        @test isapprox(
-                            evaluate(mae, y_true, y_means),
-                            expected[typeof(ae)]["point"][type] / length(y_true)
-                        )
-                    end
                 end
 
                 # compute metric on distribution predictions
                 @testset "dist prediction" begin
                     @test mse(y_true, y_pred) ≈ expected[typeof(se)]["dist"][type] / length(y_true)
                     @test mae(y_true, y_pred) ≈ expected[typeof(ae)]["dist"][type] / length(y_true)
-
-                    # evaluate will mess up the matrix thinking it is a collection of vectors
-                    if type != "matrix"
-                        @test isapprox(
-                            evaluate(mse, y_true, y_pred),
-                            expected[typeof(se)]["dist"][type] / length(y_true)
-                        )
-
-                        @test isapprox(
-                            evaluate(mae, y_true, y_pred),
-                            expected[typeof(ae)]["dist"][type] / length(y_true)
-                        )
-                    end
                 end
             end
 
