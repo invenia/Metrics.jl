@@ -68,7 +68,7 @@ function mean_squared_error(y_true::AbstractVector, y_pred::AbstractVector)
     return mean(expected_squared_error.(y_true, y_pred))
 end
 
-mean_squared_error(y_true, y_pred) = expected_squared_error(y_true, y_pred) / length(y_pred)
+mean_squared_error(y_true, y_pred) = sum(expected_squared_error.(y_true, y_pred)) / length(y_pred)
 
 obs_arrangement(::typeof(mean_squared_error)) = IteratorOfObs()
 const mse = mean_squared_error
@@ -204,7 +204,7 @@ function mean_absolute_error(y_true, y_pred::AbstractVector)
     return mean(expected_absolute_error.(y_true, y_pred))
 end
 
-mean_absolute_error(y_true, y_pred) = expected_absolute_error(y_true, y_pred) / length(y_pred)
+mean_absolute_error(y_true, y_pred) = sum(expected_absolute_error.(y_true, y_pred)) / length(y_pred)
 
 obs_arrangement(::typeof(mean_absolute_error)) = IteratorOfObs()
 const mae = mean_absolute_error
@@ -299,8 +299,9 @@ function regression_summary(args...)
     summary = Dict()
 
     for metric in REGRESSION_METRICS
-        summary[metric] = evaluate(metric, args...)
+        summary[metric] = metric(args...)
     end
 
     return summary
 end
+obs_arrangement(::typeof(regression_summary)) = IteratorOfObs()

@@ -525,8 +525,14 @@
                 y_true = [1,2,3,4]
                 y_pred = [5,6,7,8]
 
+                expected = generate_expected_values(first(y_true), first(y_pred))
+                summary = regression_summary(first(y_true), first(y_pred))
+
+                @test !isempty(summary)
+                @test isequal(expected, summary)
+
                 expected = generate_expected_values(y_true, y_pred)
-                summary = regression_summary(y_true, y_pred)
+                summary = evaluate(regression_summary, y_true, y_pred)
 
                 @test !isempty(summary)
                 @test isequal(expected, summary)
@@ -544,15 +550,20 @@
                 @test isequal(expected[rmse], summary[rmse])
                 @test isequal(expected[nrmse], summary[nrmse])
                 @test isequal(expected[smse], summary[smse])
-                @test isequal(expected[mase], summary[mase])
             end
 
             @testset "Vector" begin
                 y_true = [[1,2,3], [4,5,6], [7,8,9]]
                 y_pred = [[10, 11, 12], [13, 14, 15], [16, 17, 18]]
 
+                expected = generate_expected_values(first(y_true), first(y_pred))
+                summary = regression_summary(first(y_true), first(y_pred))
+
+                @test !isempty(summary)
+                @test isequal(expected, summary)
+
                 expected = generate_expected_values(y_true, y_pred)
-                summary = regression_summary(y_true, y_pred)
+                summary = evaluate(regression_summary, y_true, y_pred)
 
                 @test !isempty(summary)
                 @test isequal(expected, summary)
@@ -570,15 +581,20 @@
                 @test isequal(expected[rmse], summary[rmse])
                 @test isequal(expected[nrmse], summary[nrmse])
                 @test isequal(expected[smse], summary[smse])
-                @test isequal(expected[mase], summary[mase])
             end
 
             @testset "Matrix" begin
                 y_true = [[1 2; 3 4], [3 4; 5 6], [5 6; 7 8]]
                 y_pred = [[7 8; 9 10], [9 10; 11 12], [11 12; 13 14]]
 
+                expected = generate_expected_values(first(y_true), first(y_pred))
+                summary = regression_summary(first(y_true), first(y_pred))
+
+                @test !isempty(summary)
+                @test isequal(expected, summary)
+
                 expected = generate_expected_values(y_true, y_pred)
-                summary = regression_summary(y_true, y_pred)
+                summary = evaluate(regression_summary, y_true, y_pred)
 
                 @test !isempty(summary)
                 @test isequal(expected, summary)
@@ -596,7 +612,6 @@
                 @test isequal(expected[rmse], summary[rmse])
                 @test isequal(expected[nrmse], summary[nrmse])
                 @test isequal(expected[smse], summary[smse])
-                @test isequal(expected[mase], summary[mase])
             end
         end
 
