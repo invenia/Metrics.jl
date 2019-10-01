@@ -381,6 +381,53 @@
             end
         end
 
+        @testset "Mean metrics on single observation" begin
+
+            @testset "$type expected result" for (type, (y_true, y_pred)) in forecast_pairs
+
+                y_means = mean(y_pred)
+
+                # compute metric on point predictions
+                @testset "point prediction" begin
+                    @test mse(y_true, y_means) ≈ expected[typeof(se)]["point"][type] / length(y_true)
+                    @test mae(y_true, y_means) ≈ expected[typeof(ae)]["point"][type] / length(y_true)
+
+                    # evaluate will mess up the matrix thinking it is a collection of vectors
+                    if type != "matrix"
+                        @test isapprox(
+                            evaluate(mse, y_true, y_means),
+                            expected[typeof(se)]["point"][type] / length(y_true)
+                        )
+
+                        @test isapprox(
+                            evaluate(mae, y_true, y_means),
+                            expected[typeof(ae)]["point"][type] / length(y_true)
+                        )
+                    end
+                end
+
+                # compute metric on distribution predictions
+                @testset "dist prediction" begin
+                    @test mse(y_true, y_pred) ≈ expected[typeof(se)]["dist"][type] / length(y_true)
+                    @test mae(y_true, y_pred) ≈ expected[typeof(ae)]["dist"][type] / length(y_true)
+
+                    # evaluate will mess up the matrix thinking it is a collection of vectors
+                    if type != "matrix"
+                        @test isapprox(
+                            evaluate(mse, y_true, y_pred),
+                            expected[typeof(se)]["dist"][type] / length(y_true)
+                        )
+
+                        @test isapprox(
+                            evaluate(mae, y_true, y_pred),
+                            expected[typeof(ae)]["dist"][type] / length(y_true)
+                        )
+                    end
+                end
+            end
+
+        end
+
     end  # single obs
 
     @testset "collection of obs" begin

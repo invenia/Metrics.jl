@@ -42,17 +42,6 @@ function expected_squared_error(y_true,  y_pred::Distribution)
     return sum(var(y_pred)) + sum(abs2, bias)
 end
 
-function expected_squared_error(y_true, y_pred::MatrixNormal)
-    # Temporary hack
-    # var and cov not yet defined for MatrixVariates so must be transformed to MultiVariate
-    # can be removed when new Distribution version is tagged
-    # https://github.com/JuliaStats/Distributions.jl/pull/955
-    return expected_squared_error(
-        vec(y_true),
-        MvNormal(vec(y_pred.M), PSDMat(kron(y_pred.V.mat, y_pred.U.mat))),
-    )
-end
-
 expected_squared_error(y_true::Distribution, y_pred) = expected_squared_error(y_pred, y_true)
 obs_arrangement(::typeof(expected_squared_error)) = SingleObs()
 const se = expected_squared_error
@@ -68,7 +57,7 @@ function mean_squared_error(y_true::AbstractVector, y_pred::AbstractVector)
     return mean(expected_squared_error.(y_true, y_pred))
 end
 
-mean_squared_error(y_true, y_pred) = sum(expected_squared_error.(y_true, y_pred)) / length(y_pred)
+mean_squared_error(y_true, y_pred) = expected_squared_error(y_true, y_pred) / length(y_pred)
 
 obs_arrangement(::typeof(mean_squared_error)) = IteratorOfObs()
 const mse = mean_squared_error
@@ -162,7 +151,7 @@ absolute errors over the individual dimensions and sum the result.
 
 For more information see: https://en.wikipedia.org/wiki/Folded_normal_distribution
 """
-function expected_absolute_error(y_true, y_pred::Union{Normal, AbstractMvNormal})
+function expected_absolute_error(y_true, y_pred::Distribution)
     @_dimcheck size(y_true) == size(y_pred)
     μ = mean(y_pred) - y_true
     σ = sqrt.(var(y_pred))
@@ -177,18 +166,6 @@ function expected_absolute_error(y_true, y_pred::Union{Normal, AbstractMvNormal}
 
 end
 
-
-function expected_absolute_error(y_true, y_pred::MatrixNormal)
-    # Temporary hack
-    # var and cov not yet defined for MatrixVariates so must be transformed to MultiVariate
-    # can be removed when new Distribution version is tagged
-    # https://github.com/JuliaStats/Distributions.jl/pull/955
-    return expected_absolute_error(
-        vec(y_true),
-        MvNormal(vec(y_pred.M), PSDMat(kron(y_pred.V.mat, y_pred.U.mat))),
-    )
-end
-
 expected_absolute_error(y_true::Distribution, y_pred) = expected_absolute_error(y_pred, y_true)
 obs_arrangement(::typeof(expected_absolute_error)) = SingleObs()
 const ae = expected_absolute_error
@@ -199,12 +176,12 @@ const ae = expected_absolute_error
 Compute the mean absolute error between a set of observations `y_true` and point predictions
 `y_pred`.
 """
-function mean_absolute_error(y_true, y_pred::AbstractVector)
+function mean_absolute_error(y_true::AbstractVector, y_pred::AbstractVector)
     @_dimcheck size(y_true) == size(y_pred)
     return mean(expected_absolute_error.(y_true, y_pred))
 end
 
-mean_absolute_error(y_true, y_pred) = sum(expected_absolute_error.(y_true, y_pred)) / length(y_pred)
+mean_absolute_error(y_true, y_pred) = expected_absolute_error(y_true, y_pred) / length(y_pred)
 
 obs_arrangement(::typeof(mean_absolute_error)) = IteratorOfObs()
 const mae = mean_absolute_error
