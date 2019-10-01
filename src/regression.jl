@@ -63,10 +63,12 @@ const se = expected_squared_error
 Compute the mean square error between a set of observations `y_true` and predictions `y_pred`.
 
 """
-function mean_squared_error(y_true, y_pred)
+function mean_squared_error(y_true::AbstractVector, y_pred::AbstractVector)
     @_dimcheck size(y_true) == size(y_pred)
     return mean(expected_squared_error.(y_true, y_pred))
 end
+
+mean_squared_error(y_true, y_pred) = expected_squared_error(y_true, y_pred) / length(y_pred)
 
 obs_arrangement(::typeof(mean_squared_error)) = IteratorOfObs()
 const mse = mean_squared_error
@@ -197,10 +199,12 @@ const ae = expected_absolute_error
 Compute the mean absolute error between a set of observations `y_true` and point predictions
 `y_pred`.
 """
-function mean_absolute_error(y_true, y_pred)
+function mean_absolute_error(y_true, y_pred::AbstractVector)
     @_dimcheck size(y_true) == size(y_pred)
     return mean(expected_absolute_error.(y_true, y_pred))
 end
+
+mean_absolute_error(y_true, y_pred) = expected_absolute_error(y_true, y_pred) / length(y_pred)
 
 obs_arrangement(::typeof(mean_absolute_error)) = IteratorOfObs()
 const mae = mean_absolute_error
