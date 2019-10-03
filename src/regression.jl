@@ -47,17 +47,24 @@ obs_arrangement(::typeof(expected_squared_error)) = SingleObs()
 const se = expected_squared_error
 
 """
-    mean_squared_error(y_true, y_pred) -> Float64
+    mean_squared_error(y_true::AbstractArray, y_pred::AbstractArray) -> Float64
 
-Compute the mean square error between a set of observations `y_true` and predictions `y_pred`.
-
+Compute the mean squared error between a set of observations `y_true` and a set of
+predictions `y_pred`, which can be either point or distribution predictions.
 """
-function mean_squared_error(y_true::AbstractVector, y_pred::AbstractVector)
+function mean_squared_error(y_true::AbstractArray, y_pred::AbstractArray)
     @_dimcheck size(y_true) == size(y_pred)
     return mean(expected_squared_error.(y_true, y_pred))
 end
 
-mean_squared_error(y_true, y_pred) = expected_squared_error(y_true, y_pred) / length(y_pred)
+"""
+    mean_squared_error(y_true, y_pred) -> Float64
+
+Compute the squared error between a single observation `y_true` and a single prediction
+`y_pred`, which can be either a point or a distribution, and average over the dimensions.
+"""
+mean_squared_error(y_true, y_pred::Number) = expected_squared_error(y_true, y_pred)
+mean_squared_error(y_true, y_pred::Distribution) = expected_squared_error(y_true, y_pred) / length(y_pred)
 
 obs_arrangement(::typeof(mean_squared_error)) = IteratorOfObs()
 const mse = mean_squared_error
@@ -171,17 +178,24 @@ obs_arrangement(::typeof(expected_absolute_error)) = SingleObs()
 const ae = expected_absolute_error
 
 """
-    mean_absolute_error(y_true, y_pred) -> Float64
+    mean_absolute_error(y_true::AbstractArray, y_pred::AbstractArray) -> Float64
 
-Compute the mean absolute error between a set of observations `y_true` and point predictions
-`y_pred`.
+Compute the mean absolute error between a set of observations `y_true` and a set of
+predictions `y_pred`, which can be either point or distribution predictions.
 """
-function mean_absolute_error(y_true::AbstractVector, y_pred::AbstractVector)
+function mean_absolute_error(y_true::AbstractArray, y_pred::AbstractArray)
     @_dimcheck size(y_true) == size(y_pred)
     return mean(expected_absolute_error.(y_true, y_pred))
 end
 
-mean_absolute_error(y_true, y_pred) = expected_absolute_error(y_true, y_pred) / length(y_pred)
+"""
+    mean_absolute_error(y_true, y_pred) -> Float64
+
+Compute the absolute error between a single observation `y_true` and a single prediction
+`y_pred`, which can be either a point or a distribution, and average over the dimensions.
+"""
+mean_absolute_error(y_true, y_pred::Number) = expected_absolute_error(y_true, y_pred)
+mean_absolute_error(y_true, y_pred::Distribution) = expected_absolute_error(y_true, y_pred) / length(y_pred)
 
 obs_arrangement(::typeof(mean_absolute_error)) = IteratorOfObs()
 const mae = mean_absolute_error

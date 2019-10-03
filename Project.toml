@@ -15,7 +15,7 @@ StatsUtils = "d94fc345-0ff4-56ba-a2b2-f5d62e4638cc"
 Test = "8dfed614-e22c-5e08-85e1-65c5234f0b40"
 
 [compat]
-Distributions = "0.21"
+Distributions = "0.21.3"
 StatsUtils = "1.0.1"
 julia = "1"
 
