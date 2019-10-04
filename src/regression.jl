@@ -55,7 +55,7 @@ is taken over both the number of observations and their dimension.
 """
 function mean_squared_error(y_true::AbstractArray, y_pred::AbstractArray)
     @_dimcheck size(y_true) == size(y_pred)
-    return mean(expected_squared_error.(y_true, y_pred) ./ length.(y_true))
+    return mean(mean_squared_error.(y_true, y_pred))
 end
 
 """
@@ -66,6 +66,7 @@ Compute the squared error between a single observation `y_true` and a single pre
 """
 mean_squared_error(y_true, y_pred::Number) = expected_squared_error(y_true, y_pred)
 mean_squared_error(y_true, y_pred::Distribution) = expected_squared_error(y_true, y_pred) / length(y_true)
+mean_squared_error(y_true, y_pred) = mean_squared_error(y_pred, y_true)
 
 obs_arrangement(::typeof(mean_squared_error)) = IteratorOfObs()
 const mse = mean_squared_error
@@ -198,6 +199,7 @@ Compute the absolute error between a single observation `y_true` and a single pr
 """
 mean_absolute_error(y_true, y_pred::Number) = expected_absolute_error(y_true, y_pred)
 mean_absolute_error(y_true, y_pred::Distribution) = expected_absolute_error(y_true, y_pred) / length(y_pred)
+mean_absolute_error(y_true, y_pred) = mean_absolute_error(y_pred, y_true)
 
 obs_arrangement(::typeof(mean_absolute_error)) = IteratorOfObs()
 const mae = mean_absolute_error
