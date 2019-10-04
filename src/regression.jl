@@ -50,11 +50,12 @@ const se = expected_squared_error
     mean_squared_error(y_true::AbstractArray, y_pred::AbstractArray) -> Float64
 
 Compute the mean squared error between a set of observations `y_true` and a set of
-predictions `y_pred`, which can be either point or distribution predictions.
+predictions `y_pred`, which can be either point or distribution predictions, where the mean
+is taken over both the number of observations and their dimension.
 """
 function mean_squared_error(y_true::AbstractArray, y_pred::AbstractArray)
     @_dimcheck size(y_true) == size(y_pred)
-    return mean(expected_squared_error.(y_true, y_pred))
+    return mean(expected_squared_error.(y_true, y_pred) ./ length.(y_true))
 end
 
 """
@@ -64,7 +65,7 @@ Compute the squared error between a single observation `y_true` and a single pre
 `y_pred`, which can be either a point or a distribution, and average over the dimensions.
 """
 mean_squared_error(y_true, y_pred::Number) = expected_squared_error(y_true, y_pred)
-mean_squared_error(y_true, y_pred::Distribution) = expected_squared_error(y_true, y_pred) / length(y_pred)
+mean_squared_error(y_true, y_pred::Distribution) = expected_squared_error(y_true, y_pred) / length(y_true)
 
 obs_arrangement(::typeof(mean_squared_error)) = IteratorOfObs()
 const mse = mean_squared_error
@@ -181,11 +182,12 @@ const ae = expected_absolute_error
     mean_absolute_error(y_true::AbstractArray, y_pred::AbstractArray) -> Float64
 
 Compute the mean absolute error between a set of observations `y_true` and a set of
-predictions `y_pred`, which can be either point or distribution predictions.
+predictions `y_pred`, which can be either point or distribution predictions, where the mean
+is taken over both the number of observations and their dimension.
 """
 function mean_absolute_error(y_true::AbstractArray, y_pred::AbstractArray)
     @_dimcheck size(y_true) == size(y_pred)
-    return mean(expected_absolute_error.(y_true, y_pred))
+    return mean(expected_absolute_error.(y_true, y_pred) ./ length.(y_true))
 end
 
 """

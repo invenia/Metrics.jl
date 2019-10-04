@@ -426,61 +426,61 @@
             typeof(mean_squared_error) => Dict(
                 "dist" => Dict(
                     "scalar" => 74 / 3 + 2.2^2,
-                    "vector" => 290 / 3 + (2 + 2.2 + 3),
-                    "matrix" => 357 / 3 + 167.75,
+                    "vector" => (290 / 3 + (2 + 2.2 + 3)) / 3,
+                    "matrix" => (357 / 3 + 167.75) / 6,
                 ),
                 "point" => Dict(
                     "scalar" => 74 / 3,
-                    "vector" => 290 / 3,
-                    "matrix" => 357 / 3,
+                    "vector" => 290 / 9,
+                    "matrix" => 357 / 18,
                 )
             ),
             typeof(root_mean_squared_error) => Dict(
                 "dist" => Dict(
                     "scalar" => sqrt(74 / 3 + 2.2^2),
-                    "vector" => sqrt(290 / 3 + (2 + 2.2 + 3)),
-                    "matrix" => sqrt(357 / 3 + 167.75),
+                    "vector" => sqrt((290 / 3 + (2 + 2.2 + 3)) / 3),
+                    "matrix" => sqrt((357 / 3 + 167.75) / 6),
                 ),
                 "point" => Dict(
                     "scalar" => sqrt(74 / 3),
-                    "vector" => sqrt(290 / 3),
-                    "matrix" => sqrt(357 / 3),
+                    "vector" => sqrt(290 / 9),
+                    "matrix" => sqrt(357 / 18),
                 )
             ),
             typeof(normalised_root_mean_squared_error) => Dict(
                 "dist" => Dict(
                     "scalar" => sqrt(74 / 3 + 2.2^2) / 9,
-                    "vector" => sqrt(290 / 3 + (2 + 2.2 + 3)) / 20,
-                    "matrix" => sqrt(357 / 3 + 167.75) / 12,
+                    "vector" => sqrt((290 / 3 + (2 + 2.2 + 3)) / 3) / 20,
+                    "matrix" => sqrt((357 / 3 + 167.75) / 6) / 12,
                 ),
                 "point" => Dict(
                     "scalar" => sqrt(74 / 3) / 9,
-                    "vector" => sqrt(290 / 3) / 20,
-                    "matrix" => sqrt(357 / 3) / 12,
+                    "vector" => sqrt(290 / 9) / 20,
+                    "matrix" => sqrt(357 / 18) / 12,
                 )
             ),
             typeof(standardized_mean_squared_error) => Dict(
                 "dist" => Dict(
                     "scalar" => (74 / 3 + 2.2^2) / 4.333333333333334,
-                    "vector" => (290 / 3 + (2 + 2.2 + 3)) / 34.115682058464884,
-                    "matrix" => (357 / 3 + 167.75) / 15.693410363878222,
+                    "vector" => ((290 / 3 + (2 + 2.2 + 3)) / 3) / 34.115682058464884,
+                    "matrix" => ((357 / 3 + 167.75) / 6) / 15.693410363878222,
                 ),
                 "point" => Dict(
                     "scalar" => (74 / 3) / 4.333333333333334,
-                    "vector" => (290 / 3) / 34.115682058464884,
-                    "matrix" => (357 / 3) / 15.693410363878222,
+                    "vector" => (290 / 9) / 34.115682058464884,
+                    "matrix" => (357 / 18) / 15.693410363878222,
                 )
             ),
             typeof(mean_absolute_error) => Dict(
                 "dist" => Dict(
                     "scalar" => 4.369492269221085,
-                    "vector" => 16.015137998532605,
-                    "matrix" => 28.728598682194946,
+                    "vector" => 16.015137998532605 / 3,
+                    "matrix" => 28.728598682194946 / 6,
                 ),
                 "point" => Dict(
                     "scalar" => 12 / 3,
-                    "vector" => 48 / 3,
-                    "matrix" => 57 / 3,
+                    "vector" => 48 / 9,
+                    "matrix" => 57 / 18,
                 ),
             ),
             typeof(mean_absolute_scaled_error) => Dict(
