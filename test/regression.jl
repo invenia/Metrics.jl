@@ -381,6 +381,27 @@
             end
         end
 
+        @testset "Mean metrics on single observation" begin
+
+            @testset "$type expected result" for (type, (y_true, y_pred)) in forecast_pairs
+
+                y_means = mean(y_pred)
+
+                # compute metric on point predictions
+                @testset "point prediction" begin
+                    @test mse(y_true, y_means) ≈ expected[typeof(se)]["point"][type] / length(y_true)
+                    @test mae(y_true, y_means) ≈ expected[typeof(ae)]["point"][type] / length(y_true)
+                end
+
+                # compute metric on distribution predictions
+                @testset "dist prediction" begin
+                    @test mse(y_true, y_pred) ≈ expected[typeof(se)]["dist"][type] / length(y_true)
+                    @test mae(y_true, y_pred) ≈ expected[typeof(ae)]["dist"][type] / length(y_true)
+                end
+            end
+
+        end
+
     end  # single obs
 
     @testset "collection of obs" begin
@@ -405,61 +426,61 @@
             typeof(mean_squared_error) => Dict(
                 "dist" => Dict(
                     "scalar" => 74 / 3 + 2.2^2,
-                    "vector" => 290 / 3 + (2 + 2.2 + 3),
-                    "matrix" => 357 / 3 + 167.75,
+                    "vector" => (290 / 3 + (2 + 2.2 + 3)) / 3,
+                    "matrix" => (357 / 3 + 167.75) / 6,
                 ),
                 "point" => Dict(
                     "scalar" => 74 / 3,
-                    "vector" => 290 / 3,
-                    "matrix" => 357 / 3,
+                    "vector" => 290 / 9,
+                    "matrix" => 357 / 18,
                 )
             ),
             typeof(root_mean_squared_error) => Dict(
                 "dist" => Dict(
                     "scalar" => sqrt(74 / 3 + 2.2^2),
-                    "vector" => sqrt(290 / 3 + (2 + 2.2 + 3)),
-                    "matrix" => sqrt(357 / 3 + 167.75),
+                    "vector" => sqrt((290 / 3 + (2 + 2.2 + 3)) / 3),
+                    "matrix" => sqrt((357 / 3 + 167.75) / 6),
                 ),
                 "point" => Dict(
                     "scalar" => sqrt(74 / 3),
-                    "vector" => sqrt(290 / 3),
-                    "matrix" => sqrt(357 / 3),
+                    "vector" => sqrt(290 / 9),
+                    "matrix" => sqrt(357 / 18),
                 )
             ),
             typeof(normalised_root_mean_squared_error) => Dict(
                 "dist" => Dict(
                     "scalar" => sqrt(74 / 3 + 2.2^2) / 9,
-                    "vector" => sqrt(290 / 3 + (2 + 2.2 + 3)) / 20,
-                    "matrix" => sqrt(357 / 3 + 167.75) / 12,
+                    "vector" => sqrt((290 / 3 + (2 + 2.2 + 3)) / 3) / 20,
+                    "matrix" => sqrt((357 / 3 + 167.75) / 6) / 12,
                 ),
                 "point" => Dict(
                     "scalar" => sqrt(74 / 3) / 9,
-                    "vector" => sqrt(290 / 3) / 20,
-                    "matrix" => sqrt(357 / 3) / 12,
+                    "vector" => sqrt(290 / 9) / 20,
+                    "matrix" => sqrt(357 / 18) / 12,
                 )
             ),
             typeof(standardized_mean_squared_error) => Dict(
                 "dist" => Dict(
                     "scalar" => (74 / 3 + 2.2^2) / 4.333333333333334,
-                    "vector" => (290 / 3 + (2 + 2.2 + 3)) / 34.115682058464884,
-                    "matrix" => (357 / 3 + 167.75) / 15.693410363878222,
+                    "vector" => ((290 / 3 + (2 + 2.2 + 3)) / 3) / 34.115682058464884,
+                    "matrix" => ((357 / 3 + 167.75) / 6) / 15.693410363878222,
                 ),
                 "point" => Dict(
                     "scalar" => (74 / 3) / 4.333333333333334,
-                    "vector" => (290 / 3) / 34.115682058464884,
-                    "matrix" => (357 / 3) / 15.693410363878222,
+                    "vector" => (290 / 9) / 34.115682058464884,
+                    "matrix" => (357 / 18) / 15.693410363878222,
                 )
             ),
             typeof(mean_absolute_error) => Dict(
                 "dist" => Dict(
                     "scalar" => 4.369492269221085,
-                    "vector" => 16.015137998532605,
-                    "matrix" => 28.728598682194946,
+                    "vector" => 16.015137998532605 / 3,
+                    "matrix" => 28.728598682194946 / 6,
                 ),
                 "point" => Dict(
                     "scalar" => 12 / 3,
-                    "vector" => 48 / 3,
-                    "matrix" => 57 / 3,
+                    "vector" => 48 / 9,
+                    "matrix" => 57 / 18,
                 ),
             ),
             typeof(mean_absolute_scaled_error) => Dict(
@@ -525,8 +546,14 @@
                 y_true = [1,2,3,4]
                 y_pred = [5,6,7,8]
 
+                expected = generate_expected_values(first(y_true), first(y_pred))
+                summary = regression_summary(first(y_true), first(y_pred))
+
+                @test !isempty(summary)
+                @test isequal(expected, summary)
+
                 expected = generate_expected_values(y_true, y_pred)
-                summary = regression_summary(y_true, y_pred)
+                summary = evaluate(regression_summary, y_true, y_pred)
 
                 @test !isempty(summary)
                 @test isequal(expected, summary)
@@ -544,15 +571,20 @@
                 @test isequal(expected[rmse], summary[rmse])
                 @test isequal(expected[nrmse], summary[nrmse])
                 @test isequal(expected[smse], summary[smse])
-                @test isequal(expected[mase], summary[mase])
             end
 
             @testset "Vector" begin
                 y_true = [[1,2,3], [4,5,6], [7,8,9]]
                 y_pred = [[10, 11, 12], [13, 14, 15], [16, 17, 18]]
 
+                expected = generate_expected_values(first(y_true), first(y_pred))
+                summary = regression_summary(first(y_true), first(y_pred))
+
+                @test !isempty(summary)
+                @test isequal(expected, summary)
+
                 expected = generate_expected_values(y_true, y_pred)
-                summary = regression_summary(y_true, y_pred)
+                summary = evaluate(regression_summary, y_true, y_pred)
 
                 @test !isempty(summary)
                 @test isequal(expected, summary)
@@ -570,15 +602,20 @@
                 @test isequal(expected[rmse], summary[rmse])
                 @test isequal(expected[nrmse], summary[nrmse])
                 @test isequal(expected[smse], summary[smse])
-                @test isequal(expected[mase], summary[mase])
             end
 
             @testset "Matrix" begin
                 y_true = [[1 2; 3 4], [3 4; 5 6], [5 6; 7 8]]
                 y_pred = [[7 8; 9 10], [9 10; 11 12], [11 12; 13 14]]
 
+                expected = generate_expected_values(first(y_true), first(y_pred))
+                summary = regression_summary(first(y_true), first(y_pred))
+
+                @test !isempty(summary)
+                @test isequal(expected, summary)
+
                 expected = generate_expected_values(y_true, y_pred)
-                summary = regression_summary(y_true, y_pred)
+                summary = evaluate(regression_summary, y_true, y_pred)
 
                 @test !isempty(summary)
                 @test isequal(expected, summary)
@@ -596,7 +633,6 @@
                 @test isequal(expected[rmse], summary[rmse])
                 @test isequal(expected[nrmse], summary[nrmse])
                 @test isequal(expected[smse], summary[smse])
-                @test isequal(expected[mase], summary[mase])
             end
         end
 
