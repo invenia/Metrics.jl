@@ -301,6 +301,3 @@ function financial_summary(returns::AbstractVector; risk_level::Real=0.05)
         volatility => volatility(returns),
     )
 end
-
-
-@view(M[:,1])
