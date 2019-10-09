@@ -1,6 +1,7 @@
 module Metrics
 
 using Distributions
+using IndexedDistributions
 using LinearAlgebra: cholesky, det, dot, I, norm, tr
 using NamedDims
 using PSDMats
