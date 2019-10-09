@@ -1,3 +1,24 @@
+
+"""
+    _calculate_returns(volumes::AbstractVector, deltas::AbstractMatrix)
+
+Calculates the returns from the given `volumes` and `deltas`
+
+- `volumes::AbstractVector`: The MWs volumes of the portfolio, one volume per node
+- `deltas`: The collection of prices deltas which can be a `MvNormal`, `AbstractMatrix`, or
+    `AbstractVector`, expected to have dimensions of nodes × observations
+
+Returns:
+ - `returns::NamedDimsArray{(:obs,)}`: a vector of returns, one per observation.
+"""
+function _calculate_returns(volumes::AbstractVector, deltas::AbstractMatrix)
+    # we put these in NamedDimsArrays as excutable documentation of what we expect the arrangement to represent
+    # and so that we get back something with namedims
+    volumes = NamedDimsArray(volumes, :nodes)
+    deltas = NamedDimsArray(deltas, (:nodes, :obs))
+    return  deltas' * volumes
+end
+
 """
     expected_return(volumes::AbstractVector, deltas::AbstractVector, args...) -> Number
     expected_return(volumes::AbstractVector, deltas::AbstractMatrix, args...) -> Number
@@ -20,6 +41,7 @@ function expected_return(volumes::AbstractVector, deltas::AbstractVector, args..
 end
 
 function expected_return(volumes::AbstractVector, deltas::AbstractMatrix, args...)
+    returns = _calculate_returns(volumes, deltas)
     volumes = NamedDimsArray(volumes, :nodes)
     deltas = NamedDimsArray(deltas, (:nodes, :obs))
     expected_deltas = vec(mean(deltas, dims=:obs))
@@ -40,9 +62,9 @@ obs_arrangement(::typeof(expected_return)) = MatrixColsOfObs()
 Calculate the expected standard deviation of returns ``(w'Σw)^{1/2}``.
 """
 function volatility(volumes::AbstractVector, deltas::AbstractMatrix)
-    volumes = NamedDimsArray(volumes, :nodes)
-    deltas = NamedDimsArray(deltas, (:nodes, :obs))
-    vol = std(deltas' * volumes; dims=:obs)
+    returns = _calculate_returns(volumes, deltas)
+    vol = std(returns; dims=:obs)
+    # TODO: price-impact ?
     return first(vol)  # vol is a 1-element NamedDimsArray hence first()
 end
 
@@ -100,9 +122,7 @@ Calculate the median return of a portfolio of `volumes` given a sample of price 
 - `args`: The [`price impact`](@ref price_impact) arguments (excluding `volumes`).
 """
 function median_return(volumes::AbstractVector, deltas::AbstractMatrix, args...)
-    volumes = NamedDimsArray(volumes, :nodes)
-    deltas = NamedDimsArray(deltas, (:nodes, :obs))
-    returns = deltas' * volumes
+    returns = _calculate_returns(volumes, deltas)
     pi = price_impact(volumes, args...)
 
     return median(returns) - pi
@@ -213,11 +233,7 @@ function expected_shortfall(
     volumes::AbstractVector, deltas::AbstractArray, args...; kwargs...,
 )
     @assert length(args) < 3
-    volumes = NamedDimsArray(volumes, :nodes)
-    deltas = NamedDimsArray(deltas, (:nodes, :obs))
-    returns = deltas' * volumes
-
-    # calculate price impact
+    returns = _calculate_returns(volumes, deltas)
     pi = price_impact(volumes, args...)
     exp_shortfall = expected_shortfall(returns; kwargs...)
 
