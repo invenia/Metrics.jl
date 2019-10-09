@@ -75,8 +75,8 @@ using Metrics: split_volume
             @test expected_return(sample) == expected
         end
 
-        @testset "Single value - MethodError" begin
-            @test_throws MethodError expected_return(1)
+        @testset "Single value" begin
+            @test expected_return(500) == 500
         end
 
         @testset "Empty vector - MethodError" begin
@@ -117,8 +117,8 @@ using Metrics: split_volume
             @test volatility(sample) ≈ expected
         end
 
-        @testset "Single value - MethodError" begin
-            @test_throws MethodError volatility(0)
+        @testset "Single value" begin
+            @test isnan(volatility(0))
         end
 
         @testset "Empty vector - MethodError" begin
@@ -511,6 +511,15 @@ using Metrics: split_volume
             summary = financial_summary(returns; risk_level=risk_level)
 
             @test isequal(expected, summary)
+
+            @testset "returns iterator" begin
+                # Bonus from this test since the summary calls all other things
+                # this ensures they all accept an iterator
+                summary = financial_summary(skipmissing(returns); risk_level=risk_level)
+
+                # None are missing so doing `skipmissing` will not change anything
+                @test isequal(expected, summary)
+            end
         end
     end
 end

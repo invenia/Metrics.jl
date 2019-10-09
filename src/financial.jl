@@ -29,7 +29,7 @@ end
 function expected_return(volumes::AbstractVector, deltas::MvNormal, args...)
     return expected_return(volumes, mean(deltas), args...)
 end
-expected_return(returns::AbstractVector) = mean(returns)
+expected_return(returns) = mean(returns)
 obs_arrangement(::typeof(expected_return)) = MatrixColsOfObs()
 
 
@@ -54,7 +54,7 @@ function volatility(volumes::AbstractVector, deltas::MvNormal)
     # function is calculating a unique scalar: `sqrt(volume' * cov(delta) * volume)`
     return norm(sqrtcov(deltas) * volumes, 2)
 end
-volatility(returns::AbstractVector) = std(returns)
+volatility(returns) = std(returns)
 obs_arrangement(::typeof(volatility)) = MatrixColsOfObs()
 
 """
@@ -139,7 +139,7 @@ https://invenia.slack.com/archives/CMMAKP97H/p1567612804011200?thread_ts=1567543
 More info: https://www.r-bloggers.com/multivariate-medians/
 
 # Arguments
-- `returns::AbstractVector`: A vector of returns over some time or of some portfolio
+- `returns::AbstractVector`: An iterator of returns over some time or of some portfolio
 - `volumes::AbstractVector`: The MWs volumes of the portfolio
 - `deltas::AbstractMatrix`: The sample of price deltas
 - `args`: The [`price impact`](@ref price_impact) arguments (excluding `volumes`).
@@ -147,7 +147,7 @@ More info: https://www.r-bloggers.com/multivariate-medians/
 # Keyword Arguments
 - `kwargs`: The [`expected shortfall`](@ref expected_shortfall) keyword arguments.
 """
-function median_over_expected_shortfall(returns::AbstractVector; kwargs...)
+function median_over_expected_shortfall(returns; kwargs...)
     return median(returns) / expected_shortfall(returns; kwargs...)
 end
 
@@ -175,17 +175,17 @@ NOTE: Expected shortfall is the _negative_ of the average of the bottom quantile
 _minimise_ expected shortfall.
 
 # Arguments
-- `returns::AbstractVector`: the portfolio of returns
+- `returns` (iterator): the portfolio of returns
 
 # Keyword Arguments
 - `risk_level::Real`: risk level associated with the lower quantile of the returns
 distribution
 
 """
-function expected_shortfall(returns::AbstractVector; risk_level::Real=0.05)
-
+function expected_shortfall(returns; risk_level::Real=0.05)
     0 < risk_level < 1 || throw(ArgumentError("risk_level=$risk_level is not between 0 and 1."))
 
+    returns = collect(returns)
     last_index = floor(Int, risk_level * length(returns))
     last_index > 0 || throw(
         ArgumentError(string(
@@ -301,3 +301,6 @@ function financial_summary(returns::AbstractVector; risk_level::Real=0.05)
         volatility => volatility(returns),
     )
 end
+
+
+@view(M[:,1])
