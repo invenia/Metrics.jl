@@ -291,7 +291,7 @@ function financial_summary(
     )
 end
 
-function financial_summary(returns::AbstractVector; risk_level::Real=0.05)
+function financial_summary(returns; risk_level::Real=0.05)
     return Dict(
         median_return => median(returns),
         expected_return => expected_return(returns),
