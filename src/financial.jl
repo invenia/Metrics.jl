@@ -90,14 +90,20 @@ obs_arrangement(::typeof(sharpe_ratio)) = MatrixColsOfObs()
 
 
 """
+    median_return(returns, args...) -> Number
     median_return(volumes::AbstractVector, deltas::AbstractMatrix, args...) -> Number
 
 Calculate the median return of a portfolio of `volumes` given a sample of price `deltas`.
 
 ## Arguments
+- `returns`: an iterator of portfolio returns
 - `volumes::AbstractVector`: The MWs volumes of the portfolio
 - `deltas`::`AbstractMatrix`: The collection of prices deltas
 - `args`: The [`price impact`](@ref price_impact) arguments (excluding `volumes`).
+
+We currently don't have a working version of this for Multivariate Distributions as there
+are many definitions of `median` which aren't implemented by `Distributions`.
+https://invenia.slack.com/archives/CMMAKP97H/p1567612804011200?thread_ts=1567543537.008300&cid=CMMAKP97H
 """
 function median_return(volumes::AbstractVector, deltas::AbstractMatrix, args...)
     volumes = NamedDimsArray(volumes, :nodes)
@@ -105,8 +111,10 @@ function median_return(volumes::AbstractVector, deltas::AbstractMatrix, args...)
     returns = deltas' * volumes
     pi = price_impact(volumes, args...)
 
-    return median(returns) - pi
+    return median_return(returns) - pi
 end
+
+median_return(returns) = median(returns)
 
 obs_arrangement(::typeof(median_return)) = MatrixColsOfObs()
 
@@ -263,11 +271,10 @@ function expected_shortfall(volumes::AbstractVector, deltas::MvNormal, args...; 
 end
 
 """
+    financial_summary(returns, args...; kwargs...)
     financial_summary(volume::AbstractArray, deltas::Union{MvNormal, AbstractMatrix}, args...; kwargs...)
 
-Calculate the summary of; @ref[`expected_return`], @ref[`expected_shortfall`], @ref[`sharpe_ratio`]
-and @ref[`volatility`].
-
+Calculate the summary of applicable financial metrics.
 `args...` and `kwargs...` are inputs for the functions above.
 
 Returns a Dictionary where the `Key` is the function, and the `Value` is the result of the function.
@@ -284,16 +291,9 @@ function financial_summary(
     )
 end
 
-"""
-    financial_summary(returns::AbstractVector; risk_level::Real=0.05)
-
-Calculate the summary of; @ref[`expected_return`], @ref[`expected_shortfall`],
-@ref[`median_over_expected_shortfall`], @ref[`sharpe_ratio`], and @ref[`volatility`].
-
-Returns a Dictionary where the `Key` is the function, and the `Value` is the result of the function.
-"""
 function financial_summary(returns::AbstractVector; risk_level::Real=0.05)
     return Dict(
+        median_return => median(returns),
         expected_return => expected_return(returns),
         expected_shortfall => expected_shortfall(returns; risk_level=risk_level),
         median_over_expected_shortfall => median_over_expected_shortfall(returns; risk_level=risk_level),
