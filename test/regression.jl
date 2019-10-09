@@ -51,11 +51,20 @@
 
     function error_increases_as_bias_increases(metric, y_true, y_pred)
         @testset "error increases as bias increases" begin
-            v = ones.(size.(y_true))
 
-            y_pred0 = relocate(y_pred, y_true .+ 1v)
-            y_pred1 = relocate(y_pred, y_true .+ 2v)
-            y_pred2 = relocate(y_pred, y_true .+ 3v)
+            # depending on what we are shifting we need to shift with different type
+            v = if y_true isa Number
+                1
+            elseif eltype(y_true) <: AbstractArray
+                ones.(size.(y_true))
+            else
+                ones(size(y_true))
+            end
+
+
+            y_pred0 = relocate(y_pred, y_true + 1v)
+            y_pred1 = relocate(y_pred, y_true + 2v)
+            y_pred2 = relocate(y_pred, y_true + 3v)
 
             # distribution errors
             error_d0 = metric(y_true, y_pred0)
