@@ -52,6 +52,7 @@
     function error_increases_as_bias_increases(metric, y_true, y_pred)
         @testset "error increases as bias increases" begin
 
+            # depending on what we are shifting we need to shift with different type
             v = if y_true isa Number
                 1
             elseif eltype(y_true) <: AbstractArray
