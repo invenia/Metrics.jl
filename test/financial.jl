@@ -225,21 +225,26 @@ using Metrics: split_volume
     end
 
     @testset "median_return" begin
-        # Basic Usage
-        volumes = collect(1:10)
-        deltas = Matrix(I, (10, 10))
-        expected = 5.5
+        @testset "volumes and deltas" begin
+            # Basic Usage
+            volumes = collect(1:10)
+            deltas = Matrix(I, (10, 10))
+            expected = 5.5
 
-        @test median_return(volumes, deltas) == expected
-        @test evaluate(median_return, volumes, deltas) == expected
+            @test median_return(volumes, deltas) == expected
+            @test evaluate(median_return, volumes, deltas) == expected
 
-        # With Price Impact median_return should be lower
-        nonzero_pi = (supply_pi=fill(0.1, 10), demand_pi=fill(0.1, 10))
-        pi_expected = -33
+            # With Price Impact median_return should be lower
+            nonzero_pi = (supply_pi=fill(0.1, 10), demand_pi=fill(0.1, 10))
+            pi_expected = -33
 
-        @test median_return(volumes, deltas, nonzero_pi...) == pi_expected
-        @test evaluate(median_return, volumes, deltas, nonzero_pi...) == pi_expected
-        @test pi_expected < expected
+            @test median_return(volumes, deltas, nonzero_pi...) == pi_expected
+            @test evaluate(median_return, volumes, deltas, nonzero_pi...) == pi_expected
+            @test pi_expected < expected
+        end
+        @testset "returns" begin
+            @test median_return([1.2, 3, 4, 5, 6, 6, 9]) == 5
+        end
     end
 
     @testset "evano" begin
@@ -496,6 +501,7 @@ using Metrics: split_volume
 
             expected = Dict()
             expected[expected_return] = expected_return(returns)
+            expected[median_return] = median_return(returns)
             expected[expected_shortfall] = expected_shortfall(returns; risk_level=risk_level)
             expected[median_over_expected_shortfall] =
                 median_over_expected_shortfall(returns; risk_level=risk_level)
