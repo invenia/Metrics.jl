@@ -2,7 +2,7 @@
 """
     _calculate_returns(volumes::AbstractVector, deltas::AbstractMatrix)
 
-Calculates the returns from the given `volumes` and `deltas`
+Calculate the returns from the given `volumes` and `deltas`.
 
 - `volumes::AbstractVector`: The MWs volumes of the portfolio, one volume per node
 - `deltas`: The collection of prices deltas which can be a `MvNormal`, `AbstractMatrix`, or
