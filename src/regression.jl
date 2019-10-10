@@ -9,10 +9,10 @@ function expected_squared_error(y_true, y_pred)
 end
 
 """
-    expected_squared_error(y_true, y_pred::Distribution) -> Float64
+    expected_squared_error(y_true, y_pred::Sampleable) -> Float64
 
 Compute the expected square error between an observation `y_true` and the posterior
-distribution over the predicted value `y_pred`.
+`Distribution` over the predicted value `y_pred`.
 
 The expected square error of an estimator of a normal distribution `X` and the true value
 `X'` is given by
@@ -36,13 +36,13 @@ squared errors over the individual dimensions and sum the result.
 
 For more information see: https://en.wikipedia.org/wiki/Mean_squared_error#Estimator
 """
-function expected_squared_error(y_true,  y_pred::Distribution)
+function expected_squared_error(y_true, y_pred::Sampleable)
     @_dimcheck size(y_true) == size(y_pred)
     bias = mean(y_pred) - y_true
     return sum(var(y_pred)) + sum(abs2, bias)
 end
 
-expected_squared_error(y_true::Distribution, y_pred) = expected_squared_error(y_pred, y_true)
+expected_squared_error(y_true::Sampleable, y_pred) = expected_squared_error(y_pred, y_true)
 obs_arrangement(::typeof(expected_squared_error)) = SingleObs()
 const se = expected_squared_error
 
@@ -65,7 +65,7 @@ Compute the squared error between a single observation `y_true` and a single pre
 `y_pred`, which can be either a point or a distribution, and average over the dimensions.
 """
 mean_squared_error(y_true, y_pred::Number) = expected_squared_error(y_true, y_pred)
-mean_squared_error(y_true, y_pred::Distribution) = expected_squared_error(y_true, y_pred) / length(y_true)
+mean_squared_error(y_true, y_pred::Sampleable) = expected_squared_error(y_true, y_pred) / length(y_true)
 mean_squared_error(y_true, y_pred) = mean_squared_error(y_pred, y_true)
 
 obs_arrangement(::typeof(mean_squared_error)) = IteratorOfObs()
@@ -160,7 +160,7 @@ absolute errors over the individual dimensions and sum the result.
 
 For more information see: https://en.wikipedia.org/wiki/Folded_normal_distribution
 """
-function expected_absolute_error(y_true, y_pred::Distribution)
+function expected_absolute_error(y_true, y_pred::Sampleable)
     @_dimcheck size(y_true) == size(y_pred)
     μ = mean(y_pred) - y_true
     σ = sqrt.(var(y_pred))
@@ -175,7 +175,7 @@ function expected_absolute_error(y_true, y_pred::Distribution)
 
 end
 
-expected_absolute_error(y_true::Distribution, y_pred) = expected_absolute_error(y_pred, y_true)
+expected_absolute_error(y_true::Sampleable, y_pred) = expected_absolute_error(y_pred, y_true)
 obs_arrangement(::typeof(expected_absolute_error)) = SingleObs()
 const ae = expected_absolute_error
 
@@ -198,7 +198,7 @@ Compute the absolute error between a single observation `y_true` and a single pr
 `y_pred`, which can be either a point or a distribution, and average over the dimensions.
 """
 mean_absolute_error(y_true, y_pred::Number) = expected_absolute_error(y_true, y_pred)
-mean_absolute_error(y_true, y_pred::Distribution) = expected_absolute_error(y_true, y_pred) / length(y_pred)
+mean_absolute_error(y_true, y_pred::Sampleable) = expected_absolute_error(y_true, y_pred) / length(y_pred)
 mean_absolute_error(y_true, y_pred) = mean_absolute_error(y_pred, y_true)
 
 obs_arrangement(::typeof(mean_absolute_error)) = IteratorOfObs()
@@ -247,12 +247,12 @@ of the points.
 
 `marginal_gaussian_loglikelihood(dist, y_pred) = log(P (dist | y_pred))`
 """
-function marginal_gaussian_loglikelihood(dist::Distribution{Univariate}, y_pred)
+function marginal_gaussian_loglikelihood(dist::Sampleable{Univariate}, y_pred)
     normalized_dist = Normal(mean(dist), std(dist))
     return loglikelihood(normalized_dist, y_pred)
 end
 
-function marginal_gaussian_loglikelihood(dist::Distribution{Multivariate}, y_pred)
+function marginal_gaussian_loglikelihood(dist::Sampleable{Multivariate}, y_pred)
     # `std` is not defined on `MvNormal` so we use `sqrt.(var(...))`
     normalized_dist = MvNormal(mean(dist), sqrt.(var(dist)))
     return loglikelihood(normalized_dist, y_pred)
@@ -269,11 +269,11 @@ takes the full covariance matrix when calculating the joint probability of the p
 
 `joint_gaussian_loglikelihood(dist, y_pred) = log(P (dist | y_pred))`
 """
-function joint_gaussian_loglikelihood(dist::Distribution{Univariate}, y_pred)
+function joint_gaussian_loglikelihood(dist::Sampleable{Univariate}, y_pred)
     return marginal_gaussian_loglikelihood(dist, y_pred)
 end
 
-function joint_gaussian_loglikelihood(dist::Distribution{Multivariate}, y_pred)
+function joint_gaussian_loglikelihood(dist::Sampleable{Multivariate}, y_pred)
     normalized_dist = MvNormal(mean(dist), cov(dist))
     return loglikelihood(normalized_dist, y_pred)
 end
