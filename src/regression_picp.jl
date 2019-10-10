@@ -31,7 +31,7 @@ function prediction_interval_coverage_probability(y_trues; lower_bound, upper_bo
 end
 
 # Univariate, samples
-function prediction_interval_coverage_probability(α::Float64, samples, y_trues)
+function prediction_interval_coverage_probability(α::Float64, samples::AbstractArray, y_trues)
     portions = ((1 - α)/2, (1 + α)/2)
     lower_bound, upper_bound = quantile(samples, portions)
     return prediction_interval_coverage_probability(y_trues; lower_bound=lower_bound, upper_bound=upper_bound)
@@ -63,6 +63,7 @@ end
 
 const picp = prediction_interval_coverage_probability
 
+picp(α, dist::IndexedDistribution, y_trues) = picp(α, parent(dist), y_trues)
 
 """
     window_prediction_interval_coverage_probability([α_range], distribution|samples, y_trues)
@@ -106,7 +107,6 @@ function window_prediction_interval_coverage_probability(
 end
 
 const wpicp = window_prediction_interval_coverage_probability
-
 
 """
     adjusted_prediction_interval_coverage_probability([α_range], distribution|samples, y_trues)

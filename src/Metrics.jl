@@ -36,7 +36,8 @@ export
     prediction_interval_coverage_probability, picp,
     window_prediction_interval_coverage_probability, wpicp,
     adjusted_prediction_interval_coverage_probability, apicp,
-    regression_summary, REGRESSION_METRICS,
+    regression_summary,
+    REGRESSION_METRICS,
     # divergence
     kullback_leibler, kl,
     # financials

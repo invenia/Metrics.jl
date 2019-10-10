@@ -57,7 +57,7 @@ end
 # For these types of data, it doesn't mater what the metric is
 # we will never rearrange them.
 # so we don't even need to check the traits.
-for T in (Distribution, Number, Symbol,)
+for T in (Sampleable, Number, Symbol)
     @eval organise_obs(metric, data::$T; obsdim=nothing) = data
 end
 
