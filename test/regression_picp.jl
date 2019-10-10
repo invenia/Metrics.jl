@@ -4,15 +4,19 @@ const testing_distributions = let
     sqrtcov20 = randn(20, 20)
 
     (
-        # Univariate (We only test on Normal as the test are easier but the code is the
-        # same for all univariate distributions, so these test cover us surfiently)
+        # Univariate:
+        # NB: We only test on Normal distributions since the tests are easier for these
+        # but the code is the same for all univariates so these test cover us sufficiently
         Normal(1,0.2),
         Normal(0.1,8),
-        # Multivariate (We **only** support MvNormal)
+        # Multivariate: we **only** support MvNormal)
         MvNormal(3, 0.2),
         MvNormal(randn(4), sqrtcov4 * sqrtcov4'),
         MvNormal(randn(10), sqrtcov10 * sqrtcov10'),
         MvNormal(randn(20), sqrtcov20 * sqrtcov20'),
+        # IndexedDistributions: we also **only** support MvNormal
+        IndexedDistribution(MvNormal(3, 0.2), ["a", "b", "c"]),
+        IndexedDistribution(MvNormal(randn(4), sqrtcov4 * sqrtcov4'), ["a", "b", "c", "d"]),
     )
 end
 
