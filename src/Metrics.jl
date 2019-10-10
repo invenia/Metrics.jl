@@ -14,9 +14,10 @@ include("regression_picp.jl")
 include("kullback_leibler.jl")
 include("financial.jl")
 include("price_impact.jl")
+include("summaries.jl")
 include("deprecated.jl")
 
-const REGRESSION_METRICS = (mse, rmse, nrmse, smse, mae)
+
 
 export
     evaluate,
