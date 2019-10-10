@@ -22,7 +22,7 @@ end
 """
     expected_return(volumes::AbstractVector, deltas::AbstractVector, args...) -> Number
     expected_return(volumes::AbstractVector, deltas::AbstractMatrix, args...) -> Number
-    expected_return(volumes::AbstractVector, deltas::MvNormal, args...) -> Number
+    expected_return(volumes::AbstractVector, deltas::Sampleable{Multivariate}, args...) -> Number
 
 Calculate the expected mean return with [`price impact`](@ref price_impact) ``w'μ − w'Πw``
 of a portfolio of `volumes` given a distribution, sample, or vector of price `deltas`.
@@ -48,7 +48,7 @@ function expected_return(volumes::AbstractVector, deltas::AbstractMatrix, args..
     return  expected_return(volumes, expected_deltas, args...)
 end
 
-function expected_return(volumes::AbstractVector, deltas::MvNormal, args...)
+function expected_return(volumes::AbstractVector, deltas::Sampleable{Multivariate}, args...)
     return expected_return(volumes, mean(deltas), args...)
 end
 expected_return(returns) = mean(returns)
@@ -57,7 +57,7 @@ obs_arrangement(::typeof(expected_return)) = MatrixColsOfObs()
 
 """
     volatility(volumes::AbstractVector, deltas::AbstractMatrix) -> Number
-    volatility(volumes::AbstractVector, deltas::MvNormal) -> Number
+    volatility(volumes::AbstractVector, deltas::Sampleable{Multivariate}) -> Number
 
 Calculate the expected standard deviation of returns ``(w'Σw)^{1/2}``.
 """
@@ -68,7 +68,7 @@ function volatility(volumes::AbstractVector, deltas::AbstractMatrix)
     return first(vol)  # vol is a 1-element NamedDimsArray hence first()
 end
 
-function volatility(volumes::AbstractVector, deltas::MvNormal)
+function volatility(volumes::AbstractVector, deltas::Sampleable{Multivariate})
     # Note, although `sqrtcov(deltas)` is in size `variable_length * node`,
     # `sqrtcov(deltas) * volumes` is a vector of length `variable_length`.
     # Taking the L2 norm of it, it becomes a scalar.
@@ -99,7 +99,7 @@ portfolio of _no-bid_ in this metric.
 - `args`: The [`price impact`](@ref price_impact) arguments (excluding `volumes`).
 """
 function sharpe_ratio(
-    volumes::AbstractVector, deltas::Union{MvNormal, AbstractMatrix}, args...,
+    volumes::AbstractVector, deltas::Union{Sampleable{Multivariate}, AbstractMatrix}, args...,
 )
     mean_return = expected_return(volumes, deltas, args...)
     std_return = volatility(volumes, deltas)
@@ -269,7 +269,7 @@ function expected_shortfall(returns::Normal; risk_level::Real=0.05)
 end
 
 """
-    expected_shortfall(volumes::AbstractVector, deltas::MvNormal, args...; kwargs...) -> Number
+    expected_shortfall(volumes::AbstractVector, deltas::Sampleable{Multivariate}, args...; kwargs...) -> Number
 
 Calculate the analytic expected shortfall of the distribution of `returns` - with
 [`price impact`](@ref price_impact) ``w'μ − w'Πw`` -  according to a certain `risk_level`
@@ -277,13 +277,13 @@ given a portfolio of `volumes` and known `distribution` of price deltas.
 
 # Arguments
 - `volumes::AbstractVector`: the portfolio of `volumes`
-- `deltas::MvNormal`: the joint distribution of the price deltas
+- `deltas::Sampleable{Multivariate}`: the joint distribution of the price deltas
 - `args`: The [`price impact`](@ref price_impact) arguments (excluding `volumes`).
 
 # Keyword Arguments
 - `kwargs::Real`: risk level associated with the lower quantile of the returns distribution
 """
-function expected_shortfall(volumes::AbstractVector, deltas::MvNormal, args...; kwargs...)
+function expected_shortfall(volumes::AbstractVector, deltas::Sampleable{Multivariate}, args...; kwargs...)
     @assert length(args) < 3
     mean_returns = expected_return(volumes, deltas, args...)
     sigma_returns = volatility(volumes, deltas)
