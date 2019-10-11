@@ -190,6 +190,9 @@ Calculate the expected shortfall `-𝔼[ r_p | r_p ≤ q_risk_level(r_p) ]`, whe
 the portfolio return and `q_risk_level(r_p)` is the lower quantile of the distribution
 of `r_p` characterised by the `risk_level`.
 
+If an insufficient number of `returns` is provided to calculate the expected shortfall
+then this logs a warning and returns `missing`.
+
 NOTE: Expected shortfall is the _negative_ of the average of the bottom quantile of
 `return_samples`. Assuming average is positive for all `risk_level`, then it is good to
 _minimise_ expected shortfall.
@@ -200,19 +203,21 @@ _minimise_ expected shortfall.
 # Keyword Arguments
 - `risk_level::Real`: risk level associated with the lower quantile of the returns
 distribution
-
 """
 function expected_shortfall(returns; risk_level::Real=0.05)
     0 < risk_level < 1 || throw(ArgumentError("risk_level=$risk_level is not between 0 and 1."))
 
     returns = collect(returns)
     last_index = floor(Int, risk_level * length(returns))
-    last_index > 0 || throw(
-        ArgumentError(string(
-                "length(returns)=$(length(returns)) too few elements for risk_level=$risk_level.",
-                " Min length(returns)=$(ceil(Int, 1/risk_level))",
-        ))
-    )
+    if last_index === 0
+        @warn(
+            "Too few samples provided to calculate expected shortfall for given risk-level.",
+             risk_level,
+             minimum_number_of_samples=ceil(Int, 1/risk_level),
+             number_of_samples=length(returns),
+        )
+        return missing
+    end
 
     return -mean(partialsort(returns, 1:last_index))
 end

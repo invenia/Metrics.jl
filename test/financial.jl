@@ -300,7 +300,7 @@ using Metrics: split_volume
             @test evaluate(evano, volumes, samples; obsdim=2) ≈ expected
 
             # too few samples
-            @test_throws ArgumentError evano(volumes, samples; risk_level=0.01)
+            @test evano(volumes, samples; risk_level=0.01) === missing
 
             # single sample should not work given `risk_level=1` but not otherwise.
             @test_throws MethodError evano([-5], [10]; risk_level=0.99)
@@ -387,7 +387,7 @@ using Metrics: split_volume
             )
 
             # too few samples
-            @test_throws ArgumentError expected_shortfall(volumes, samples; risk_level=0.01)
+            @test expected_shortfall(volumes, samples; risk_level=0.01) === missing
 
             # single sample should not work given `risk_level=1` but not otherwise.
             @test_throws MethodError expected_shortfall([-5], [10]; risk_level=0.99)
@@ -442,14 +442,16 @@ using Metrics: split_volume
             risk_level = 1.1
             @test_throws ArgumentError expected_shortfall(returns; risk_level=risk_level)
 
-            returns = []
-            risk_level = 1/2
-            @test_throws ArgumentError expected_shortfall(returns; risk_level=risk_level)
-            returns = [1]
-            @test_throws ArgumentError expected_shortfall(returns; risk_level=risk_level)
-            returns = collect(1:100)
-            risk_level = 1/101
-            @test_throws ArgumentError expected_shortfall(returns; risk_level=risk_level)
+            @testset "insurficient samples" begin
+                returns = []
+                risk_level = 1/2
+                @test expected_shortfall(returns; risk_level=risk_level) === missing
+                returns = [1]
+                @test expected_shortfall(returns; risk_level=risk_level) === missing
+                returns = collect(1:100)
+                risk_level = 1/101
+                @test expected_shortfall(returns; risk_level=risk_level) === missing
+            end
 
             # wrong number of args elements in financial function calls
             volumes = [-1, 2, -3]
