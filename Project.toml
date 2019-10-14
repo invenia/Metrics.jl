@@ -1,7 +1,7 @@
 name = "Metrics"
 uuid = "273c2e6c-7e43-11e9-12af-8fca11176a4c"
 authors = ["Invenia Technical Computing Corporation"]
-version = "0.6.2"
+version = "0.6.3"
 
 [deps]
 Distributions = "31c24e10-a181-5473-b8eb-7969acd0382f"
