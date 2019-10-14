@@ -63,7 +63,10 @@ end
 
 const picp = prediction_interval_coverage_probability
 
-picp(α, dist::IndexedDistribution, y_trues) = picp(α, parent(dist), y_trues)
+function picp(α, dist::IndexedDistribution, y_trues)
+    y_trues, dist = _match(y_trues, dist)
+    return picp(α, parent(dist), y_trues)
+end
 
 """
     window_prediction_interval_coverage_probability([α_range], distribution|samples, y_trues)
