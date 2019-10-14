@@ -198,6 +198,11 @@
             a = IndexedDistribution(MvNormal(μ0, Σ0), ["a", "b", "c"])
             b = IndexedDistribution(MvNormal(μ1, Σ1), ["a", "b", "q"])
             @test_throws ArgumentError kullback_leibler(a, b)
+
+            # only works on gaussians
+            a = IndexedDistribution(MvNormal(μ0, Σ0), ["a", "b", "c"])
+            b = IndexedDistribution(MvLogNormal(μ1), ["a", "b", "c"])
+            @test_throws MethodError kullback_leibler(a, b)
         end
     end
 end

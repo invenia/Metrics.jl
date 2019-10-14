@@ -46,7 +46,10 @@ end
 Calculate the Kullback-Leibler divergence between two indexed distributions parameterised
 by gaussian distributions.
 """
-function kullback_leibler(a::IndexedDistribution, b::IndexedDistribution)
+function kullback_leibler(
+    a::IndexedDistribution{Multivariate, Continuous, <:AbstractMvNormal},
+    b::IndexedDistribution{Multivariate, Continuous, <:AbstractMvNormal},
+)
     @_dimcheck size(a) == size(b)
 
     id1, d1 = index(a), distribution(a)
@@ -62,9 +65,8 @@ function kullback_leibler(a::IndexedDistribution, b::IndexedDistribution)
     p1 = sortperm(id1)
     p2 = sortperm(id2)
 
-    dist = typeof(d1).name.wrapper
-    sorted_d1 = dist(d1.μ[p1], cov(d1)[p1, p1])
-    sorted_d2 = dist(d2.μ[p2], cov(d2)[p2, p2])
+    sorted_d1 = MvNormal(d1.μ[p1], cov(d1)[p1, p1])
+    sorted_d2 = MvNormal(d2.μ[p2], cov(d2)[p2, p2])
 
     return kullback_leibler(sorted_d1, sorted_d2)
 end
