@@ -601,8 +601,8 @@
                         @test evaluate(m, _y_true_axis, y_pred_index) ≈ expected[typeof(m)]["dist"][type]
                     end
                 end
-            end
-        end
+            end  # expected results
+        end  # metric
     end  # collection of obs
 
 
