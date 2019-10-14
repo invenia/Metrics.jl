@@ -76,7 +76,7 @@ using Metrics: @_dimcheck, _match
 
         @testset "AxisArray and IndexedDistribution" begin
             new_array, new_dist = _match(axis_array, index_dist)
-            @test new_array != plain_array
+            @test new_array != axis_array
             @test new_dist != index_dist
 
             # check indices are now sorted and values are in new order
@@ -85,6 +85,16 @@ using Metrics: @_dimcheck, _match
             @test parent(new_array) == [2, 3, 1]
         end
 
-    end
+        @testset "AxisArray and AxisArray" begin
+            axis_array2 = AxisArray([3, 1, 2], Axis{:obs}(["c", "a", "b"]))
+            new_array1, new_array2 = _match(axis_array, axis_array2)
+            @test new_array1 != axis_array
+            @test new_array2 != axis_array2
 
+            # check indices are now sorted and values are in new order
+            @test axisvalues(new_array1)[1] == axisvalues(new_array2)[1] == ["a", "b", "c"]
+            @test parent(new_array1) == [2, 3, 1]
+            @test parent(new_array2) == [1, 2, 3]
+        end
+    end
 end

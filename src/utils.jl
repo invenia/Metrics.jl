@@ -33,13 +33,20 @@ end
 
 
 """
+    _match(a::AxisArray, b::AxisArray) -> a, b
     _match(a::AxisArray, d::IndexedDistribution) -> a, d
 
-Sort the indices of the provided `AxisArray` and `IndexedDistribution` such that they align.
+Sort the indices of the provided arguments such that they align.
+Applies to pairs of `AxisArray`s or an `AxisArray` with an `IndexedDistribution`.
 
 ```jldoctest; setup = :(using AxisArrays, Distributions, IndexedDistributions, Metrics)
 
 julia> a = AxisArray([1, 2, 3], Axis{:node}(["b", "a", "c"]));
+
+julia> b = AxisArray([1, 2, 3], Axis{:node}(["c", "b", "a"]));
+
+julia> Metrics._match(a, b)
+([2, 1, 3], [3, 2, 1])
 
 julia> d = IndexedDistribution(MvNormal(ones(3)), ["c", "b", "a"]);
 
@@ -53,14 +60,15 @@ dim: 3
 ```
 """
 function _match(a::AxisArray, d::IndexedDistribution)
+    @_dimcheck size(a) == size(d)
 
     dist, names = parent(d), index(d)
     index_dim = findfirst(Ref(sort(names)) .== sort.(axisvalues(a)))
 
     if isnothing(index_dim)
-     throw(ArgumentError(
-        "Index and axis values do not coincide: index = $(index(d)), axis = $(axisvalues(a))"
-    ))
+        throw(ArgumentError(
+            "Index and axis values do not match: index = $(index(d)), axis = $(axisvalues(a))"
+        ))
     end
 
     # determine the correct ordering
@@ -71,6 +79,24 @@ function _match(a::AxisArray, d::IndexedDistribution)
     sorted_d = IndexedDistribution(MvNormal(vec(μ[pd, :]), Σ[pd, pd]), names[pd])
 
     return a[pa], sorted_d
+end
+
+function _match(a::AxisArray, b::AxisArray)
+    @_dimcheck size(a) == size(b)
+
+    #TODO: Are these already ordered?
+    if axisnames(a) != axisnames(b)
+        throw(ArgumentError(
+            "Axis names do not match: "*
+            "axisnames(a) = $(axisnames(a)), axisnames(b) = $(axisvalues(b))"
+        ))
+    end
+
+    pa = sortperm.(axisvalues(a))
+    pb = sortperm.(axisvalues(b))
+
+    return a[pa...], b[pb...]
+
 end
 
 _match(a, d) =  a, d
