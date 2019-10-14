@@ -1,4 +1,8 @@
-using Documenter, Metrics
+using AxisArrays
+using Distributions
+using Documenter
+using IndexedDistributions
+using Metrics
 
 makedocs(;
     modules=[Metrics],
