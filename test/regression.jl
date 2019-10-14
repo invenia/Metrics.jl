@@ -326,12 +326,12 @@
         y_true_scalar = 2
         y_true_vector = [2, 3, 4]
         y_true_matrix = [1 2 3; 4 5 6]
+        y_true_axis = AxisArray(y_true_vector, Axis{:obs}(["a", "b", "c"]))
 
         y_pred_scalar = Normal(5, 2.2)
         y_pred_vector = MvNormal([7, 6, 5], Σ)
         y_pred_matrix = MatrixNormal([1 3 5; 7 9 11], U, V)
-
-        y_pred_vector_id = IndexedDistribution(y_pred_vector, ["a", "b", "c"])
+        y_pred_index = IndexedDistribution(y_pred_vector, ["a", "b", "c"])
 
         expected = Dict(
             typeof(expected_squared_error) => Dict(
@@ -392,9 +392,21 @@
 
                 # compute metric on indexed distribution predictions - only defined for multivariates
                 if type == "vector"
-                    @testset "indexed distribution" begin
-                        @test m(y_true, y_pred_vector_id) ≈ expected[typeof(m)]["dist"][type]
-                        @test evaluate(m, y_true, y_pred_vector_id) ≈ expected[typeof(m)]["dist"][type]
+                    @testset "IndexedDistribution with AbstractArray" begin
+                        @test m(y_true, y_pred_index) ≈ expected[typeof(m)]["dist"][type]
+                        @test evaluate(m, y_true, y_pred_index) ≈ expected[typeof(m)]["dist"][type]
+                    end
+                    @testset "IndexedDistribution with AxisArray" begin
+                        @test m(y_true_axis, y_pred_index) ≈ expected[typeof(m)]["dist"][type]
+                        @test evaluate(m, y_true_axis, y_pred_index) ≈ expected[typeof(m)]["dist"][type]
+                    end
+                    @testset "IndexedDistribution with shuffled AxisArray" begin
+                        names = index(y_pred_index)
+                        new_order = shuffle(1:length(names))
+                        _y_true_axis = AxisArray(y_true[new_order], Axis{:obs}(names[new_order]))
+
+                        @test m(_y_true_axis, y_pred_index) ≈ expected[typeof(m)]["dist"][type]
+                        @test evaluate(m, _y_true_axis, y_pred_index) ≈ expected[typeof(m)]["dist"][type]
                     end
                 end
             end
@@ -420,9 +432,21 @@
 
                 # compute metric on indexed distribution predictions - only defined for multivariates
                 if type == "vector"
-                    @testset "indexed distribution" begin
-                        @test mse(y_true, y_pred_vector_id) ≈ expected[typeof(se)]["dist"][type] / length(y_true)
-                        @test mae(y_true, y_pred_vector_id) ≈ expected[typeof(ae)]["dist"][type] / length(y_true)
+                    @testset "IndexedDistribution with AbstractArray" begin
+                        @test mse(y_true, y_pred_index) ≈ expected[typeof(se)]["dist"][type] / length(y_true)
+                        @test mae(y_true, y_pred_index) ≈ expected[typeof(ae)]["dist"][type] / length(y_true)
+                    end
+                    @testset "IndexedDistribution with AxisArray" begin
+                        @test mse(y_true_axis, y_pred_index) ≈ expected[typeof(se)]["dist"][type] / length(y_true)
+                        @test mae(y_true_axis, y_pred_index) ≈ expected[typeof(ae)]["dist"][type] / length(y_true)
+                    end
+                    @testset "IndexedDistribution with shuffled AxisArray" begin
+                        names = index(y_pred_index)
+                        new_order = shuffle(1:length(names))
+                        _y_true_axis = AxisArray(y_true[new_order], Axis{:obs}(names[new_order]))
+
+                        @test mse(_y_true_axis, y_pred_index) ≈ expected[typeof(se)]["dist"][type] / length(y_true)
+                        @test mae(_y_true_axis, y_pred_index) ≈ expected[typeof(ae)]["dist"][type] / length(y_true)
                     end
                 end
             end
@@ -444,12 +468,12 @@
         y_true_scalar = [2, -3, 6]
         y_true_vector = [[2, 3, 0], [-9, 6, 4], [10, -2, 11]]
         y_true_matrix = [[1 2 3; 4 5 6], [4 -3 2; 1 0 -1], [2 9 0; 6 5 6]]
+        y_true_axis = AxisArray.(y_true_vector, Ref(Axis{:obs}(["a", "b", "c"])))
 
         y_pred_scalar = Normal.([1, 0, -2], Ref(2.2))
         y_pred_vector = MvNormal.([[7, 6, 5], [-4, 0, -1], [7, 8, 5]], Ref(Σ))
         y_pred_matrix = MatrixNormal.([[1 3 5; 7 9 11], [0 0 2; 1 9 11], [-2 8 5; 7 5 3]], Ref(U), Ref(V))
-
-        y_pred_vector_id = IndexedDistribution.(y_pred_vector, Ref(["a", "b", "c"]))
+        y_pred_index = IndexedDistribution.(y_pred_vector, Ref(["a", "b", "c"]))
 
         expected = Dict(
             typeof(mean_squared_error) => Dict(
@@ -558,9 +582,23 @@
 
                 # compute metric on indexed distribution predictions - only defined for multivariates
                 if type == "vector"
-                    @testset "indexed distribution" begin
-                        @test m(y_true, y_pred_vector_id) ≈ expected[typeof(m)]["dist"][type]
-                        @test evaluate(m, y_true, y_pred_vector_id) ≈ expected[typeof(m)]["dist"][type]
+                    @testset "IndexedDistribution with AbstractArray" begin
+                        @test m(y_true, y_pred_index) ≈ expected[typeof(m)]["dist"][type]
+                        @test evaluate(m, y_true, y_pred_index) ≈ expected[typeof(m)]["dist"][type]
+                    end
+                    @testset "IndexedDistribution with AxisArray" begin
+                        @test m(y_true_axis, y_pred_index) ≈ expected[typeof(m)]["dist"][type]
+                        @test evaluate(m, y_true_axis, y_pred_index) ≈ expected[typeof(m)]["dist"][type]
+                    end
+                    @testset "IndexedDistribution with shuffled AxisArray" begin
+                        # make a new vector of AxisArrays with shuffled axisnames
+                        _y_true_axis = map(y_true_axis, y_pred_index) do _y_true, _y_pred
+                            names = index(_y_pred)
+                            new_order = shuffle(1:length(names))
+                            AxisArray(_y_true[new_order], Axis{:obs}(names[new_order]))
+                        end
+                        @test m(_y_true_axis, y_pred_index) ≈ expected[typeof(m)]["dist"][type]
+                        @test evaluate(m, _y_true_axis, y_pred_index) ≈ expected[typeof(m)]["dist"][type]
                     end
                 end
             end

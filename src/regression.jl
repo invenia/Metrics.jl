@@ -5,6 +5,7 @@ Compute the square error between an observation `y_true` and point prediction `y
 """
 function expected_squared_error(y_true, y_pred)
     @_dimcheck size(y_true) == size(y_pred)
+    y_true, y_pred = _match(y_true, y_pred)
     return sum(abs2, (y_true .- y_pred))
 end
 
@@ -126,6 +127,7 @@ Compute the total absolute error between an observation `y_true` and prediction 
 """
 function expected_absolute_error(y_true, y_pred)
     @_dimcheck size(y_true) == size(y_pred)
+    y_true, y_pred = _match(y_true, y_pred)
     return sum(abs.(y_true .- y_pred))
 end
 
@@ -250,11 +252,13 @@ of the points.
 `marginal_gaussian_loglikelihood(dist, y_pred) = log(P (dist | y_pred))`
 """
 function marginal_gaussian_loglikelihood(dist::Sampleable{Univariate}, y_pred)
+    y_pred, dist = _match(y_pred, dist)
     normalized_dist = Normal(mean(dist), std(dist))
     return loglikelihood(normalized_dist, y_pred)
 end
 
 function marginal_gaussian_loglikelihood(dist::Sampleable{Multivariate}, y_pred)
+    y_pred, dist = _match(y_pred, dist)
     # `std` is not defined on `MvNormal` so we use `sqrt.(var(...))`
     normalized_dist = MvNormal(mean(dist), sqrt.(var(dist)))
     return loglikelihood(normalized_dist, y_pred)
@@ -276,6 +280,7 @@ function joint_gaussian_loglikelihood(dist::Sampleable{Univariate}, y_pred)
 end
 
 function joint_gaussian_loglikelihood(dist::Sampleable{Multivariate}, y_pred)
+    y_pred, dist = _match(y_pred, dist)
     normalized_dist = MvNormal(mean(dist), cov(dist))
     return loglikelihood(normalized_dist, y_pred)
 end
