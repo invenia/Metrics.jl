@@ -38,6 +38,7 @@ For more information see: https://en.wikipedia.org/wiki/Mean_squared_error#Estim
 """
 function expected_squared_error(y_true, y_pred::Sampleable)
     @_dimcheck size(y_true) == size(y_pred)
+    y_true, y_pred = _match(y_true, y_pred)
     bias = mean(y_pred) - y_true
     return sum(var(y_pred)) + sum(abs2, bias)
 end
@@ -162,6 +163,7 @@ For more information see: https://en.wikipedia.org/wiki/Folded_normal_distributi
 """
 function expected_absolute_error(y_true, y_pred::Sampleable)
     @_dimcheck size(y_true) == size(y_pred)
+    y_true, y_pred = _match(y_true, y_pred)
     μ = mean(y_pred) - y_true
     σ = sqrt.(var(y_pred))
     z = μ ./ σ

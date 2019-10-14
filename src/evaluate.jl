@@ -128,7 +128,7 @@ end
 # Slice up the array to get an iterator of observations
 function organise_obs(::IteratorOfObs, data::AbstractArray, obsdim::Integer)
     # This is basically eachslice from julia 1.1+
-    return (selectdim(data, obsdim, ii) for ii in axes(data, obsdim))
+    return (selectdim(data, obsdim, ii) for ii in Base.axes(data, obsdim))
 end
 
 # Permute the array so the observations are on the right dimension

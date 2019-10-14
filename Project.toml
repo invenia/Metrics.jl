@@ -4,6 +4,7 @@ authors = ["Invenia Technical Computing Corporation"]
 version = "0.6.3"
 
 [deps]
+AxisArrays = "39de3d68-74b9-583c-8d2d-e117c070f3a9"
 Distributions = "31c24e10-a181-5473-b8eb-7969acd0382f"
 IndexedDistributions = "f8b19354-d7d2-57c1-87c2-c7771792bf73"
 LinearAlgebra = "37e2e46d-f89d-539d-b4ee-838fcccc9c8e"
