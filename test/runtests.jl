@@ -1,4 +1,5 @@
 using Distributions
+using IndexedDistributions
 using LinearAlgebra
 using Metrics
 using Metrics:

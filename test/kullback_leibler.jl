@@ -155,4 +155,54 @@
         @test kullback_leibler(p, q) ≈ expected
         @test evaluate(kullback_leibler, p, q) ≈ expected
     end
+
+    @testset "using IndexedDistributions" begin
+        names = ["foo", "bar", "baz"]
+
+        @testset "normal usage" begin
+
+            a = IndexedDistribution(MvNormal(μ0, Σ0), names)
+            b = IndexedDistribution(MvNormal(μ1, Σ1), names)
+
+            expected = kullback_leibler(distribution(a), distribution(b))
+            @test kullback_leibler(a, b) == expected
+            @test evaluate(kullback_leibler, a, b) == expected
+
+        end
+        @testset "shuffled" begin
+            a = IndexedDistribution(MvNormal(μ0, Σ0), shuffle(names))
+            b = IndexedDistribution(MvNormal(μ1, Σ1), shuffle(names))
+
+            ida = index(a)
+            idb = index(b)
+
+            pa = sortperm(ida)
+            pb = sortperm(idb)
+
+            sorted_a = MvNormal(μ0[pa], Matrix(Σ0)[pa, pa])
+            sorted_b = MvNormal(μ1[pb], Matrix(Σ1)[pb, pb])
+
+            expected = kullback_leibler(sorted_a, sorted_b)
+            @test kullback_leibler(a, b) == expected
+            @test evaluate(kullback_leibler, a, b) == expected
+
+        end
+
+        @testset "erroring" begin
+            # dimensions don't match
+            a = IndexedDistribution(MvNormal(rand(4), 1), ["a", "b", "c", "d"])
+            b = IndexedDistribution(MvNormal(μ1, Σ1), ["a", "b", "c"])
+            @test_throws DimensionMismatch kullback_leibler(a, b)
+
+            # obs lists are different
+            a = IndexedDistribution(MvNormal(μ0, Σ0), ["a", "b", "c"])
+            b = IndexedDistribution(MvNormal(μ1, Σ1), ["a", "b", "q"])
+            @test_throws ArgumentError kullback_leibler(a, b)
+
+            # only works on gaussians
+            a = IndexedDistribution(MvNormal(μ0, Σ0), ["a", "b", "c"])
+            b = IndexedDistribution(MvLogNormal(μ1), ["a", "b", "c"])
+            @test_throws MethodError kullback_leibler(a, b)
+        end
+    end
 end

@@ -1,6 +1,7 @@
 module Metrics
 
 using Distributions
+using IndexedDistributions
 using LinearAlgebra: cholesky, det, dot, I, norm, tr
 using NamedDims
 using PSDMats
@@ -35,7 +36,8 @@ export
     prediction_interval_coverage_probability, picp,
     window_prediction_interval_coverage_probability, wpicp,
     adjusted_prediction_interval_coverage_probability, apicp,
-    regression_summary, REGRESSION_METRICS,
+    regression_summary,
+    REGRESSION_METRICS,
     # divergence
     kullback_leibler, kl,
     # financials

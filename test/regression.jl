@@ -331,6 +331,8 @@
         y_pred_vector = MvNormal([7, 6, 5], Σ)
         y_pred_matrix = MatrixNormal([1 3 5; 7 9 11], U, V)
 
+        y_pred_vector_id = IndexedDistribution(y_pred_vector, ["a", "b", "c"])
+
         expected = Dict(
             typeof(expected_squared_error) => Dict(
                 "dist" => Dict(
@@ -387,6 +389,14 @@
                     @test m(y_true, y_pred) ≈ expected[typeof(m)]["dist"][type]
                     @test evaluate(m, y_true, y_pred) ≈ expected[typeof(m)]["dist"][type]
                 end
+
+                # compute metric on indexed distribution predictions - only defined for multivariates
+                if type == "vector"
+                    @testset "indexed distribution" begin
+                        @test m(y_true, y_pred_vector_id) ≈ expected[typeof(m)]["dist"][type]
+                        @test evaluate(m, y_true, y_pred_vector_id) ≈ expected[typeof(m)]["dist"][type]
+                    end
+                end
             end
         end
 
@@ -406,6 +416,14 @@
                 @testset "dist prediction" begin
                     @test mse(y_true, y_pred) ≈ expected[typeof(se)]["dist"][type] / length(y_true)
                     @test mae(y_true, y_pred) ≈ expected[typeof(ae)]["dist"][type] / length(y_true)
+                end
+
+                # compute metric on indexed distribution predictions - only defined for multivariates
+                if type == "vector"
+                    @testset "indexed distribution" begin
+                        @test mse(y_true, y_pred_vector_id) ≈ expected[typeof(se)]["dist"][type] / length(y_true)
+                        @test mae(y_true, y_pred_vector_id) ≈ expected[typeof(ae)]["dist"][type] / length(y_true)
+                    end
                 end
             end
 
@@ -430,6 +448,8 @@
         y_pred_scalar = Normal.([1, 0, -2], Ref(2.2))
         y_pred_vector = MvNormal.([[7, 6, 5], [-4, 0, -1], [7, 8, 5]], Ref(Σ))
         y_pred_matrix = MatrixNormal.([[1 3 5; 7 9 11], [0 0 2; 1 9 11], [-2 8 5; 7 5 3]], Ref(U), Ref(V))
+
+        y_pred_vector_id = IndexedDistribution.(y_pred_vector, Ref(["a", "b", "c"]))
 
         expected = Dict(
             typeof(mean_squared_error) => Dict(
@@ -534,6 +554,14 @@
                 @testset "dist prediction" begin
                     @test m(y_true, y_pred) ≈ expected[typeof(m)]["dist"][type]
                     @test evaluate(m, y_true, y_pred) ≈ expected[typeof(m)]["dist"][type]
+                end
+
+                # compute metric on indexed distribution predictions - only defined for multivariates
+                if type == "vector"
+                    @testset "indexed distribution" begin
+                        @test m(y_true, y_pred_vector_id) ≈ expected[typeof(m)]["dist"][type]
+                        @test evaluate(m, y_true, y_pred_vector_id) ≈ expected[typeof(m)]["dist"][type]
+                    end
                 end
             end
         end

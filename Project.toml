@@ -1,10 +1,11 @@
 name = "Metrics"
 uuid = "273c2e6c-7e43-11e9-12af-8fca11176a4c"
 authors = ["Invenia Technical Computing Corporation"]
-version = "0.6.2"
+version = "0.6.3"
 
 [deps]
 Distributions = "31c24e10-a181-5473-b8eb-7969acd0382f"
+IndexedDistributions = "f8b19354-d7d2-57c1-87c2-c7771792bf73"
 LinearAlgebra = "37e2e46d-f89d-539d-b4ee-838fcccc9c8e"
 NamedDims = "356022a1-0364-5f58-8944-0da4b18d706f"
 PSDMats = "d8364848-a99d-5bfe-b7b0-b4f035b9733f"
@@ -16,7 +17,8 @@ Test = "8dfed614-e22c-5e08-85e1-65c5234f0b40"
 
 [compat]
 Distributions = "0.21.3"
-StatsUtils = "1.0.1"
+IndexedDistributions = "1.2"
+StatsUtils = "1.1"
 julia = "1"
 
 [extras]

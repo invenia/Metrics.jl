@@ -44,36 +44,41 @@
 end
 
 @testset "how evaluate handles mixs" begin
+    orig_idist = IndexedDistribution(MvNormal(ones(3)), ["a", "b", "c"])
+
     @testset "IteratorOfObs" begin
-        function dummy_metric1(dist, scalar, iter, mat)
+        function dummy_metric1(dist, idist, scalar, iter, mat)
             @test dist == Normal()
+            @test idist == orig_idist
             @test scalar == 1
             @test iter == [1, 2, 3]
             @test collect(mat) == [[10, 20, 30], [10, 20, 30]]
         end
         Metrics.obs_arrangement(::typeof(dummy_metric1)) = IteratorOfObs()
-        evaluate(dummy_metric1, Normal(), 1, [1, 2, 3], [10 20 30; 10 20 30])
+        evaluate(dummy_metric1, Normal(), orig_idist, 1, [1, 2, 3], [10 20 30; 10 20 30])
     end
 
     @testset "MatrixColsOfObs" begin
-        function dummy_metric2(dist, scalar, iter, mat)
+        function dummy_metric2(dist, idist, scalar, iter, mat)
             @test dist == Normal()
+            @test idist == orig_idist
             @test scalar == 1
             @test iter == [1, 2, 3]
             @test collect(mat) == [10 10;  20 20; 30 30]
         end
         Metrics.obs_arrangement(::typeof(dummy_metric2)) = MatrixColsOfObs()
-        evaluate(dummy_metric2, Normal(), 1, [1, 2, 3], [10 20 30; 10 20 30])
+        evaluate(dummy_metric2, Normal(), orig_idist, 1, [1, 2, 3], [10 20 30; 10 20 30])
     end
 
     @testset "MatrixRowsOfObs" begin
-        function dummy_metric3(dist, scalar, iter, mat)
+        function dummy_metric3(dist, idist, scalar, iter, mat)
             @test dist == Normal()
+            @test idist == orig_idist
             @test scalar == 1
             @test iter == [1, 2, 3]
             @test collect(mat) == [10 20 30; 10 20 30]
         end
         Metrics.obs_arrangement(::typeof(dummy_metric3)) = MatrixRowsOfObs()
-        evaluate(dummy_metric3, Normal(), 1, [1, 2, 3], [10 20 30; 10 20 30])
+        evaluate(dummy_metric3, Normal(), orig_idist, 1, [1, 2, 3], [10 20 30; 10 20 30])
     end
 end

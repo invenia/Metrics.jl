@@ -44,14 +44,20 @@ using Metrics: split_volume
         dense_dist = generate_mvnormal(mean_deltas, num_nodes)
         nonzero_pi = (supply_pi=fill(0.1, num_nodes), demand_pi=fill(0.1, num_nodes))
 
-        @testset "with distribution" begin
+        node_names = "node" .* string.(collect(1:num_nodes))
+        dense_id = IndexedDistribution(dense_dist, node_names)
+
+        @testset "with $type" for (type, dist) in (
+            ("Distribution", dense_dist),
+            ("IndexedDistribution", dense_id)
+        )
             expected = dot(volumes, mean_deltas)
-            @test expected_return(volumes, dense_dist) ≈ expected
-            @test evaluate(expected_return, volumes, dense_dist) ≈ expected
+            @test expected_return(volumes, dist) ≈ expected
+            @test evaluate(expected_return, volumes, dist) ≈ expected
 
             # with price impact
-            @test expected_return(volumes, dense_dist, nonzero_pi...) < expected
-            @test evaluate(expected_return, volumes, dense_dist, nonzero_pi...) < expected
+            @test expected_return(volumes, dist, nonzero_pi...) < expected
+            @test evaluate(expected_return, volumes, dist, nonzero_pi...) < expected
         end
 
         @testset "with samples" begin
@@ -97,10 +103,16 @@ using Metrics: split_volume
         volumes = rand(Uniform(-50,50), 10)
         dense_dist = generate_mvnormal(10)
 
-        @testset "with distribution" begin
-            expected = norm(sqrtcov(dense_dist) * volumes, 2)
-            @test volatility(volumes, dense_dist) ≈ expected
-            @test evaluate(volatility, volumes, dense_dist) ≈ expected
+        names = "node" .* string.(collect(1:10))
+        dense_id = IndexedDistribution(dense_dist, names)
+
+        @testset "with $type" for (type, dist) in (
+            ("Distribution", dense_dist),
+            ("IndexedDistribution", dense_id)
+        )
+            expected = norm(sqrtcov(dist) * volumes, 2)
+            @test volatility(volumes, dist) ≈ expected
+            @test evaluate(volatility, volumes, dist) ≈ expected
         end
 
         @testset "with samples" begin
@@ -190,17 +202,23 @@ using Metrics: split_volume
             dense_dist = generate_mvnormal(10)
             nonzero_pi = (supply_pi=fill(0.1, 10), demand_pi=fill(0.1, 10))
 
-            @testset "with distribution" begin
-                exp_return = expected_return(volumes, dense_dist)
-                exp_vol = volatility(volumes, dense_dist)
+            names = "nodes" .* string.(collect(1:10))
+            dense_id = IndexedDistribution(dense_dist, names)
 
-                @test sharpe_ratio(volumes, dense_dist) == exp_return / exp_vol
-                @test evaluate(sharpe_ratio, volumes, dense_dist) == exp_return / exp_vol
+            @testset "with $type" for (type, dist) in (
+                ("Distribution", dense_dist),
+                ("IndexedDistribution", dense_id)
+            )
+                exp_return = expected_return(volumes, dist)
+                exp_vol = volatility(volumes, dist)
+
+                @test sharpe_ratio(volumes, dist) == exp_return / exp_vol
+                @test evaluate(sharpe_ratio, volumes, dist) == exp_return / exp_vol
 
                 # with price impact
-                @test sharpe_ratio(volumes, dense_dist, nonzero_pi...) < exp_return / exp_vol
+                @test sharpe_ratio(volumes, dist, nonzero_pi...) < exp_return / exp_vol
                 @test isless(
-                    evaluate(sharpe_ratio, volumes, dense_dist, nonzero_pi...),
+                    evaluate(sharpe_ratio, volumes, dist, nonzero_pi...),
                     exp_return / exp_vol,
                 )
             end
@@ -400,31 +418,38 @@ using Metrics: split_volume
             dense_dist = generate_mvnormal(10)
             nonzero_pi = (supply_pi=fill(0.1, 10), demand_pi=fill(0.1, 10))
 
-            # basic usage
-            expected = 26.995589121396023
-            @test expected_shortfall(volumes, dense_dist; risk_level=0.5) ≈ expected
+            names = "node" .* string.(collect(1:10))
+            dense_id = IndexedDistribution(dense_dist, names)
 
-            expected = 73.06492436615295
-            @test expected_shortfall(volumes, dense_dist; risk_level=0.01) ≈ expected
-            @test evaluate(expected_shortfall, volumes, dense_dist; risk_level=0.01) ≈ expected
-
-            # with price impact ES should increase (due to sign)
-            @test isless(
-                expected,
-                expected_shortfall(volumes, dense_dist, nonzero_pi...; risk_level=0.01),
+            @testset "with $type" for (type, dist) in (
+                ("Distribution", dense_dist),
+                ("IndexedDistribution", dense_id)
             )
-            @test isless(
-                expected,
-                evaluate(expected_shortfall, volumes, dense_dist, nonzero_pi...; risk_level=0.01),
-            )
+                # basic usage
+                expected = 26.995589121396023
+                @test expected_shortfall(volumes, dist; risk_level=0.5) ≈ expected
 
-            # SES should converge to AES after sufficient samples
-            ses_1 = expected_shortfall(volumes, dense_dist)
-            # this requires a large number of samples due to poor convergence in the
-            # covariance matrix
-            aes_6 = expected_shortfall(volumes, rand(dense_dist, 1_000_000))
-            @test isapprox(ses_1, aes_6, atol=1e-1)
+                expected = 73.06492436615295
+                @test expected_shortfall(volumes, dist; risk_level=0.01) ≈ expected
+                @test evaluate(expected_shortfall, volumes, dist; risk_level=0.01) ≈ expected
 
+                # with price impact ES should increase (due to sign)
+                @test isless(
+                    expected,
+                    expected_shortfall(volumes, dist, nonzero_pi...; risk_level=0.01),
+                )
+                @test isless(
+                    expected,
+                    evaluate(expected_shortfall, volumes, dist, nonzero_pi...; risk_level=0.01),
+                )
+
+                # SES should converge to AES after sufficient samples
+                ses_1 = expected_shortfall(volumes, dist)
+                # this requires a large number of samples due to poor convergence in the
+                # covariance matrix
+                aes_6 = expected_shortfall(volumes, rand(dist, 1_000_000))
+                @test isapprox(ses_1, aes_6, atol=1e-1)
+            end
         end
 
         @testset "erroring" begin

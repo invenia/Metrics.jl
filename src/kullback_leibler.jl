@@ -40,5 +40,36 @@ function kullback_leibler(a::Normal, b::Normal)
     return kullback_leibler(mv_a, mv_b)
 end
 
+"""
+    kullback_leibler(a::IndexedDistribution, b::IndexedDistribution) -> Float64
+
+Calculate the Kullback-Leibler divergence between two indexed distributions parameterised
+by gaussian distributions.
+"""
+function kullback_leibler(
+    a::IndexedDistribution{Multivariate, Continuous, <:AbstractMvNormal},
+    b::IndexedDistribution{Multivariate, Continuous, <:AbstractMvNormal},
+)
+    @_dimcheck size(a) == size(b)
+
+    id1, d1 = index(a), distribution(a)
+    id2, d2 = index(b), distribution(b)
+
+    if !(sort(id1) == sort(id2))
+        throw(ArgumentError(
+            "Distribution indices do not match: "*
+            "index(a) = $id1, index(b) = $id2",
+        ))
+    end
+
+    p1 = sortperm(id1)
+    p2 = sortperm(id2)
+
+    sorted_d1 = MvNormal(d1.μ[p1], cov(d1)[p1, p1])
+    sorted_d2 = MvNormal(d2.μ[p2], cov(d2)[p2, p2])
+
+    return kullback_leibler(sorted_d1, sorted_d2)
+end
+
 obs_arrangement(::typeof(kullback_leibler)) = SingleObs()
 const kl = kullback_leibler
