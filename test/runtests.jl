@@ -1,3 +1,4 @@
+using AxisArrays
 using Distributions
 using IndexedDistributions
 using LinearAlgebra

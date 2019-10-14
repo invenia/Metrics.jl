@@ -1,5 +1,6 @@
 module Metrics
 
+using AxisArrays
 using Distributions
 using IndexedDistributions
 using LinearAlgebra: cholesky, det, dot, I, norm, tr

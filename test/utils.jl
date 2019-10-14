@@ -1,4 +1,4 @@
-using Metrics: @_dimcheck
+using Metrics: @_dimcheck, _match
 @testset "utils.jl" begin
 
     @testset "failing checks" begin
@@ -40,12 +40,51 @@ using Metrics: @_dimcheck
             @test err isa DimensionMismatch
             @test occursin("1==1==foo", sprint(showerror, err))
         end
-end
+    end
 
     @testset "passing checks" begin
         @test @_dimcheck(1===1) isa Any
         @test @_dimcheck(size([20,30]) == (2,)) isa Any
         @test @_dimcheck(size([20,30]) == size([2,3]) == (2,)) isa Any
+    end
+
+    @testset "_match" begin
+
+        plain_array = [3, 2, 1]
+        plain_dist = generate_mvnormal([2, 1, 3], 3)
+
+        axis_array = AxisArray(plain_array, Axis{:obs}(["b", "a", "c"]))
+        index_dist = IndexedDistribution(plain_dist, ["c", "b", "a"])
+
+        @testset "Plain array and plain distribution" begin
+            new_array, new_dist = _match(plain_array, plain_dist)
+            @test new_array == plain_array
+            @test new_dist == plain_dist
+        end
+
+        @testset "AxisArray and plain distribution" begin
+            new_array, new_dist = _match(axis_array, plain_dist)
+            @test new_array == axis_array
+            @test new_dist == plain_dist
+        end
+
+        @testset "Plain array and IndexedDistribution" begin
+            new_array, new_dist = _match(plain_array, index_dist)
+            @test new_array == plain_array
+            @test new_dist == index_dist
+        end
+
+        @testset "AxisArray and IndexedDistribution" begin
+            new_array, new_dist = _match(axis_array, index_dist)
+            @test new_array != plain_array
+            @test new_dist != index_dist
+
+            # check indices are now sorted and values are in new order
+            @test index(new_dist) == axisvalues(new_array)[1] == ["a", "b", "c"]
+            @test mean(parent(new_dist)) == [3, 1, 2]
+            @test parent(new_array) == [2, 3, 1]
+        end
+
     end
 
 end
