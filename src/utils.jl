@@ -40,7 +40,6 @@ Sort the indices of the provided arguments such that they align.
 Applies to pairs of `AxisArray`s or an `AxisArray` with an `IndexedDistribution`.
 
 ```jldoctest; setup = :(using AxisArrays, Distributions, IndexedDistributions, Metrics)
-
 julia> a = AxisArray([1, 2, 3], Axis{:node}(["b", "a", "c"]));
 
 julia> b = AxisArray([1, 2, 3], Axis{:node}(["c", "b", "a"]));
