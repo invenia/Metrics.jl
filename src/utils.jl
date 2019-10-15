@@ -65,7 +65,7 @@ function _match(a::AxisArray, d::IndexedDistribution)
     dist, names = parent(d), index(d)
     index_dim = findfirst(Ref(sort(names)) .== sort.(axisvalues(a)))
 
-    if isnothing(index_dim)
+    if index_dim isa Nothing
         throw(ArgumentError(
             "Index and axis values do not match: index = $(index(d)), axis = $(axisvalues(a))"
         ))
@@ -84,10 +84,10 @@ end
 function _match(a::AxisArray, b::AxisArray)
     @_dimcheck size(a) == size(b)
 
-    #TODO: Are these already ordered?
+    # check that axis orientation is the same
     if axisnames(a) != axisnames(b)
         throw(ArgumentError(
-            "Axis names do not match: "*
+            "Axis names or orientation do not match: "*
             "axisnames(a) = $(axisnames(a)), axisnames(b) = $(axisvalues(b))"
         ))
     end
