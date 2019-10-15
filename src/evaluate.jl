@@ -117,6 +117,9 @@ for A in (IteratorOfObs, ArraySlicesOfObs)
         if data isa NamedDimsArray && obsdim isa Symbol
             obsdim = NamedDims.dim(data, obsdim)
         end
+        if data isa AxisArray && obsdim isa Symbol
+            obsdim = axisdim(data, Axis{obsdim})
+        end
 
         return organise_obs(arrangement, data, obsdim)
     end
