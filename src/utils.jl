@@ -47,6 +47,10 @@ julia> b = AxisArray([1, 2, 3], Axis{:node}(["c", "b", "a"]));
 
 julia> Metrics._match(a, b)
 ([2, 1, 3], [3, 2, 1])
+```
+
+```jldoctest; setup = :(using AxisArrays, Distributions, IndexedDistributions, Metrics)
+julia> a = AxisArray([1, 2, 3], Axis{:node}(["b", "a", "c"]));
 
 julia> d = IndexedDistribution(MvNormal(ones(3)), ["c", "b", "a"]);
 
