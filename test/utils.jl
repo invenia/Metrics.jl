@@ -86,15 +86,38 @@ using Metrics: @_dimcheck, _match
         end
 
         @testset "AxisArray and AxisArray" begin
-            axis_array2 = AxisArray([3, 1, 2], Axis{:obs}(["c", "a", "b"]))
-            new_array1, new_array2 = _match(axis_array, axis_array2)
-            @test new_array1 != axis_array
-            @test new_array2 != axis_array2
+            @testset "1-D" begin
+                axis_array2 = AxisArray([3, 1, 2], Axis{:obs}(["c", "a", "b"]))
+                new_array1, new_array2 = _match(axis_array, axis_array2)
+                @test new_array1 != axis_array
+                @test new_array2 != axis_array2
 
-            # check indices are now sorted and values are in new order
-            @test axisvalues(new_array1)[1] == axisvalues(new_array2)[1] == ["a", "b", "c"]
-            @test parent(new_array1) == [2, 3, 1]
-            @test parent(new_array2) == [1, 2, 3]
+                # check indices are now sorted and values are in new order
+                @test axisvalues(new_array1)[1] == axisvalues(new_array2)[1] == ["a", "b", "c"]
+                @test parent(new_array1) == [2, 3, 1]
+                @test parent(new_array2) == [1, 2, 3]
+            end
+            @testset "2-D" begin
+                axis_array1 = AxisArray(
+                    [1 3; 2 -1; 5 0],
+                    Axis{:obs}(["c", "a", "b"]),
+                    Axis{:target}([:t1, :t2])
+                )
+                axis_array2 = AxisArray(
+                    [2 0; 3 5; -2 6],
+                    Axis{:obs}(["a", "c", "b"]),
+                    Axis{:target}([:t2, :t1])
+                )
+                new_array1, new_array2 = _match(axis_array1, axis_array2)
+                @test new_array1 != axis_array1
+                @test new_array2 != axis_array2
+
+                # check indices are now sorted and values are in new order
+                @test axisvalues(new_array1)[1] == axisvalues(new_array2)[1] == ["a", "b", "c"]
+                @test axisvalues(new_array1)[2] == axisvalues(new_array2)[2] == Symbol[:t1, :t2]
+                @test parent(new_array1) == [2 -1; 5 0; 1 3]
+                @test parent(new_array2) == [0 2; 6 -2; 5 3]
+            end
         end
     end
 end
