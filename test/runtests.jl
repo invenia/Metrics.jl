@@ -6,7 +6,7 @@ using Metrics:
     IteratorOfObs,
     MatrixRowsOfObs,
     MatrixColsOfObs,
-    SingleObs,
+    ObsArrangement,
     obs_arrangement,
     organise_obs,
     price_impact
