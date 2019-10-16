@@ -62,7 +62,7 @@ dim: 3
 , ["a", "b", "c"]))
 ```
 """
-function _match(a::AxisArray, d::IndexedDistribution)
+function _match(a::AxisArray, d::IndexedDistribution{F, S, <:AbstractMvNormal}) where {F, S}
     @_dimcheck size(a) == size(d)
 
     dist, names = parent(d), index(d)
