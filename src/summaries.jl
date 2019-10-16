@@ -18,7 +18,7 @@ function regression_summary(args...)
 
     return summary
 end
-obs_arrangement(::typeof(regression_summary)) = IteratorOfObs()
+obs_arrangement(::typeof(regression_summary)) = SingleObs()
 
 
 

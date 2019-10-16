@@ -26,10 +26,5 @@ rescale(d::MatrixNormal, U_sf) = rescale(d::MatrixNormal, U_sf, U_sf)
 # broadcast sensibly if passed a vector of distributions
 rescale(v::AbstractVector{<:Distribution}, scale_factor) = rescale.(v, Ref(scale_factor))
 
-# If metric is a SingleObs then return the mean of the distribution
-Statistics.mean(arrangement::SingleObs, y_pred) = mean(y_pred)
-
-# If metric is an IteratorOfObs then return means of the distributions in the vector
-# declaring AbstractVector type may seem verbose but it protects against an ambiguity in
-# Statistics mean(f, A::AbstractArray).
-Statistics.mean(arrangement::IteratorOfObs, y_pred::AbstractVector) = mean.(y_pred)
+# This mean function returns the point-predictions from vector of distributions.
+Statistics.mean(y_pred::AbstractVector{<:Sampleable}) = mean.(y_pred)

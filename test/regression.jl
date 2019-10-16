@@ -9,7 +9,7 @@
 
     function is_strictly_positive(metric, y_true, y_pred)
         # get mean value(s) of distribution(s)
-        point_pred = mean(obs_arrangement(metric), y_pred)
+        point_pred = mean(y_pred)
 
         @testset "is strictly positive" begin
             @test metric(y_true, point_pred) > 0
@@ -21,7 +21,7 @@
 
     function is_symmetric(metric, y_true, y_pred)
         # get mean value(s) of distribution(s)
-        point_pred = mean(obs_arrangement(metric), y_pred)
+        point_pred = mean(y_pred)
 
         @testset "is symmetric" begin
             @test metric(y_true, point_pred) == metric(point_pred, y_true)
@@ -33,7 +33,7 @@
 
     function is_not_symmetric(metric, y_true, y_pred)
         # get mean value(s) of distribution(s)
-        point_pred = mean(obs_arrangement(metric), y_pred)
+        point_pred = mean(y_pred)
 
         # only the point prediction is tested
         @testset "is not symmetric" begin
@@ -72,9 +72,9 @@
             error_d2 = metric(y_true, y_pred2)
 
             # point errors
-            error_p0 = metric(y_true, mean(obs_arrangement(metric), y_pred0))
-            error_p1 = metric(y_true, mean(obs_arrangement(metric), y_pred1))
-            error_p2 = metric(y_true, mean(obs_arrangement(metric), y_pred2))
+            error_p0 = metric(y_true, mean(y_pred0))
+            error_p1 = metric(y_true, mean(y_pred1))
+            error_p2 = metric(y_true, mean(y_pred2))
 
             @test error_d2 > error_d1 > error_d0
             @test error_p2 > error_p1 > error_p0
@@ -83,7 +83,7 @@
 
     function dist_returns_larger_errors(metric, y_true, y_pred)
         # get mean value(s) of distribution(s)
-        point_pred = mean(obs_arrangement(metric), y_pred)
+        point_pred = mean(y_pred)
 
         # generate new distribution(s) with mean = y_true
         y_true_dist = relocate(y_pred, y_true)
@@ -103,7 +103,7 @@
 
     function dist_error_converges_safely(metric, y_true, y_pred)
         # get mean value(s) of distribution(s)
-        point_pred = mean(obs_arrangement(metric), y_pred)
+        point_pred = mean(y_pred)
 
         # generate new distribution(s) with var = 0
         y_pred_var0 = rescale(y_pred, 0)
@@ -131,9 +131,9 @@
             error_d2 = metric(y_true, y_pred2)
 
             # point errors
-            error_p0 = metric(y_true, mean(obs_arrangement(metric), y_pred0))
-            error_p1 = metric(y_true, mean(obs_arrangement(metric), y_pred1))
-            error_p2 = metric(y_true, mean(obs_arrangement(metric), y_pred2))
+            error_p0 = metric(y_true, mean(y_pred0))
+            error_p1 = metric(y_true, mean(y_pred1))
+            error_p2 = metric(y_true, mean(y_pred2))
 
             @test error_d2 > error_d1 > error_d0
             @test error_p2 == error_p1 == error_p0
