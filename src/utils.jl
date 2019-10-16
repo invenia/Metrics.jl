@@ -87,19 +87,28 @@ end
 function _match(a::AxisArray, b::AxisArray)
     @_dimcheck size(a) == size(b)
 
+    # if AxisArrays already match then short-circtuit the rest
+    if (axisnames(a) == axisnames(b)) && (axisvalues(a) == axisvalues(b))
+        return a, b
     # check that axis orientation is the same
-    if axisnames(a) != axisnames(b)
+    elseif axisnames(a) != axisnames(b)
         throw(ArgumentError(
-            "Axis names or orientation do not match: "*
+            "AxisArray orientations do not match: "*
             "axisnames(a) = $(axisnames(a)), axisnames(b) = $(axisvalues(b))"
         ))
+    # check that axis values are the same
+    elseif sort.(axisvalues(a)) != sort.(axisvalues(b))
+        throw(ArgumentError(
+            "AxisArray axis values do not match: "*
+            "axisnames(a) = $(sort.(axisvalues(a))), axisnames(b) = $(sort.(axisvalues(b)))"
+        ))
+    else
+
+        pa = sortperm.(axisvalues(a))
+        pb = sortperm.(axisvalues(b))
+
+        return a[pa...], b[pb...]
     end
-
-    pa = sortperm.(axisvalues(a))
-    pb = sortperm.(axisvalues(b))
-
-    return a[pa...], b[pb...]
-
 end
 
 _match(a, d) =  a, d
