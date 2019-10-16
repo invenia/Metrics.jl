@@ -416,43 +416,85 @@
 
             @testset "$type expected result" for (type, (y_true, y_pred)) in forecast_pairs
 
-                y_means = mean(y_pred)
+                @testset "$mean_metric" for (mean_metric, single_metric) in ((mse, se), (mae, ae))
 
-                # compute metric on point predictions
-                @testset "point prediction" begin
-                    @test mse(y_true, y_means) ≈ expected[typeof(se)]["point"][type] / length(y_true)
-                    @test mae(y_true, y_means) ≈ expected[typeof(ae)]["point"][type] / length(y_true)
-                end
+                    y_means = mean(y_pred)
 
-                # compute metric on distribution predictions
-                @testset "dist prediction" begin
-                    @test mse(y_true, y_pred) ≈ expected[typeof(se)]["dist"][type] / length(y_true)
-                    @test mae(y_true, y_pred) ≈ expected[typeof(ae)]["dist"][type] / length(y_true)
-                end
-
-                # compute metric on indexed distribution predictions - only defined for multivariates
-                if type == "vector"
-                    @testset "IndexedDistribution with AbstractArray" begin
-                        @test mse(y_true, y_pred_index) ≈ expected[typeof(se)]["dist"][type] / length(y_true)
-                        @test mae(y_true, y_pred_index) ≈ expected[typeof(ae)]["dist"][type] / length(y_true)
+                    # compute metric on point predictions
+                    @testset "point prediction" begin
+                        @test isapprox(
+                            mean_metric(y_true, y_means),
+                            expected[typeof(single_metric)]["point"][type] / length(y_true)
+                        )
                     end
-                    @testset "IndexedDistribution with AxisArray" begin
-                        @test mse(y_true_axis, y_pred_index) ≈ expected[typeof(se)]["dist"][type] / length(y_true)
-                        @test mae(y_true_axis, y_pred_index) ≈ expected[typeof(ae)]["dist"][type] / length(y_true)
-                    end
-                    @testset "IndexedDistribution with shuffled AxisArray" begin
-                        names = index(y_pred_index)
-                        new_order = shuffle(1:length(names))
-                        _y_true_axis = AxisArray(y_true[new_order], Axis{:obs}(names[new_order]))
 
-                        @test mse(_y_true_axis, y_pred_index) ≈ expected[typeof(se)]["dist"][type] / length(y_true)
-                        @test mae(_y_true_axis, y_pred_index) ≈ expected[typeof(ae)]["dist"][type] / length(y_true)
+                    # compute metric on distribution predictions
+                    @testset "dist prediction" begin
+                        @test isapprox(
+                            mean_metric(y_true, y_pred),
+                            expected[typeof(single_metric)]["dist"][type] / length(y_true)
+                        )
                     end
-                end
-            end
 
+                    # compute metric on indexed distribution predictions - only defined for multivariates
+                    if type == "vector"
+                        @testset "AxisArray with AxisArray" begin
+                            y_means = mean(y_pred)
+                            names = index(y_pred_index)
+                            y_pred_axis = AxisArray(y_means, Axis{:obs}(names))
+
+                            @test isapprox(
+                                mean_metric(y_true_axis, y_pred_axis),
+                                expected[typeof(single_metric)]["point"][type] / length(y_true)
+                            )
+                        end
+                        @testset "AxisArray with shuffled AxisArray" begin
+                            y_means = mean(y_pred)
+                            names = index(y_pred_index)
+                            new_order = shuffle(1:length(names))
+                            y_pred_axis = AxisArray(y_means, Axis{:obs}(names[new_order]))
+
+                            @test isapprox(
+                                mean_metric(y_true_axis, y_pred_axis),
+                                expected[typeof(single_metric)]["point"][type] / length(y_true)
+                            )
+                        end
+                        @testset "AxisArrays don't match" begin
+                            y_means = mean(y_pred)
+                            y_pred_axis = AxisArray(y_means, Axis{:obs}(["a", "b", "q"]))
+
+                            @test_throws ArgumentError mean_metric(y_true_axis, y_pred_axis)
+                        end
+                        @testset "IndexedDistribution with AbstractArray" begin
+                            @test isapprox(
+                                mean_metric(y_true, y_pred_index),
+                                expected[typeof(single_metric)]["dist"][type] / length(y_true)
+                            )
+                        end
+                        @testset "IndexedDistribution with AxisArray" begin
+                            @test isapprox(
+                                mean_metric(y_true_axis, y_pred_index),
+                                expected[typeof(single_metric)]["dist"][type] / length(y_true)
+                            )
+                        end
+                        @testset "IndexedDistribution with shuffled AxisArray" begin
+                            names = index(y_pred_index)
+                            new_order = shuffle(1:length(names))
+                            _y_true_axis = AxisArray(y_true[new_order], Axis{:obs}(names[new_order]))
+
+                            @test isapprox(
+                                mean_metric(_y_true_axis, y_pred_index),
+                                expected[typeof(single_metric)]["dist"][type] / length(y_true)
+                            )
+                        end
+                        @testset "IndexedDistribution and AxisArray don't match" begin
+                            _y_true_axis = AxisArray(y_true, Axis{:obs}(["a", "z", "t"]))
+                            @test_throws ArgumentError mean_metric(_y_true_axis, y_pred_index)
+                        end
+                    end  # if vector
+                end # mean metrics
+            end # type
         end
-
     end  # single obs
 
     @testset "collection of obs" begin
