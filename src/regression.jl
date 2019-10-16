@@ -57,6 +57,7 @@ is taken over both the number of observations and their dimension.
 """
 function mean_squared_error(y_true::AbstractArray, y_pred::AbstractArray)
     @_dimcheck size(y_true) == size(y_pred)
+    y_true, y_pred = _match(y_true, y_pred)
     return mean(mean_squared_error.(y_true, y_pred))
 end
 
@@ -192,6 +193,7 @@ is taken over both the number of observations and their dimension.
 """
 function mean_absolute_error(y_true::AbstractArray, y_pred::AbstractArray)
     @_dimcheck size(y_true) == size(y_pred)
+    y_true, y_pred = _match(y_true, y_pred)
     return mean(expected_absolute_error.(y_true, y_pred) ./ length.(y_true))
 end
 
