@@ -118,6 +118,37 @@ using Metrics: @_dimcheck, _match
                 @test parent(new_array1) == [2 -1; 5 0; 1 3]
                 @test parent(new_array2) == [0 2; 6 -2; 5 3]
             end
+            @testset "erroring" begin
+                a = AxisArray(
+                    [1 3; 2 -1; 5 0],
+                    Axis{:obs}(["c", "a", "b"]),
+                    Axis{:target}([:t1, :t2])
+                )
+
+                # wrong orientation
+                b = AxisArray(
+                    [2 0; 3 5; -2 6],
+                    Axis{:target}(["c", "a", "b"]),
+                    Axis{:obs}([:t1, :t2]),
+                )
+                @test_throws ArgumentError _match(a, b)
+
+                # axis values don't match
+                b = AxisArray(
+                    [2 0; 3 5; -2 6],
+                    Axis{:obs}(["a", "q", "b"]),
+                    Axis{:target}([:t2, :t1])
+                )
+                @test_throws ArgumentError _match(a, b)
+
+                # wrong size
+                b = AxisArray(
+                    [2 0 3; 5 -2 6],
+                    Axis{:target}([:t1, :t2]),
+                    Axis{:obs}(["c", "a", "b"]),
+                )
+                @test_throws DimensionMismatch _match(a, b)
+            end
         end
     end
 end
