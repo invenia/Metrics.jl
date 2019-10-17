@@ -26,5 +26,5 @@ rescale(d::MatrixNormal, U_sf) = rescale(d::MatrixNormal, U_sf, U_sf)
 # broadcast sensibly if passed a vector of distributions
 rescale(v::AbstractVector{<:Distribution}, scale_factor) = rescale.(v, Ref(scale_factor))
 
-Statistics.mean(::ObsArrangement, y_pred) = mean(y_pred)
-Statistics.mean(::ObsArrangement, y_pred::AbstractVector{<:Sampleable}) = mean.(y_pred)
+# This mean function returns the point-predictions from vector of distributions.
+Statistics.mean(y_pred::AbstractVector{<:Sampleable}) = mean.(y_pred)

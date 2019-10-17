@@ -1,6 +1,8 @@
 @testset "organise_obs" begin
     c_organise_obs(args...; kwargs...) = collect(organise_obs(args...; kwargs...))
 
+    # TODO: Add tests for SingleObs
+
     @testset "simple IteratorOfObs for iterators" begin
         for out in (
             [1,2,3],

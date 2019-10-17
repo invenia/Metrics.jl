@@ -104,6 +104,14 @@ end
 # If it is a single observation than never any need to rearrage
 organise_obs(::SingleObs, data; obsdim=nothing) = data
 
+# If data is an array we can safely drop single length dimensions
+# This lets us compute metrics on pairs of objects that are (3,) and (3, 1)
+function organise_obs(::SingleObs, data::AbstractArray; obsdim=nothing)
+    to_drop = findall(size(data) .== 1)
+    data = isempty(to_drop) ? data : dropdims(data; dims=(to_drop...))
+    return data
+end
+
 for A in (IteratorOfObs, ArraySlicesOfObs)
     # Handle non-1D AbstractArray data, this means we need to know the obsdim
     # This method fills in the obsdim, if required, to the default
