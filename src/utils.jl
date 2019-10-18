@@ -63,7 +63,10 @@ dim: 3
 ```
 """
 function _match(a::AxisArray, d::IndexedDistribution{F, S, <:AbstractMvNormal}) where {F, S}
-    @_dimcheck size(a) == size(d)
+    # marginal_gaussian_loglikelihood, etc. can accept multiple observations at a time
+    # The stricter condition: size(a) == size(d) should be picked up by any metric that
+    # requires it
+    @_dimcheck first(size(a)) == first(size(d))
 
     dist, names = parent(d), index(d)
     index_dim = findfirst(Ref(sort(names)) .== sort.(axisvalues(a)))
@@ -75,13 +78,16 @@ function _match(a::AxisArray, d::IndexedDistribution{F, S, <:AbstractMvNormal}) 
     end
 
     # determine the correct ordering
-    pd = sortperm(names)
-    pa = sortperm(axisvalues(a)[index_dim])
+    pa = sortperm.(axisvalues(a))
+    sorted_a = a[pa...]
 
+    pd = sortperm(names)
     μ, Σ = mean(dist), cov(dist)  # params() returns a PDMat which can't be re-sorted
     sorted_d = IndexedDistribution(MvNormal(vec(μ[pd, :]), Σ[pd, pd]), names[pd])
 
-    return a[pa], sorted_d
+    @assert axisvalues(sorted_a)[index_dim] == index(sorted_d)
+
+    return sorted_a, sorted_d
 end
 
 function _match(a::AxisArray, b::AxisArray)
