@@ -119,14 +119,19 @@ for A in (IteratorOfObs, ArraySlicesOfObs)
     # Filling in the observation dimension is the same regardless of if targetting
     # IteratorOfObs, ArraySlicesOfObs
     @eval function organise_obs(arrangement::$A, data::AbstractArray; obsdim=nothing)
+
         if obsdim == nothing
             obsdim = _default_obsdim(data)
         end
+
         if data isa NamedDimsArray && obsdim isa Symbol
+
             obsdim = NamedDims.dim(data, obsdim)
-        end
-        if data isa AxisArray && obsdim isa Symbol
+
+        elseif data isa AxisArray && obsdim isa Symbol
+
             obsdim = axisdim(data, Axis{obsdim})
+
         end
 
         return organise_obs(arrangement, data, obsdim)

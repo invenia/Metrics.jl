@@ -33,11 +33,29 @@ end
 
 
 """
-    _match(a::AxisArray, b::AxisArray) -> a, b
-    _match(a::AxisArray, d::IndexedDistribution) -> a, d
+    _match(a::AxisArray, b::AxisArray) -> Tuple{a::AxisArray, b::AxisArray}
+    _match(a::AxisArray, d::IndexedDistribution) -> Tuple{a::AxisArray, d::IndexedDistribution}
 
-Sort the indices of the provided arguments such that they align.
-Applies to pairs of `AxisArray`s or an `AxisArray` with an `IndexedDistribution`.
+Match the axis values and/or indices of the provided arguments such that their values are in
+the same order. This can be applied to pairs of `AxisArray`s or an `AxisArray` with an
+`IndexedDistribution`.
+
+Arguments:
+  - `a::AxisArray`: An array of data whose axes are indexed by some values
+  - `b::AxisArray`: An array of data whose axes are indexed by some values
+  - `d::IndexedDistribution`: A distribution indexed by some values, usually produced as the
+  output of a forecaster
+
+Returns:
+  - `Tuple{a::AxisArray, b::AxisArray}`: A tuple of the same input data but with axes aligned.
+  - `Tuple{a::AxisArray, d::IndexedDistribution}`: A tuple of the same input data with their
+  axes and indices aligned.
+
+Throws:
+  - `ArgumentError`: If the AxisArrays do not have the same orientation
+  - `ArgumentError`: If the AxisArrays do not have the same axis values
+  - `ArgumentError`: If the axis values of the AxisArray do not match the indices of the
+  IndexedDistribution
 
 ```jldoctest; setup = :(using AxisArrays, Distributions, IndexedDistributions, Metrics)
 julia> a = AxisArray([1, 2, 3], Axis{:node}(["b", "a", "c"]));
@@ -77,17 +95,22 @@ function _match(a::AxisArray, d::IndexedDistribution{F, S, <:AbstractMvNormal}) 
         ))
     end
 
-    # determine the correct ordering
-    pa = sortperm.(axisvalues(a))
-    sorted_a = a[pa...]
+    if axisvalues(a)[index_dim] == index(d)
+        return a, d
+    else
+        # re-organise the AxisArray
+        pa = sortperm.(axisvalues(a))
+        sorted_a = a[pa...]
 
-    pd = sortperm(names)
-    μ, Σ = mean(dist), cov(dist)  # params() returns a PDMat which can't be re-sorted
-    sorted_d = IndexedDistribution(MvNormal(vec(μ[pd, :]), Σ[pd, pd]), names[pd])
+        # re-organise the IndexedDistribution
+        pd = sortperm(names)
+        μ, Σ = mean(dist), cov(dist)  # params() returns a PDMat which can't be re-sorted
+        sorted_d = IndexedDistribution(MvNormal(vec(μ[pd, :]), Σ[pd, pd]), names[pd])
 
-    @assert axisvalues(sorted_a)[index_dim] == index(sorted_d)
+        @assert axisvalues(sorted_a)[index_dim] == index(sorted_d)
 
-    return sorted_a, sorted_d
+        return sorted_a, sorted_d
+    end
 end
 
 function _match(a::AxisArray, b::AxisArray)

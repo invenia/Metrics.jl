@@ -671,7 +671,6 @@
             end
 
             @testset "Arrangements" begin
-                # test arrangements
                 expected = marginal_gaussian_loglikelihood(dist, y_pred)
                 @test expected == evaluate(marginal_gaussian_loglikelihood, dist, y_pred)
                 @test expected == evaluate(marginal_gaussian_loglikelihood, dist, Tuple(y_pred))
