@@ -5,8 +5,8 @@
 
         data = (
             1.2,
-            [1,2,3],
-            [[1,2,3], [4,5,6]],
+            [1, 2, 3],
+            [[1, 2, 3], [4, 5, 6]],
             [[1 2 3; 10 20 30], [4 5 6; 40 50 60]],
             Normal(1, 3),
             MvNormal(rand(3), I)
@@ -16,20 +16,22 @@
         @test all(==(raw,organise_obs(SingleObs(), raw)) for raw in data)
 
         data = (
-            [1,2,3],
-            [[1,2,3], [4,5,6]],
+            [1, 2, 3],
+            [[1, 2, 3], [4, 5, 6]],
             [[1 2 3; 10 20 30], [4 5 6; 40 50 60]],
         )
 
         for expected in data
-            # add an extra artificial column of size 1 to the end
-            # organise obs should remove this
+            # add an extra artificial column of size 1 to the end, e.g. (3,) -> (3, 1)
+            # organise_obs should remove this
             with_extra_col = reshape(expected, (size(expected)..., :))
             @test expected == organise_obs(SingleObs(), with_extra_col)
 
-            # add 2 extra columns of size 1 at random
+            # add 2 extra columns of size 1 at random, e.g. (3,) -> (1, 3, 1)
+            # organise_obs should also remove these
             new_size = shuffle([size(expected)..., 1, 1])
             with_extra_cols = reshape(expected, (new_size...))
+            @test expected == organise_obs(SingleObs(), with_extra_col)
 
         end
 
