@@ -702,16 +702,17 @@
                 @test expected == evaluate(marginal_gaussian_loglikelihood, dist, y_pred')
             end
 
-            @testset "with AxisArrays" begin
+            @testset "Using IndexedDistributions and AxisArrays" begin
 
                 obs = ["a", "b", "c"]
                 features = [:f1, :f2, :f3, :f4]
+                id = IndexedDistribution(dist, obs)
 
                 expected = marginal_gaussian_loglikelihood(dist, y_pred)
 
                 # normal
                 a = AxisArray(y_pred, Axis{:obs}(obs), Axis{:feature}(features))
-                @test marginal_gaussian_loglikelihood(dist, a) ≈ expected
+                @test marginal_gaussian_loglikelihood(id, a) ≈ expected
 
                 #shuffled
                 new_obs_order = shuffle(1:3)
@@ -721,7 +722,7 @@
                     Axis{:obs}(obs[new_obs_order]),
                     Axis{:feature}(features[new_feature_order]),
                 )
-                @test marginal_gaussian_loglikelihood(dist, a) ≈ expected
+                @test marginal_gaussian_loglikelihood(id, a) ≈ expected
 
             end
         end
@@ -784,16 +785,17 @@
                 @test expected == evaluate(joint_gaussian_loglikelihood, dist, y_pred')
             end
 
-            @testset "with AxisArrays" begin
+            @testset "Using IndexedDistributions with AxisArrays" begin
 
                 obs = ["a", "b", "c"]
                 features = [:f1, :f2, :f3, :f4]
+                id = IndexedDistribution(dist, obs)
 
                 expected = joint_gaussian_loglikelihood(dist, y_pred)
 
                 # normal
                 a = AxisArray(y_pred, Axis{:obs}(obs), Axis{:feature}(features))
-                @test joint_gaussian_loglikelihood(dist, a) ≈ expected
+                @test joint_gaussian_loglikelihood(id, a) ≈ expected
 
                 #shuffled
                 new_obs_order = shuffle(1:3)
@@ -803,7 +805,7 @@
                     Axis{:obs}(obs[new_obs_order]),
                     Axis{:feature}(features[new_feature_order]),
                 )
-                @test joint_gaussian_loglikelihood(dist, a) ≈ expected
+                @test joint_gaussian_loglikelihood(id, a) ≈ expected
 
             end
         end

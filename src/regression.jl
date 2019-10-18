@@ -262,7 +262,7 @@ end
 function marginal_gaussian_loglikelihood(dist::Sampleable{Multivariate}, y_pred)
     y_pred, dist = _match(y_pred, dist)
     # `std` is not defined on `MvNormal` so we use `sqrt.(var(...))`
-    normalized_dist = MvNormal(parent(mean(dist)), sqrt.(var(dist)))
+    normalized_dist = MvNormal(parent(mean(dist)), sqrt.(parent(var(dist))))
     return loglikelihood(normalized_dist, y_pred)
 end
 obs_arrangement(::typeof(marginal_gaussian_loglikelihood)) = MatrixColsOfObs()
@@ -283,7 +283,7 @@ end
 
 function joint_gaussian_loglikelihood(dist::Sampleable{Multivariate}, y_pred)
     y_pred, dist = _match(y_pred, dist)
-    normalized_dist = MvNormal(parent(mean(dist)), cov(dist))
+    normalized_dist = MvNormal(parent(mean(dist)), parent(cov(dist)))
     return loglikelihood(normalized_dist, y_pred)
 end
 
