@@ -58,7 +58,9 @@ end
 # we will never rearrange them.
 # so we don't even need to check the traits.
 for T in (Sampleable, Number, Symbol)
-    @eval organise_obs(metric, data::$T; obsdim=nothing) = data
+    for A in (SingleObs, IteratorOfObs, MatrixRowsOfObs, MatrixColsOfObs)
+        @eval organise_obs(::$A, data::$T; obsdim=nothing) = data
+    end
 end
 
 ## Two arg forms: obsdim is optional, we may or may not need it.
@@ -108,7 +110,7 @@ organise_obs(::SingleObs, data; obsdim=nothing) = data
 # This lets us compute metrics on pairs of objects that are (3,) and (3, 1)
 function organise_obs(::SingleObs, data::AbstractArray; obsdim=nothing)
     to_drop = findall(size(data) .== 1)
-    data = isempty(to_drop) ? data : dropdims(data; dims=(to_drop...))
+    data = isempty(to_drop) ? data : dropdims(data; dims=Tuple(to_drop))
     return data
 end
 
