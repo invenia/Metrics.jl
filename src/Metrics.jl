@@ -19,8 +19,6 @@ include("price_impact.jl")
 include("summaries.jl")
 include("deprecated.jl")
 
-
-
 export
     evaluate,
     # regression
