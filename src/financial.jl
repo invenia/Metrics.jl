@@ -1,12 +1,11 @@
-
 """
     _calculate_returns(volumes::AbstractVector, deltas::AbstractMatrix)
 
 Calculate the returns from the given `volumes` and `deltas`.
 
 - `volumes::AbstractVector`: The MWs volumes of the portfolio, one volume per node
-- `deltas`: The collection of prices deltas which can be a `MvNormal`, `AbstractMatrix`, or
-    `AbstractVector`, expected to have dimensions of nodes × observations
+- `deltas::AbstractMatrix`: The collection of prices deltas, expected to have dimensions
+    of nodes × observations
 
 Returns:
  - `returns::NamedDimsArray{(:obs,)}`: a vector of returns, one per observation.
