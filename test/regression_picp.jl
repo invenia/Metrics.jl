@@ -96,7 +96,7 @@ end
                 @test picp(α, canonform(dist), data) ≈ picp(α, dist, data) rtol=0.05
             end
 
-            @testset "increasing how how different true data is decreases PICP" begin
+            @testset "increasing how different true data is decreases PICP" begin
                 old_picp = α
                 plain_samples = [rand(dist) for _ in 1:6000]
                 corrupt_samples = rand_out_of_dist(dist, 6_000)
@@ -128,7 +128,6 @@ end # @testset picp
     end
 
     @testset "Distributions - $typeof(dist)" for dist in testing_distributions
-        ideal_samples =
         @testset "$name" for (name, samples) in (
             ("ideal_samples",  [rand(dist) for _ in 1:5_000]),
             ("nonideal_samples",  rand_out_of_dist(dist, 5_000)),

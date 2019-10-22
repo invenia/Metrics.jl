@@ -5,6 +5,7 @@ Compute the square error between an observation `y_true` and point prediction `y
 """
 function expected_squared_error(y_true, y_pred)
     @_dimcheck size(y_true) == size(y_pred)
+    y_true, y_pred = _match(y_true, y_pred)
     return sum(abs2, (y_true .- y_pred))
 end
 
@@ -38,6 +39,7 @@ For more information see: https://en.wikipedia.org/wiki/Mean_squared_error#Estim
 """
 function expected_squared_error(y_true, y_pred::Sampleable)
     @_dimcheck size(y_true) == size(y_pred)
+    y_true, y_pred = _match(y_true, y_pred)
     bias = mean(y_pred) - y_true
     return sum(var(y_pred)) + sum(abs2, bias)
 end
@@ -55,6 +57,7 @@ is taken over both the number of observations and their dimension.
 """
 function mean_squared_error(y_true::AbstractArray, y_pred::AbstractArray)
     @_dimcheck size(y_true) == size(y_pred)
+    y_true, y_pred = _match(y_true, y_pred)
     return mean(mean_squared_error.(y_true, y_pred))
 end
 
@@ -125,6 +128,7 @@ Compute the total absolute error between an observation `y_true` and prediction 
 """
 function expected_absolute_error(y_true, y_pred)
     @_dimcheck size(y_true) == size(y_pred)
+    y_true, y_pred = _match(y_true, y_pred)
     return sum(abs.(y_true .- y_pred))
 end
 
@@ -162,6 +166,7 @@ For more information see: https://en.wikipedia.org/wiki/Folded_normal_distributi
 """
 function expected_absolute_error(y_true, y_pred::Sampleable)
     @_dimcheck size(y_true) == size(y_pred)
+    y_true, y_pred = _match(y_true, y_pred)
     μ = mean(y_pred) - y_true
     σ = sqrt.(var(y_pred))
     z = μ ./ σ
@@ -188,6 +193,7 @@ is taken over both the number of observations and their dimension.
 """
 function mean_absolute_error(y_true::AbstractArray, y_pred::AbstractArray)
     @_dimcheck size(y_true) == size(y_pred)
+    y_true, y_pred = _match(y_true, y_pred)
     return mean(expected_absolute_error.(y_true, y_pred) ./ length.(y_true))
 end
 
@@ -248,13 +254,15 @@ of the points.
 `marginal_gaussian_loglikelihood(dist, y_pred) = log(P (dist | y_pred))`
 """
 function marginal_gaussian_loglikelihood(dist::Sampleable{Univariate}, y_pred)
+    y_pred, dist = _match(y_pred, dist)
     normalized_dist = Normal(mean(dist), std(dist))
     return loglikelihood(normalized_dist, y_pred)
 end
 
 function marginal_gaussian_loglikelihood(dist::Sampleable{Multivariate}, y_pred)
+    y_pred, dist = _match(y_pred, dist)
     # `std` is not defined on `MvNormal` so we use `sqrt.(var(...))`
-    normalized_dist = MvNormal(mean(dist), sqrt.(var(dist)))
+    normalized_dist = MvNormal(parent(mean(dist)), sqrt.(parent(var(dist))))
     return loglikelihood(normalized_dist, y_pred)
 end
 obs_arrangement(::typeof(marginal_gaussian_loglikelihood)) = MatrixColsOfObs()
@@ -274,7 +282,8 @@ function joint_gaussian_loglikelihood(dist::Sampleable{Univariate}, y_pred)
 end
 
 function joint_gaussian_loglikelihood(dist::Sampleable{Multivariate}, y_pred)
-    normalized_dist = MvNormal(mean(dist), cov(dist))
+    y_pred, dist = _match(y_pred, dist)
+    normalized_dist = MvNormal(parent(mean(dist)), parent(cov(dist)))
     return loglikelihood(normalized_dist, y_pred)
 end
 

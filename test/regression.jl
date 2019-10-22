@@ -323,15 +323,17 @@
     @testset "single obs" begin
         metrics = (expected_squared_error, expected_absolute_error)
 
+        names = ["a", "b", "c"]
+
         y_true_scalar = 2
         y_true_vector = [2, 3, 4]
         y_true_matrix = [1 2 3; 4 5 6]
+        y_true_axis = AxisArray(y_true_vector, Axis{:obs}(names))
 
         y_pred_scalar = Normal(5, 2.2)
         y_pred_vector = MvNormal([7, 6, 5], Σ)
         y_pred_matrix = MatrixNormal([1 3 5; 7 9 11], U, V)
-
-        y_pred_vector_id = IndexedDistribution(y_pred_vector, ["a", "b", "c"])
+        y_pred_index = IndexedDistribution(y_pred_vector, names)
 
         expected = Dict(
             typeof(expected_squared_error) => Dict(
@@ -392,9 +394,20 @@
 
                 # compute metric on indexed distribution predictions - only defined for multivariates
                 if type == "vector"
-                    @testset "indexed distribution" begin
-                        @test m(y_true, y_pred_vector_id) ≈ expected[typeof(m)]["dist"][type]
-                        @test evaluate(m, y_true, y_pred_vector_id) ≈ expected[typeof(m)]["dist"][type]
+                    @testset "IndexedDistribution with AbstractArray" begin
+                        @test m(y_true, y_pred_index) ≈ expected[typeof(m)]["dist"][type]
+                        @test evaluate(m, y_true, y_pred_index) ≈ expected[typeof(m)]["dist"][type]
+                    end
+                    @testset "IndexedDistribution with AxisArray" begin
+                        @test m(y_true_axis, y_pred_index) ≈ expected[typeof(m)]["dist"][type]
+                        @test evaluate(m, y_true_axis, y_pred_index) ≈ expected[typeof(m)]["dist"][type]
+                    end
+                    @testset "IndexedDistribution with shuffled AxisArray" begin
+                        new_order = shuffle(1:length(names))
+                        _y_true_axis = AxisArray(y_true[new_order], Axis{:obs}(names[new_order]))
+
+                        @test m(_y_true_axis, y_pred_index) ≈ expected[typeof(m)]["dist"][type]
+                        @test evaluate(m, _y_true_axis, y_pred_index) ≈ expected[typeof(m)]["dist"][type]
                     end
                 end
             end
@@ -404,31 +417,78 @@
 
             @testset "$type expected result" for (type, (y_true, y_pred)) in forecast_pairs
 
-                y_means = mean(y_pred)
+                @testset "$mean_metric" for (mean_metric, single_metric) in ((mse, se), (mae, ae))
 
-                # compute metric on point predictions
-                @testset "point prediction" begin
-                    @test mse(y_true, y_means) ≈ expected[typeof(se)]["point"][type] / length(y_true)
-                    @test mae(y_true, y_means) ≈ expected[typeof(ae)]["point"][type] / length(y_true)
-                end
+                    y_means = mean(y_pred)
 
-                # compute metric on distribution predictions
-                @testset "dist prediction" begin
-                    @test mse(y_true, y_pred) ≈ expected[typeof(se)]["dist"][type] / length(y_true)
-                    @test mae(y_true, y_pred) ≈ expected[typeof(ae)]["dist"][type] / length(y_true)
-                end
-
-                # compute metric on indexed distribution predictions - only defined for multivariates
-                if type == "vector"
-                    @testset "indexed distribution" begin
-                        @test mse(y_true, y_pred_vector_id) ≈ expected[typeof(se)]["dist"][type] / length(y_true)
-                        @test mae(y_true, y_pred_vector_id) ≈ expected[typeof(ae)]["dist"][type] / length(y_true)
+                    # compute metric on point predictions
+                    @testset "point prediction" begin
+                        @test isapprox(
+                            mean_metric(y_true, y_means),
+                            expected[typeof(single_metric)]["point"][type] / length(y_true)
+                        )
                     end
-                end
-            end
 
+                    # compute metric on distribution predictions
+                    @testset "dist prediction" begin
+                        @test isapprox(
+                            mean_metric(y_true, y_pred),
+                            expected[typeof(single_metric)]["dist"][type] / length(y_true)
+                        )
+                    end
+
+                    # compute metric on indexed distribution predictions - only defined for multivariates
+                    if type == "vector"
+                        @testset "AxisArray with AxisArray" begin
+                            y_pred_axis = AxisArray(y_means, Axis{:obs}(names))
+
+                            @test isapprox(
+                                mean_metric(y_true_axis, y_pred_axis),
+                                expected[typeof(single_metric)]["point"][type] / length(y_true)
+                            )
+                        end
+                        @testset "AxisArray with shuffled AxisArray" begin
+                            new_order = shuffle(1:length(names))
+                            y_pred_axis = AxisArray(y_means, Axis{:obs}(names[new_order]))
+
+                            @test isapprox(
+                                mean_metric(y_true_axis, y_pred_axis),
+                                expected[typeof(single_metric)]["point"][type] / length(y_true)
+                            )
+                        end
+                        @testset "AxisArrays don't match" begin
+                            y_pred_axis = AxisArray(y_means, Axis{:obs}(["a", "b", "q"]))
+                            @test_throws ArgumentError mean_metric(y_true_axis, y_pred_axis)
+                        end
+                        @testset "IndexedDistribution with AbstractArray" begin
+                            @test isapprox(
+                                mean_metric(y_true, y_pred_index),
+                                expected[typeof(single_metric)]["dist"][type] / length(y_true)
+                            )
+                        end
+                        @testset "IndexedDistribution with AxisArray" begin
+                            @test isapprox(
+                                mean_metric(y_true_axis, y_pred_index),
+                                expected[typeof(single_metric)]["dist"][type] / length(y_true)
+                            )
+                        end
+                        @testset "IndexedDistribution with shuffled AxisArray" begin
+                            new_order = shuffle(1:length(names))
+                            _y_true_axis = AxisArray(y_true[new_order], Axis{:obs}(names[new_order]))
+
+                            @test isapprox(
+                                mean_metric(_y_true_axis, y_pred_index),
+                                expected[typeof(single_metric)]["dist"][type] / length(y_true)
+                            )
+                        end
+                        @testset "IndexedDistribution and AxisArray don't match" begin
+                            _y_true_axis = AxisArray(y_true, Axis{:obs}(["a", "z", "t"]))
+                            @test_throws ArgumentError mean_metric(_y_true_axis, y_pred_index)
+                        end
+                    end  # if vector
+                end # mean metrics
+            end # type
         end
-
     end  # single obs
 
     @testset "collection of obs" begin
@@ -441,15 +501,17 @@
             mean_absolute_scaled_error,
         )
 
+        names = ["a", "b", "c"]
+
         y_true_scalar = [2, -3, 6]
         y_true_vector = [[2, 3, 0], [-9, 6, 4], [10, -2, 11]]
         y_true_matrix = [[1 2 3; 4 5 6], [4 -3 2; 1 0 -1], [2 9 0; 6 5 6]]
+        y_true_axis = AxisArray.(y_true_vector, Ref(Axis{:obs}(names)))
 
         y_pred_scalar = Normal.([1, 0, -2], Ref(2.2))
         y_pred_vector = MvNormal.([[7, 6, 5], [-4, 0, -1], [7, 8, 5]], Ref(Σ))
         y_pred_matrix = MatrixNormal.([[1 3 5; 7 9 11], [0 0 2; 1 9 11], [-2 8 5; 7 5 3]], Ref(U), Ref(V))
-
-        y_pred_vector_id = IndexedDistribution.(y_pred_vector, Ref(["a", "b", "c"]))
+        y_pred_index = IndexedDistribution.(y_pred_vector, Ref(names))
 
         expected = Dict(
             typeof(mean_squared_error) => Dict(
@@ -558,13 +620,41 @@
 
                 # compute metric on indexed distribution predictions - only defined for multivariates
                 if type == "vector"
-                    @testset "indexed distribution" begin
-                        @test m(y_true, y_pred_vector_id) ≈ expected[typeof(m)]["dist"][type]
-                        @test evaluate(m, y_true, y_pred_vector_id) ≈ expected[typeof(m)]["dist"][type]
+                    @testset "AxisArray with AxisArray" begin
+                        # make a new vector of predicted AxisArrays
+                        y_pred_axis = [AxisArray(y, Axis{:obs}(names)) for y in y_means]
+                        @test m(y_true_axis, y_pred_axis) ≈ expected[typeof(m)]["point"][type]
+                    end
+                    @testset "AxisArray with shuffled AxisArray" begin
+                        # make a new vector of predicted AxisArrays with shuffles axis names
+                        new_order = shuffle(1:length(names))
+                        y_pred_axis = [AxisArray(y[new_order], Axis{:obs}(names[new_order])) for y in y_means]
+                        @test m(y_true_axis, y_pred_axis) ≈ expected[typeof(m)]["point"][type]
+                    end
+                    @testset "AxisArrays don't match" begin
+                        # make a new vector of predicted AxisArrays with mismatched axis names
+                        y_pred_axis = [AxisArray(y, Axis{:obs}(["b", "c", "q"])) for y in y_means]
+                        @test_throws ArgumentError m(y_true_axis, y_pred_axis)
+                    end
+                    @testset "IndexedDistribution with AbstractArray" begin
+                        @test m(y_true, y_pred_index) ≈ expected[typeof(m)]["dist"][type]
+                        @test evaluate(m, y_true, y_pred_index) ≈ expected[typeof(m)]["dist"][type]
+                    end
+                    @testset "IndexedDistribution with AxisArray" begin
+                        @test m(y_true_axis, y_pred_index) ≈ expected[typeof(m)]["dist"][type]
+                        @test evaluate(m, y_true_axis, y_pred_index) ≈ expected[typeof(m)]["dist"][type]
+                    end
+                    @testset "IndexedDistribution with shuffled AxisArray" begin
+                        # make a new vector of AxisArrays with shuffled axisnames
+                        new_order = shuffle(1:length(names))
+                        _y_true_axis = [AxisArray(y[new_order], Axis{:obs}(names[new_order])) for y in y_true_axis]
+
+                        @test m(_y_true_axis, y_pred_index) ≈ expected[typeof(m)]["dist"][type]
+                        @test evaluate(m, _y_true_axis, y_pred_index) ≈ expected[typeof(m)]["dist"][type]
                     end
                 end
-            end
-        end
+            end  # expected results
+        end  # metric
     end  # collection of obs
 
 
@@ -574,15 +664,17 @@
             y_pred = [0.1, 0.2, 0.3]
             y_mean = [0.1, 0.1, 0.1]
 
-            @test marginal_gaussian_loglikelihood(dist, y_pred) < 0.0 # logprobs always negative
+            @testset "Properties" begin
+                @test marginal_gaussian_loglikelihood(dist, y_pred) < 0.0 # logprobs always negative
+                # y_pred is less likely than y_mean
+                @test marginal_gaussian_loglikelihood(dist, y_pred) < marginal_gaussian_loglikelihood(dist, y_mean)
+            end
 
-            # y_pred is less likely than y_mean
-            @test marginal_gaussian_loglikelihood(dist, y_pred) < marginal_gaussian_loglikelihood(dist, y_mean)
-
-            # test arrangements
-            expected = marginal_gaussian_loglikelihood(dist, y_pred)
-            @test expected == evaluate(marginal_gaussian_loglikelihood, dist, y_pred)
-            @test expected == evaluate(marginal_gaussian_loglikelihood, dist, Tuple(y_pred))
+            @testset "Arrangements" begin
+                expected = marginal_gaussian_loglikelihood(dist, y_pred)
+                @test expected == evaluate(marginal_gaussian_loglikelihood, dist, y_pred)
+                @test expected == evaluate(marginal_gaussian_loglikelihood, dist, Tuple(y_pred))
+            end
         end
         @testset "vector point" begin
             dist = MvNormal(3, 1.5)
@@ -593,20 +685,46 @@
             ]
             y_mean = zeros(3, 4)
 
-            @test marginal_gaussian_loglikelihood(dist, y_pred) < 0.0 # logprobs always negative
-            # y_pred is less likely than y_mean
-            @test marginal_gaussian_loglikelihood(dist, y_pred) < marginal_gaussian_loglikelihood(dist, y_mean)
+            @testset "Properties" begin
+                @test marginal_gaussian_loglikelihood(dist, y_pred) < 0.0 # logprobs always negative
+                # y_pred is less likely than y_mean
+                @test marginal_gaussian_loglikelihood(dist, y_pred) < marginal_gaussian_loglikelihood(dist, y_mean)
+                # using the alternative Canonical form should not change results
+                @test marginal_gaussian_loglikelihood(dist, y_pred) ≈ marginal_gaussian_loglikelihood(canonform(dist), y_pred)
+            end
 
-            # using the alternative Canonical form should not change results
-            @test marginal_gaussian_loglikelihood(dist, y_pred) ≈ marginal_gaussian_loglikelihood(canonform(dist), y_pred)
+            @testset "Observation rearragement" begin
+                expected = marginal_gaussian_loglikelihood(dist, y_pred)
+                @test expected == evaluate(marginal_gaussian_loglikelihood, dist, y_pred, obsdim=2)
+                obs_iter = [[8., 10, 10], [10., 5, 7], [9., 7, 10], [11., 12, 1]]
+                @test expected == evaluate(marginal_gaussian_loglikelihood, dist, obs_iter)
+                @test expected == evaluate(marginal_gaussian_loglikelihood, dist, y_pred'; obsdim=1)
+                @test expected == evaluate(marginal_gaussian_loglikelihood, dist, y_pred')
+            end
 
-            # Test observation rearragement
-            expected = marginal_gaussian_loglikelihood(dist, y_pred)
-            @test expected == evaluate(marginal_gaussian_loglikelihood, dist, y_pred, obsdim=2)
-            obs_iter = [[8., 10, 10], [10., 5, 7], [9., 7, 10], [11., 12, 1]]
-            @test expected == evaluate(marginal_gaussian_loglikelihood, dist, obs_iter)
-            @test expected == evaluate(marginal_gaussian_loglikelihood, dist, y_pred'; obsdim=1)
-            @test expected == evaluate(marginal_gaussian_loglikelihood, dist, y_pred')
+            @testset "Using IndexedDistributions and AxisArrays" begin
+
+                obs = ["a", "b", "c"]
+                features = [:f1, :f2, :f3, :f4]
+                id = IndexedDistribution(dist, obs)
+
+                expected = marginal_gaussian_loglikelihood(dist, y_pred)
+
+                # normal
+                a = AxisArray(y_pred, Axis{:obs}(obs), Axis{:feature}(features))
+                @test marginal_gaussian_loglikelihood(id, a) ≈ expected
+
+                #shuffled
+                new_obs_order = shuffle(1:3)
+                new_feature_order = shuffle(1:4)
+                a = AxisArray(
+                    y_pred[new_obs_order, new_feature_order],
+                    Axis{:obs}(obs[new_obs_order]),
+                    Axis{:feature}(features[new_feature_order]),
+                )
+                @test marginal_gaussian_loglikelihood(id, a) ≈ expected
+
+            end
         end
     end
 
@@ -616,18 +734,20 @@
             y_pred = [.1, .2, .3]
             y_mean = [0.1, 0.1, 0.1]
 
-            @test joint_gaussian_loglikelihood(dist, y_pred) < 0.0  # logprobs always negative
+            @testset "Properties" begin
+                @test joint_gaussian_loglikelihood(dist, y_pred) < 0.0  # logprobs always negative
+                # y_pred is less likely than y_mean
+                @test joint_gaussian_loglikelihood(dist, y_pred) < joint_gaussian_loglikelihood(dist, y_mean)
+                # For unviariate markingal and joint are the same, it is just the normalized likelyhood.
+                @test joint_gaussian_loglikelihood(dist, y_pred) ≈ marginal_gaussian_loglikelihood(dist, y_pred)
+            end
 
-            # y_pred is less likely than y_mean
-            @test joint_gaussian_loglikelihood(dist, y_pred) < joint_gaussian_loglikelihood(dist, y_mean)
-
-            # For unviariate markingal and joint are the same, it is just the normalized likelyhood.
-            @test joint_gaussian_loglikelihood(dist, y_pred) ≈ marginal_gaussian_loglikelihood(dist, y_pred)
-
-            # test arrangements
-            expected = joint_gaussian_loglikelihood(dist, y_pred)
-            @test expected == evaluate(joint_gaussian_loglikelihood, dist, y_pred)
-            @test expected == evaluate(joint_gaussian_loglikelihood, dist, Tuple(y_pred))
+            @testset "Arrangements" begin
+                # test arrangements
+                expected = joint_gaussian_loglikelihood(dist, y_pred)
+                @test expected == evaluate(joint_gaussian_loglikelihood, dist, y_pred)
+                @test expected == evaluate(joint_gaussian_loglikelihood, dist, Tuple(y_pred))
+            end
         end
 
         sqrtcov = rand(3, 3)
@@ -639,27 +759,55 @@
             ]
             y_mean = zeros(3, 4)
 
-            @test joint_gaussian_loglikelihood(dist, y_pred) < 0.0  # logprobs always negative
-            # y_pred is less likely than y_mean
-            @test joint_gaussian_loglikelihood(dist, y_pred) < joint_gaussian_loglikelihood(dist, y_mean)
+            @testset "Properties" begin
+                @test joint_gaussian_loglikelihood(dist, y_pred) < 0.0  # logprobs always negative
+                # y_pred is less likely than y_mean
+                @test joint_gaussian_loglikelihood(dist, y_pred) < joint_gaussian_loglikelihood(dist, y_mean)
 
-            if dist isa ZeroMeanIsoNormal
-                # For IsoNormal joint and marginal are the same, it is just the normalized likelyhood.
-                @test joint_gaussian_loglikelihood(dist, y_pred) ≈ marginal_gaussian_loglikelihood(dist, y_pred)
-            else
-                @test joint_gaussian_loglikelihood(dist, y_pred) != marginal_gaussian_loglikelihood(dist, y_pred)
+                if dist isa ZeroMeanIsoNormal
+                    # For IsoNormal joint and marginal are the same, it is just the normalized likelyhood.
+                    @test joint_gaussian_loglikelihood(dist, y_pred) ≈ marginal_gaussian_loglikelihood(dist, y_pred)
+                else
+                    @test joint_gaussian_loglikelihood(dist, y_pred) != marginal_gaussian_loglikelihood(dist, y_pred)
+                end
+
+                # using the alternative canonical form should not change the results
+                @test joint_gaussian_loglikelihood(dist, y_pred) ≈ joint_gaussian_loglikelihood(canonform(dist), y_pred)
+
             end
 
-            # using the alternative canonical form should not change the results
-            @test joint_gaussian_loglikelihood(dist, y_pred) ≈ joint_gaussian_loglikelihood(canonform(dist), y_pred)
+            @testset "Arrangements" begin
+                expected = joint_gaussian_loglikelihood(dist, y_pred)
+                @test expected == evaluate(joint_gaussian_loglikelihood, dist, y_pred, obsdim=2)
+                obs_iter = [[8., 10, 10], [10., 5, 7], [9., 7, 10], [11., 12, 1]]
+                @test expected == evaluate(joint_gaussian_loglikelihood, dist, obs_iter)
+                @test expected == evaluate(joint_gaussian_loglikelihood, dist, y_pred'; obsdim=1)
+                @test expected == evaluate(joint_gaussian_loglikelihood, dist, y_pred')
+            end
 
-            # Test observation rearragement
-            expected = joint_gaussian_loglikelihood(dist, y_pred)
-            @test expected == evaluate(joint_gaussian_loglikelihood, dist, y_pred, obsdim=2)
-            obs_iter = [[8., 10, 10], [10., 5, 7], [9., 7, 10], [11., 12, 1]]
-            @test expected == evaluate(joint_gaussian_loglikelihood, dist, obs_iter)
-            @test expected == evaluate(joint_gaussian_loglikelihood, dist, y_pred'; obsdim=1)
-            @test expected == evaluate(joint_gaussian_loglikelihood, dist, y_pred')
+            @testset "Using IndexedDistributions with AxisArrays" begin
+
+                obs = ["a", "b", "c"]
+                features = [:f1, :f2, :f3, :f4]
+                id = IndexedDistribution(dist, obs)
+
+                expected = joint_gaussian_loglikelihood(dist, y_pred)
+
+                # normal
+                a = AxisArray(y_pred, Axis{:obs}(obs), Axis{:feature}(features))
+                @test joint_gaussian_loglikelihood(id, a) ≈ expected
+
+                #shuffled
+                new_obs_order = shuffle(1:3)
+                new_feature_order = shuffle(1:4)
+                a = AxisArray(
+                    y_pred[new_obs_order, new_feature_order],
+                    Axis{:obs}(obs[new_obs_order]),
+                    Axis{:feature}(features[new_feature_order]),
+                )
+                @test joint_gaussian_loglikelihood(id, a) ≈ expected
+
+            end
         end
     end
 end  # regression.jl

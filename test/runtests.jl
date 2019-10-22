@@ -1,3 +1,4 @@
+using AxisArrays
 using Distributions
 using IndexedDistributions
 using LinearAlgebra
@@ -9,7 +10,8 @@ using Metrics:
     ObsArrangement,
     obs_arrangement,
     organise_obs,
-    price_impact
+    price_impact,
+    SingleObs
 using NamedDims
 using PSDMats
 using Random

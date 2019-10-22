@@ -58,7 +58,9 @@ end
 # we will never rearrange them.
 # so we don't even need to check the traits.
 for T in (Sampleable, Number, Symbol)
-    @eval organise_obs(metric, data::$T; obsdim=nothing) = data
+    for A in (SingleObs, IteratorOfObs, MatrixRowsOfObs, MatrixColsOfObs)
+        @eval organise_obs(::$A, data::$T; obsdim=nothing) = data
+    end
 end
 
 ## Two arg forms: obsdim is optional, we may or may not need it.
@@ -108,7 +110,7 @@ organise_obs(::SingleObs, data; obsdim=nothing) = data
 # This lets us compute metrics on pairs of objects that are (3,) and (3, 1)
 function organise_obs(::SingleObs, data::AbstractArray; obsdim=nothing)
     to_drop = findall(size(data) .== 1)
-    data = isempty(to_drop) ? data : dropdims(data; dims=(to_drop...))
+    data = isempty(to_drop) ? data : dropdims(data; dims=Tuple(to_drop))
     return data
 end
 
@@ -119,11 +121,19 @@ for A in (IteratorOfObs, ArraySlicesOfObs)
     # Filling in the observation dimension is the same regardless of if targetting
     # IteratorOfObs, ArraySlicesOfObs
     @eval function organise_obs(arrangement::$A, data::AbstractArray; obsdim=nothing)
+
         if obsdim == nothing
             obsdim = _default_obsdim(data)
         end
+
         if data isa NamedDimsArray && obsdim isa Symbol
+
             obsdim = NamedDims.dim(data, obsdim)
+
+        elseif data isa AxisArray && obsdim isa Symbol
+
+            obsdim = axisdim(data, Axis{obsdim})
+
         end
 
         return organise_obs(arrangement, data, obsdim)
@@ -136,7 +146,7 @@ end
 # Slice up the array to get an iterator of observations
 function organise_obs(::IteratorOfObs, data::AbstractArray, obsdim::Integer)
     # This is basically eachslice from julia 1.1+
-    return (selectdim(data, obsdim, ii) for ii in axes(data, obsdim))
+    return (selectdim(data, obsdim, ii) for ii in Base.axes(data, obsdim))
 end
 
 # Permute the array so the observations are on the right dimension

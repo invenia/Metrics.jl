@@ -1,5 +1,6 @@
 module Metrics
 
+using AxisArrays
 using Distributions
 using IndexedDistributions
 using LinearAlgebra: cholesky, det, dot, I, norm, tr
@@ -17,8 +18,6 @@ include("financial.jl")
 include("price_impact.jl")
 include("summaries.jl")
 include("deprecated.jl")
-
-
 
 export
     evaluate,
