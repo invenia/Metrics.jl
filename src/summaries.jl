@@ -1,4 +1,4 @@
-const REGRESSION_METRICS = (mse, rmse, nrmse, smse, mae)
+const REGRESSION_METRICS = (mse, rmse, nrmse, smse, mae, potential_payoff)
 
 """
     regression_summary(y_true, y_pred, args...)

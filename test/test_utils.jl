@@ -18,8 +18,12 @@ relocate(v::AbstractVector{<:Distribution}, new_mu) = relocate.(v, new_mu)
 rescale(d::Normal, scale_factor) = Normal(d.μ, scale_factor * d.σ)
 rescale(d::MvNormal, scale_factor) = MvNormal(d.μ, PSDMat(scale_factor * cov(d)))
 
-function rescale(d::MatrixNormal, U_sf::Number, V_sf::Number)
-    return MatrixNormal(d.M, PSDMat(U_sf * d.U.mat), PSDMat(V_sf * d.V.mat))
+function rescale(d::MatrixNormal, U_sf, V_sf)
+    return MatrixNormal(
+        d.M,
+        PSDMat(Matrix(Hermitian(U_sf * d.U.mat))),
+        PSDMat(Matrix(Hermitian(V_sf * d.V.mat))),
+    )
 end
 rescale(d::MatrixNormal, U_sf) = rescale(d::MatrixNormal, U_sf, U_sf)
 

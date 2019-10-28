@@ -49,6 +49,13 @@
         end
     end
 
+    function is_nonzero_if_ypred_equals_ytrue(metric, y_true, y_pred)
+        @testset "is non-zero if y_pred == y_true" begin
+            @test !iszero(metric(y_true, y_true))
+            @test !iszero(evaluate(metric, y_true, y_true))
+        end
+    end
+
     function error_increases_as_bias_increases(metric, y_true, y_pred)
         @testset "error increases as bias increases" begin
 
@@ -101,6 +108,26 @@
         end
     end
 
+    function dist_returns_smaller_errors(metric, y_true, y_pred)
+        # get mean value(s) of distribution(s)
+        point_pred = mean(y_pred)
+
+        # generate new distribution(s) with mean = y_true
+        y_true_dist = relocate(y_pred, y_true)
+
+        @testset "distributions return larger errors" begin
+            # a distribution about the truth has metric >0
+            # (whereas the true point was 0, tested above)
+            @test metric(y_true, y_true_dist) > 0
+            @test evaluate(metric, y_true, y_true_dist) > 0
+
+            # distributions give larger errors for convex metrics by Jensen's inequality
+            # https://en.wikipedia.org/wiki/Jensen%27s_inequality
+            @test metric(y_true, y_pred) <= metric(y_true, point_pred)
+            @test evaluate(metric, y_true, y_pred) <= evaluate(metric, y_true, point_pred)
+        end
+    end
+
     function dist_error_converges_safely(metric, y_true, y_pred)
         # get mean value(s) of distribution(s)
         point_pred = mean(y_pred)
@@ -119,8 +146,26 @@
         end
     end
 
-    function error_increases_as_var_increases(metric, y_true, y_pred)
-        @testset "error increases as variance increase" begin
+    function dist_error_converges_safely(metric::typeof(potential_payoff), y_true, y_pred)
+        # get mean value(s) of distribution(s)
+        point_pred = mean(y_pred)
+
+        # generate new distribution(s) with var = 1
+        y_pred_var1 = rescale(y_pred, inv.(params(y_pred)[2:end])...)
+
+        @testset "distribution error converges when var = 1 " begin
+            @test metric(y_true, y_pred_var1) ≈ metric(y_true, point_pred)
+            @test evaluate(metric, y_true, y_pred_var1) ≈ evaluate(metric, y_true, point_pred)
+        end
+
+        @testset "does not return nan when y_pred = y_true " begin
+            @test !isnan(metric(point_pred, y_pred_var1))
+            @test !isnan(evaluate(metric, point_pred, y_pred_var1))
+        end
+    end
+
+    function metric_increases_as_var_increases(metric, y_true, y_pred)
+        @testset "metric increases as variance increase" begin
             y_pred0 = rescale(y_pred, 1)
             y_pred1 = rescale(y_pred, 2)
             y_pred2 = rescale(y_pred, 3)
@@ -137,6 +182,48 @@
 
             @test error_d2 > error_d1 > error_d0
             @test error_p2 == error_p1 == error_p0
+        end
+    end
+
+    function metric_decreases_as_var_increases(metric, y_true, y_pred)
+        @testset "metric decreases as variance increase" begin
+            y_pred0 = rescale(y_pred, 1)
+            y_pred1 = rescale(y_pred, 2)
+            y_pred2 = rescale(y_pred, 3)
+
+            # distribution errors
+            error_d0 = metric(y_true, y_pred0)
+            error_d1 = metric(y_true, y_pred1)
+            error_d2 = metric(y_true, y_pred2)
+
+            # point errors
+            error_p0 = metric(y_true, mean(y_pred0))
+            error_p1 = metric(y_true, mean(y_pred1))
+            error_p2 = metric(y_true, mean(y_pred2))
+
+            @test error_d2 < error_d1 < error_d0
+            @test error_p2 == error_p1 == error_p0
+        end
+    end
+
+    function metric_invariant_to_var(metric, y_true, y_pred)
+        @testset "metric is invariant to variance" begin
+            y_pred0 = rescale(y_pred, 1)
+            y_pred1 = rescale(y_pred, 2)
+            y_pred2 = rescale(y_pred, 3)
+
+            # distribution errors
+            error_d0 = metric(y_true, y_pred0)
+            error_d1 = metric(y_true, y_pred1)
+            error_d2 = metric(y_true, y_pred2)
+
+            # point errors
+            error_p0 = metric(y_true, mean(y_pred0))
+            error_p1 = metric(y_true, mean(y_pred1))
+            error_p2 = metric(y_true, mean(y_pred2))
+
+            @test error_d2 ≈ error_d1 ≈ error_d0
+            @test error_p2 ≈ error_p1 ≈ error_p0
         end
     end
 
@@ -161,7 +248,7 @@
         error_increases_as_bias_increases(metric, args...)
         dist_returns_larger_errors(metric, args...)
         dist_error_converges_safely(metric, args...)
-        error_increases_as_var_increases(metric, args...)
+        metric_increases_as_var_increases(metric, args...)
         errors_correctly(metric, args...)
 
         y_true, y_pred = args
@@ -198,7 +285,7 @@
         error_increases_as_bias_increases(metric, args...)
         dist_returns_larger_errors(metric, args...)
         dist_error_converges_safely(metric, args...)
-        error_increases_as_var_increases(metric, args...)
+        metric_increases_as_var_increases(metric, args...)
         errors_correctly(metric, args...)
     end
 
@@ -210,7 +297,7 @@
         error_increases_as_bias_increases(metric, args...)
         dist_returns_larger_errors(metric, args...)
         dist_error_converges_safely(metric, args...)
-        error_increases_as_var_increases(metric, args...)
+        metric_increases_as_var_increases(metric, args...)
         errors_correctly(metric, args...)
 
         y_true, y_pred = args
@@ -239,7 +326,7 @@
         error_increases_as_bias_increases(metric, args...)
         dist_returns_larger_errors(metric, args...)
         dist_error_converges_safely(metric, args...)
-        error_increases_as_var_increases(metric, args...)
+        metric_increases_as_var_increases(metric, args...)
         errors_correctly(metric, args...)
     end
 
@@ -251,7 +338,7 @@
         error_increases_as_bias_increases(metric, args...)
         dist_returns_larger_errors(metric, args...)
         dist_error_converges_safely(metric, args...)
-        error_increases_as_var_increases(metric, args...)
+        metric_increases_as_var_increases(metric, args...)
         errors_correctly(metric, args...)
     end
 
@@ -263,7 +350,7 @@
         error_increases_as_bias_increases(metric, args...)
         dist_returns_larger_errors(metric, args...)
         dist_error_converges_safely(metric, args...)
-        error_increases_as_var_increases(metric, args...)
+        metric_increases_as_var_increases(metric, args...)
         errors_correctly(metric, args...)
 
         @testset "equals sqrt(mse)" begin
@@ -281,7 +368,7 @@
         error_increases_as_bias_increases(metric, args...)
         dist_returns_larger_errors(metric, args...)
         dist_error_converges_safely(metric, args...)
-        error_increases_as_var_increases(metric, args...)
+        metric_increases_as_var_increases(metric, args...)
         errors_correctly(metric, args...)
     end
 
@@ -293,7 +380,7 @@
         error_increases_as_bias_increases(metric, args...)
         dist_returns_larger_errors(metric, args...)
         dist_error_converges_safely(metric, args...)
-        error_increases_as_var_increases(metric, args...)
+        metric_increases_as_var_increases(metric, args...)
         errors_correctly(metric, args...)
 
         @testset "SpiderFinancial Example" begin
@@ -314,6 +401,16 @@
         end
     end
 
+    """potential_payoff"""
+    function test_metric_properties(metric::typeof(potential_payoff), args...)
+        is_strictly_positive(metric, args...)
+        is_not_symmetric(metric, args...)
+        is_nonzero_if_ypred_equals_ytrue(metric, args...)
+        dist_returns_smaller_errors(metric, args...)
+        dist_error_converges_safely(metric, args...)
+        metric_invariant_to_var(metric, args...)
+        errors_correctly(metric, args...)
+    end
 
     # constants for defining Distributions
     Σ = [2 1 1; 1 2.2 2; 1 2 3]
@@ -321,7 +418,7 @@
     V = [1 2 3; 2 5.5 10.2; 3 10.2 24]
 
     @testset "single obs" begin
-        metrics = (expected_squared_error, expected_absolute_error)
+        metrics = (expected_squared_error, expected_absolute_error, potential_payoff)
 
         names = ["a", "b", "c"]
 
@@ -359,7 +456,19 @@
                     "vector" => 9,
                     "matrix" => 15,
                 )
-            )
+            ),
+            typeof(potential_payoff) => Dict(
+                "dist" => Dict(
+                    "scalar" => 2.0,
+                    "vector" => 1.703703703703704,
+                    "matrix" => 0.31317902692489547,
+                ),
+                "point" => Dict(
+                    "scalar" => 2,
+                    "vector" => 2.888888888888889,
+                    "matrix" => 4.472222222222222,
+                ),
+            ),
         )
 
         forecast_pairs = (

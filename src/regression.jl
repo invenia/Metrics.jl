@@ -289,3 +289,51 @@ end
 
 joint_gaussian_loglikelihood(dist::MvNormal, y_pred) = loglikelihood(dist, y_pred)
 obs_arrangement(::typeof(joint_gaussian_loglikelihood)) = MatrixColsOfObs()
+
+
+"""
+    potential_payoff(y_true, y_pred)
+
+Approximate the potential payoff of the predicted deltas `y_pred ~ N(μ, Σ)`, in units of
+USD/MW, from a simplified Portfolio Optimization given the true deltas `Δ`:
+
+```math
+dot(Σ^{-1}μ, Δ) / norm(Σ^{-1}μ, 1)`
+```
+
+This formula arises from considering the maximisation of the objective function in Markowitz
+Portolio Optimisation: `max_{w} μw - γwΣw'`, where the volume `w` is allocated proportional
+to `μ` if `Σ` is an identity matrix.
+
+Hence, under this assumption, the potential payoff is proportional to `dot(Σ^{-1}μ, Δ)`
+for a normally distributed estimation. The denominator `norm(Δ, 1)` is then introduced in
+order to mimick the total volume constraint in PO.
+"""
+function potential_payoff(y_true, y_pred::Sampleable{Univariate})
+    @_dimcheck size(y_true) == size(y_pred)
+    _y_pred = mean(y_pred) / var(y_pred)
+    return potential_payoff(y_true, _y_pred)
+end
+
+function potential_payoff(y_true, y_pred::Sampleable{Multivariate})
+    @_dimcheck size(y_true) == size(y_pred)
+    _y_pred, _y_true = _match(y_pred, y_true)
+
+    # TODO: Ideally this line would require that \ is defined on AxisArrays
+    # since it currently isn't we have to call parent() no the object
+    _y_pred = parent(cov(_y_pred)) \ parent(mean(_y_pred))
+    return potential_payoff(_y_true, _y_pred)
+end
+
+function potential_payoff(y_true, y_pred::Sampleable{Matrixvariate})
+    return potential_payoff(vec(y_true), vec(y_pred))
+end
+
+function potential_payoff(y_true, y_pred)
+    @_dimcheck size(y_true) == size(y_pred)
+    return dot(y_pred, y_true) / norm(y_pred, 1)
+end
+
+potential_payoff(y_true::Sampleable, y_pred) = potential_payoff(y_pred, y_true)
+
+obs_arrangement(::typeof(potential_payoff)) = SingleObs()
