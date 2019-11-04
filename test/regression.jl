@@ -151,7 +151,7 @@
         point_pred = mean(y_pred)
 
         # generate new distribution(s) with var = 1
-        y_pred_var1 = rescale(y_pred, inv.(params(y_pred)[2:end])...)
+        y_pred_var1 = unit_variance(y_pred)
 
         @testset "distribution error converges when var = 1 " begin
             @test metric(y_true, y_pred_var1) ≈ metric(y_true, point_pred)
