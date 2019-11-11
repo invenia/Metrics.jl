@@ -23,6 +23,7 @@ using Test
 import Statistics.mean
 
 # Include test_utils
+include("test_properties.jl")
 include("test_utils.jl")
 
 seed!(1)
