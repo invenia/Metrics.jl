@@ -88,7 +88,7 @@
         end
     end
 
-    function dist_returns_larger_errors(metric, y_true, y_pred)
+    function dist_increases_metric_value(metric, y_true, y_pred)
         # get mean value(s) of distribution(s)
         point_pred = mean(y_pred)
 
@@ -108,21 +108,17 @@
         end
     end
 
-    function dist_returns_smaller_errors(metric, y_true, y_pred)
+    function dist_reduces_metric_value(metric, y_true, y_pred)
         # get mean value(s) of distribution(s)
         point_pred = mean(y_pred)
 
         # generate new distribution(s) with mean = y_true
         y_true_dist = relocate(y_pred, y_true)
 
-        @testset "distributions return larger errors" begin
-            # a distribution about the truth has metric >0
-            # (whereas the true point was 0, tested above)
+        @testset "distributions return smaller errors" begin
             @test metric(y_true, y_true_dist) > 0
             @test evaluate(metric, y_true, y_true_dist) > 0
 
-            # distributions give larger errors for convex metrics by Jensen's inequality
-            # https://en.wikipedia.org/wiki/Jensen%27s_inequality
             @test metric(y_true, y_pred) <= metric(y_true, point_pred)
             @test evaluate(metric, y_true, y_pred) <= evaluate(metric, y_true, point_pred)
         end
@@ -246,7 +242,7 @@
         is_symmetric(metric, args...)
         is_zero_if_ypred_equals_ytrue(metric, args...)
         error_increases_as_bias_increases(metric, args...)
-        dist_returns_larger_errors(metric, args...)
+        dist_increases_metric_value(metric, args...)
         dist_error_converges_safely(metric, args...)
         metric_increases_as_var_increases(metric, args...)
         errors_correctly(metric, args...)
@@ -283,7 +279,7 @@
         is_symmetric(metric, args...)
         is_zero_if_ypred_equals_ytrue(metric, args...)
         error_increases_as_bias_increases(metric, args...)
-        dist_returns_larger_errors(metric, args...)
+        dist_increases_metric_value(metric, args...)
         dist_error_converges_safely(metric, args...)
         metric_increases_as_var_increases(metric, args...)
         errors_correctly(metric, args...)
@@ -295,7 +291,7 @@
         is_symmetric(metric, args...)
         is_zero_if_ypred_equals_ytrue(metric, args...)
         error_increases_as_bias_increases(metric, args...)
-        dist_returns_larger_errors(metric, args...)
+        dist_increases_metric_value(metric, args...)
         dist_error_converges_safely(metric, args...)
         metric_increases_as_var_increases(metric, args...)
         errors_correctly(metric, args...)
@@ -324,7 +320,7 @@
         is_symmetric(metric, args...)
         is_zero_if_ypred_equals_ytrue(metric, args...)
         error_increases_as_bias_increases(metric, args...)
-        dist_returns_larger_errors(metric, args...)
+        dist_increases_metric_value(metric, args...)
         dist_error_converges_safely(metric, args...)
         metric_increases_as_var_increases(metric, args...)
         errors_correctly(metric, args...)
@@ -336,7 +332,7 @@
         is_symmetric(metric, args...)
         is_zero_if_ypred_equals_ytrue(metric, args...)
         error_increases_as_bias_increases(metric, args...)
-        dist_returns_larger_errors(metric, args...)
+        dist_increases_metric_value(metric, args...)
         dist_error_converges_safely(metric, args...)
         metric_increases_as_var_increases(metric, args...)
         errors_correctly(metric, args...)
@@ -348,7 +344,7 @@
         is_not_symmetric(metric, args...)
         is_zero_if_ypred_equals_ytrue(metric, args...)
         error_increases_as_bias_increases(metric, args...)
-        dist_returns_larger_errors(metric, args...)
+        dist_increases_metric_value(metric, args...)
         dist_error_converges_safely(metric, args...)
         metric_increases_as_var_increases(metric, args...)
         errors_correctly(metric, args...)
@@ -366,7 +362,7 @@
         is_not_symmetric(metric, args...)
         is_zero_if_ypred_equals_ytrue(metric, args...)
         error_increases_as_bias_increases(metric, args...)
-        dist_returns_larger_errors(metric, args...)
+        dist_increases_metric_value(metric, args...)
         dist_error_converges_safely(metric, args...)
         metric_increases_as_var_increases(metric, args...)
         errors_correctly(metric, args...)
@@ -378,7 +374,7 @@
         is_not_symmetric(metric, args...)
         is_zero_if_ypred_equals_ytrue(metric, args...)
         error_increases_as_bias_increases(metric, args...)
-        dist_returns_larger_errors(metric, args...)
+        dist_increases_metric_value(metric, args...)
         dist_error_converges_safely(metric, args...)
         metric_increases_as_var_increases(metric, args...)
         errors_correctly(metric, args...)
@@ -403,10 +399,9 @@
 
     """potential_payoff"""
     function test_metric_properties(metric::typeof(potential_payoff), args...)
-        is_strictly_positive(metric, args...)
         is_not_symmetric(metric, args...)
         is_nonzero_if_ypred_equals_ytrue(metric, args...)
-        dist_returns_smaller_errors(metric, args...)
+        dist_reduces_metric_value(metric, args...)
         dist_error_converges_safely(metric, args...)
         metric_invariant_to_var(metric, args...)
         errors_correctly(metric, args...)

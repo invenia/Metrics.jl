@@ -22,8 +22,6 @@ using Test
 
 import Statistics.mean
 
-include("test_utils.jl")
-
 # Include test_utils
 include("test_utils.jl")
 

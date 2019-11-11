@@ -302,12 +302,15 @@ dot(Σ^{-1}μ, Δ) / norm(Σ^{-1}μ, 1)
 ```
 
 This formula arises from considering the maximisation of the objective function in Markowitz
-Portolio Optimisation: ``max_{w} μw - γwΣw'``, where the volume `w` is allocated proportional
-to ``μ`` if ``Σ`` is an identity matrix.
+Portfolio Optimisation: ``w^* = max_{w} μw - γwΣw'``, where in the absence of constraints,
+the optimal volume `w^*` is proportional to `Σ^{-1}μ`.
 
-Hence, under this assumption, the potential payoff is proportional to ``dot(Σ^{-1}μ, Δ)``
-for a normally distributed estimation. The denominator `norm(Δ, 1)` is then introduced in
-order to mimick the total volume constraint in PO.
+Hence, under this assumption, the potential payoff is proportional to ``dot(Σ^{-1}μ, Δ)``.
+The denominator `norm(Δ, 1)` is then introduced in order to mimick the total volume
+constraint in PO.
+
+Note that this ignores other constraints which might be present in our actual portfolio
+optimisation, for example constraints on net total volume or volume-per-node.
 """
 function potential_payoff(y_true, y_pred::Sampleable{Univariate})
     @_dimcheck size(y_true) == size(y_pred)
