@@ -16,6 +16,7 @@ include("regression_picp.jl")
 include("kullback_leibler.jl")
 include("financial.jl")
 include("price_impact.jl")
+include("potential_payoff.jl")
 include("summaries.jl")
 include("deprecated.jl")
 
@@ -32,7 +33,7 @@ export
     mean_absolute_scaled_error, mase,
     marginal_gaussian_loglikelihood,
     joint_gaussian_loglikelihood,
-    potential_payoff, 
+    potential_payoff,
     prediction_interval_coverage_probability, picp,
     window_prediction_interval_coverage_probability, wpicp,
     adjusted_prediction_interval_coverage_probability, apicp,
