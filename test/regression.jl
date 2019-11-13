@@ -1,6 +1,5 @@
 @testset "regression.jl" begin
 
-
     """expected_squared_error"""
     function test_metric_properties(metric::typeof(expected_squared_error), args...)
         is_strictly_positive(metric, args...)
@@ -162,24 +161,13 @@
         end
     end
 
-
-    """potential_payoff"""
-    function test_metric_properties(metric::typeof(potential_payoff), args...)
-        is_not_symmetric(metric, args...)
-        is_nonzero_if_ypred_equals_ytrue(metric, args...)
-        dist_reduces_metric_value(metric, args...)
-        dist_error_converges_safely(metric, args...)
-        metric_invariant_to_var(metric, args...)
-        errors_correctly(metric, args...)
-    end
-
     # constants for defining Distributions
     Σ = [2 1 1; 1 2.2 2; 1 2 3]
     U = [1 2; 2 4.5]
     V = [1 2 3; 2 5.5 10.2; 3 10.2 24]
 
     @testset "single obs" begin
-        metrics = (expected_squared_error, expected_absolute_error, potential_payoff)
+        metrics = (expected_squared_error, expected_absolute_error)
 
         names = ["a", "b", "c"]
 
@@ -217,18 +205,6 @@
                     "vector" => 9,
                     "matrix" => 15,
                 )
-            ),
-            typeof(potential_payoff) => Dict(
-                "dist" => Dict(
-                    "scalar" => 2.0,
-                    "vector" => 1.703703703703704,
-                    "matrix" => 0.31317902692489547,
-                ),
-                "point" => Dict(
-                    "scalar" => 2,
-                    "vector" => 2.888888888888889,
-                    "matrix" => 4.472222222222222,
-                ),
             ),
         )
 
