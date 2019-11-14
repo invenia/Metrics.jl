@@ -22,9 +22,8 @@ using Test
 
 import Statistics.mean
 
-include("test_utils.jl")
-
-# Include test_utils
+# Include test utilities
+include("test_properties.jl")
 include("test_utils.jl")
 
 seed!(1)
@@ -36,6 +35,7 @@ seed!(1)
     include("kullback_leibler.jl")
     include("financial.jl")
     include("price_impact.jl")
+    include("potential_payoff.jl")
     include("summaries.jl")
     include("deprecated.jl")
 end

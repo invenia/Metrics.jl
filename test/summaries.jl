@@ -101,6 +101,8 @@
             @test isequal(expected[rmse], summary[rmse])
             @test isequal(expected[nrmse], summary[nrmse])
             @test isequal(expected[smse], summary[smse])
+            @test isequal(expected[potential_payoff], summary[potential_payoff])
+
         end
     end
     @testset "Financial Summaries" begin
