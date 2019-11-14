@@ -39,7 +39,7 @@ export
     adjusted_prediction_interval_coverage_probability, apicp,
     regression_summary,
     REGRESSION_METRICS,
-    # divergence
+    # model
     kullback_leibler, kl,
     # financials
     expected_return,
