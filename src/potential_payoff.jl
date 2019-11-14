@@ -55,7 +55,7 @@ end
     potential_payoff(y_true, y_pred::Sampleable{Multivariate})
 
 Compute the [`potential_payoff`](@ref) for all nodes on a single hour with fixed hourly
-total MW. This method is most faithfully resembles our current production PO framework but
+total MW. This method most faithfully resembles our current production PO framework but
 without additional constraints such as net total volume, volume-per-node, price impact, etc.
 """
 function potential_payoff(y_true, y_pred::Sampleable{Multivariate})
