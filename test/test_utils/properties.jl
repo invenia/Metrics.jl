@@ -1,4 +1,4 @@
-# These tests are arranged such that they test the expected properties of a metrics.
+# These tests are arranged such that they test the expected properties of a metric.
 # Each property gets a function which evaluates the behaviour of the metric and input data.
 # Each metric then gets assigned a test_metric_properties function which contains the
 # list of relevant tests (functions) it should obey.

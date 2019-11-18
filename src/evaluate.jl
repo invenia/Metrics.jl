@@ -40,7 +40,6 @@ const MatrixRowsOfObs = ArraySlicesOfObs{1}
 const MatrixColsOfObs = ArraySlicesOfObs{2}
 
 
-
 # TODO: Consider adding `VectorOfObs`, which is like `collect` + `IteratorOfObs`
 # this would let things that are type-constrained to `AbstractVector` work.
 # At the cost of matrializing all the generators that slice up matrixes

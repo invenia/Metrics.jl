@@ -9,15 +9,21 @@ using PSDMats
 using SpecialFunctions
 using StatsUtils: sqrtcov
 
-include("evaluate.jl")
 include("utils.jl")
-include("regression.jl")
-include("regression_picp.jl")
-include("kullback_leibler.jl")
-include("financial.jl")
-include("price_impact.jl")
-include("potential_payoff.jl")
-include("summaries.jl")
+# regression
+include("regression/gaussian_loglikelihood.jl")
+include("regression/picp.jl")
+include("regression/potential_payoff.jl")
+include("regression/simple.jl")
+# model
+include("model/kullback_leibler.jl")
+# financial
+include("financial/expected_shortfall.jl")
+include("financial/simple.jl")
+include("financial/price_impact.jl")
+# misc
+include("evaluate.jl")
+include("summary.jl")
 include("deprecated.jl")
 
 export
@@ -39,7 +45,7 @@ export
     adjusted_prediction_interval_coverage_probability, apicp,
     regression_summary,
     REGRESSION_METRICS,
-    # divergence
+    # model
     kullback_leibler, kl,
     # financials
     expected_return,
