@@ -4,7 +4,13 @@
 Modules = [Metrics]
 ```
 
+## Evaluate
+```@docs
+evaluate
+```
+
 ## Regression Metrics
+
 ```@docs
 expected_squared_error
 expected_absolute_error
@@ -31,6 +37,7 @@ sharpe_ratio
 median_return
 expected_shortfall
 median_over_expected_shortfall
+price_impact
 ```
 
 ## Model Metrics
@@ -39,6 +46,11 @@ median_over_expected_shortfall
 kullback_leibler
 ```
 
+## Summary Functions
+```@docs
+regression_summary
+financial_summary
+```
 
 ## Implementation
 
