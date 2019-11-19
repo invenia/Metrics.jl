@@ -54,5 +54,6 @@ export
     median_over_expected_shortfall, evano,
     median_return,
     expected_shortfall, es,
-    financial_summary
+    financial_summary,
+    price_impact
 end # module
