@@ -1,5 +1,6 @@
 @testset "picp.jl" begin
-    const testing_distributions = let
+
+    testing_distributions = let
         sqrtcov4 = randn(4, 4)
         sqrtcov10 = randn(10, 10)
         sqrtcov20 = randn(20, 20)
