@@ -51,7 +51,3 @@ kullback_leibler
 regression_summary
 financial_summary
 ```
-
-## Implementation
-
-For implementation details refer to the [Metrics.jl documentation](https://invenia.pages.invenia.ca/Metrics.jl/).
