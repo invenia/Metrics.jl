@@ -9,7 +9,6 @@ makedocs(;
     format=Documenter.HTML(
         assets=[
             "assets/invenia.css",
-            "assets/logo.png",
         ],
         prettyurls=false,
     ),
