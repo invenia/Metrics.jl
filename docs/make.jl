@@ -6,18 +6,21 @@ using Metrics
 
 makedocs(;
     modules=[Metrics],
-    format=Documenter.HTML(),
+    format=Documenter.HTML(
+        assets=[
+            "assets/invenia.css",
+            "assets/logo.png",
+        ],
+        prettyurls=false,
+    ),
     pages=[
         "Home" => "index.md",
+        "API" => "api.md",
+        "Examples" => "examples.md"
     ],
     repo="https://gitlab.invenia.ca/invenia/Metrics.jl/blob/{commit}{path}#L{line}",
     sitename="Metrics.jl",
     authors="Invenia Technical Computing Corporation",
-    assets=[
-        "assets/invenia.css",
-        "assets/logo.png",
-    ],
     strict=true,
-    html_prettyurls=false,
     checkdocs=:none,
 )
