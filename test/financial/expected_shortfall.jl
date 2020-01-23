@@ -170,6 +170,23 @@ end
         expected = -3.8846153846153846
         @test evano(returns; risk_level=risk_level) == expected
         @test evaluate(evano, returns; risk_level=risk_level) == expected
+
+        @testset "NaN" begin
+            @test isnan(evano(zeros(100); risk_level=risk_level))
+            @test isnan(evaluate(evano, zeros(100); risk_level=risk_level))
+        end
+        @testset "Inf" begin
+            returns = collect(1.0:100.0)
+            returns[1:25] .= 0.0
+            @test isinf(evano(returns; risk_level=risk_level))
+            @test isinf(evaluate(evano, returns; risk_level=risk_level))
+        end
+
+        @testset "DivisionError" begin
+            returns = FixedDecimal{Int, 2}.(zeros(100))
+            @test_throws DivideError evano(returns; risk_level=risk_level)
+            @test_throws DivideError evaluate(evano, returns; risk_level=risk_level)
+        end
     end
 
     @testset "sample evano" begin
