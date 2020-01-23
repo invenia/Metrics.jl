@@ -1,108 +1,103 @@
 @testset "summaries.jl" begin
     @testset "Regression Summaries" begin
-        function generate_expected_values(y_true, y_pred)
-            expected = Dict()
+        function generate_expected_type(y_true, y_pred)
+            isscalar = y_true isa Number && y_pred isa Number
+            add_val = first(first(y_true .+ y_pred))
+            div_val = add_val/add_val
 
-            for metric in REGRESSION_METRICS
-                expected[metric] = metric(y_true, y_pred)
-            end
-
-            return expected
+            example = (;
+                mean_squared_error=isscalar ? add_val : div_val,
+                root_mean_squared_error=div_val,
+                normalised_root_mean_squared_error=div_val,
+                standardized_mean_squared_error=div_val,
+                mean_absolute_error=isscalar ? add_val : div_val,
+                potential_payoff=div_val
+            )
+            return typeof(example)
         end
 
         @testset "Scalar" begin
             y_true = [1,2,3,4]
             y_pred = [5,6,7,8]
 
-            expected = generate_expected_values(first(y_true), first(y_pred))
+            expected_type = generate_expected_type(first(y_true), first(y_pred))
             summary = regression_summary(first(y_true), first(y_pred))
 
             @test !isempty(summary)
-            @test isequal(expected, summary)
+            @test summary isa expected_type
 
-            expected = generate_expected_values(y_true, y_pred)
+            expected_type = generate_expected_type(y_true, y_pred)
             summary = evaluate(regression_summary, y_true, y_pred)
 
             @test !isempty(summary)
-            @test isequal(expected, summary)
+            @test summary isa expected_type
         end
 
         @testset "Scalar - Indexed Values" begin
             y_true = [1,2,3,4]
             y_pred = [5,6,7,8]
 
-            expected = generate_expected_values(y_true, y_pred)
+            expected_type = generate_expected_type(y_true, y_pred)
             summary = regression_summary(y_true, y_pred)
 
             @test !isempty(summary)
-            @test isequal(expected[mse], summary[mse])
-            @test isequal(expected[rmse], summary[rmse])
-            @test isequal(expected[nrmse], summary[nrmse])
-            @test isequal(expected[smse], summary[smse])
+            @test summary isa expected_type
         end
 
         @testset "Vector" begin
             y_true = [[1,2,3], [4,5,6], [7,8,9]]
             y_pred = [[10, 11, 12], [13, 14, 15], [16, 17, 18]]
 
-            expected = generate_expected_values(first(y_true), first(y_pred))
+            expected_type = generate_expected_type(first(y_true), first(y_pred))
             summary = regression_summary(first(y_true), first(y_pred))
 
             @test !isempty(summary)
-            @test isequal(expected, summary)
+            @test summary isa expected_type
 
-            expected = generate_expected_values(y_true, y_pred)
+            expected_type = generate_expected_type(y_true, y_pred)
             summary = evaluate(regression_summary, y_true, y_pred)
 
             @test !isempty(summary)
-            @test isequal(expected, summary)
+            @test summary isa expected_type
         end
 
         @testset "Vector - Indexed Values" begin
             y_true = [[1,2,3], [4,5,6], [7,8,9]]
             y_pred = [[10, 11, 12], [13, 14, 15], [16, 17, 18]]
 
-            expected = generate_expected_values(y_true, y_pred)
+            expected_type = generate_expected_type(y_true, y_pred)
             summary = regression_summary(y_true, y_pred)
 
             @test !isempty(summary)
-            @test isequal(expected[mse], summary[mse])
-            @test isequal(expected[rmse], summary[rmse])
-            @test isequal(expected[nrmse], summary[nrmse])
-            @test isequal(expected[smse], summary[smse])
+            @test summary isa expected_type
         end
 
         @testset "Matrix" begin
             y_true = [[1 2; 3 4], [3 4; 5 6], [5 6; 7 8]]
             y_pred = [[7 8; 9 10], [9 10; 11 12], [11 12; 13 14]]
 
-            expected = generate_expected_values(first(y_true), first(y_pred))
+            expected_type = generate_expected_type(first(y_true), first(y_pred))
             summary = regression_summary(first(y_true), first(y_pred))
 
             @test !isempty(summary)
-            @test isequal(expected, summary)
+            @test summary isa expected_type
 
-            expected = generate_expected_values(y_true, y_pred)
+            expected_type = generate_expected_type(y_true, y_pred)
             summary = evaluate(regression_summary, y_true, y_pred)
 
             @test !isempty(summary)
-            @test isequal(expected, summary)
+            @test summary isa expected_type
         end
 
         @testset "Matrix - Indexed Values" begin
             y_true = [[1 2; 3 4], [3 4; 5 6], [5 6; 7 8]]
             y_pred = [[7 8; 9 10], [9 10; 11 12], [11 12; 13 14]]
 
-            expected = generate_expected_values(y_true, y_pred)
+            expected_type = generate_expected_type(y_true, y_pred)
             summary = regression_summary(y_true, y_pred)
 
             @test !isempty(summary)
-            @test isequal(expected[mse], summary[mse])
-            @test isequal(expected[rmse], summary[rmse])
-            @test isequal(expected[nrmse], summary[nrmse])
-            @test isequal(expected[smse], summary[smse])
-            @test isequal(expected[potential_payoff], summary[potential_payoff])
-
+            @test summary isa expected_type
         end
     end
     @testset "Financial Summaries" begin
@@ -112,33 +107,34 @@
             mean_deltas = rand(num_nodes)
             deltas = generate_mvnormal(mean_deltas, num_nodes)
 
-            expected = Dict()
-            expected[expected_return] = expected_return(volumes, deltas)
-            expected[expected_shortfall] = expected_shortfall(volumes, deltas)
-            expected[sharpe_ratio] = sharpe_ratio(volumes, deltas)
-            expected[volatility] = volatility(volumes, deltas)
+            expected_type = typeof((;
+                expected_return=1.0,
+                expected_shortfall=1.0,
+                sharpe_ratio=1.0,
+                volatility=1.0,
+            ))
 
             summary = financial_summary(volumes, deltas)
 
-            @test isequal(expected, summary)
+            @test summary isa expected_type
        end
 
         @testset "returns::AbstractVector; risk_level::Real=0.5" begin
             returns = rand(20)
             risk_level = 0.05
 
-            expected = Dict()
-            expected[expected_return] = expected_return(returns)
-            expected[median_return] = median_return(returns)
-            expected[expected_shortfall] = expected_shortfall(returns; risk_level=risk_level)
-            expected[median_over_expected_shortfall] =
-                median_over_expected_shortfall(returns; risk_level=risk_level)
-            expected[sharpe_ratio] = sharpe_ratio(returns)
-            expected[volatility] = volatility(returns)
+            expected_type = typeof((;
+                median_return=1.0,
+                expected_return=1.0,
+                expected_shortfall=1.0,
+                median_over_expected_shortfall=1.0,
+                sharpe_ratio=1.0,
+                volatility=1.0,
+            ))
 
             summary = financial_summary(returns; risk_level=risk_level)
 
-            @test isequal(expected, summary)
+            @test summary isa expected_type
 
             @testset "returns iterator" begin
                 # Bonus from this test since the summary calls all other things
@@ -146,7 +142,7 @@
                 summary = financial_summary(skipmissing(returns); risk_level=risk_level)
 
                 # None are missing so doing `skipmissing` will not change anything
-                @test isequal(expected, summary)
+                @test summary isa expected_type
             end
         end
     end
