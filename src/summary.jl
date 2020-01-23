@@ -9,7 +9,7 @@ Calculate a summary of; @ref[`mean_squared_error`], @ref[`root_mean_squared_erro
 
 Returns a `NamedTuple` of metric names and results.
 """
-regression_summary(args...) = (; (Symbol(f) => f(args...) for f in REGRESSION_METRICS)...)
+regression_summary(args...) = (; (nameof(f) => f(args...) for f in REGRESSION_METRICS)...)
 obs_arrangement(::typeof(regression_summary)) = SingleObs()
 
 
