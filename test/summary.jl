@@ -1,5 +1,9 @@
 @testset "summaries.jl" begin
     @testset "Regression Summaries" begin
+        # We don't need to check the exact values returned, we already have robust tests for each metric.
+        # but we do want to make sure the summaries come back in a type we can consume.
+        # Technically we just need to check we are getting a NamedTuple with right fields here
+        # but checking the types gives a bit more confirmation.
         function generate_expected_type(y_true, y_pred)
             isscalar = y_true isa Number && y_pred isa Number
             add_val = first(first(y_true .+ y_pred))
