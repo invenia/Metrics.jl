@@ -121,7 +121,17 @@
             summary = financial_summary(volumes, deltas)
 
             @test summary isa expected_type
-       end
+
+            @testset "per MWh" begin
+                summary_mwh = financial_summary(volumes, deltas; per_mwh=true)
+                total_volume = sum(abs, volumes)
+
+                @test summary_mwh.expected_return == summary.expected_return / total_volume
+                @test summary_mwh.expected_shortfall == summary.expected_shortfall / total_volume
+                @test summary_mwh.sharpe_ratio == summary.sharpe_ratio
+                @test summary_mwh.volatility == summary.volatility / total_volume
+            end
+        end
 
         @testset "returns::AbstractVector; risk_level::Real=0.5" begin
             returns = rand(20)

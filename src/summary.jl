@@ -21,17 +21,22 @@ obs_arrangement(::typeof(regression_summary)) = SingleObs()
 Calculate the summary of applicable financial metrics.
 `args...` and `kwargs...` are inputs for the functions above.
 
+# Keywords
+- `per_mwh::Bool=false`: Scales financial metrics by per MWh instead by total volume.
+
 Returns a `NamedTuple` of metric names and results.
 """
 function financial_summary(
     volumes::AbstractArray, deltas::Union{MvNormal, AbstractMatrix}, args...;
-    kwargs...
+    per_mwh::Bool=false, kwargs...
 )
+    scale = per_mwh ? 1 / sum(abs, volumes) : one(eltype(volumes))
+
     return (;
-        :expected_return => expected_return(volumes, deltas, args...),
-        :expected_shortfall => expected_shortfall(volumes, deltas, args...; kwargs...),
+        :expected_return => scale * expected_return(volumes, deltas, args...),
+        :expected_shortfall => scale * expected_shortfall(volumes, deltas, args...; kwargs...),
         :sharpe_ratio => sharpe_ratio(volumes, deltas, args...),
-        :volatility => volatility(volumes, deltas),
+        :volatility => scale * volatility(volumes, deltas),
     )
 end
 
