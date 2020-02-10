@@ -28,20 +28,20 @@ function financial_summary(
     kwargs...
 )
     return (;
-        expected_return=expected_return(volumes, deltas, args...),
-        expected_shortfall=expected_shortfall(volumes, deltas, args...; kwargs...),
-        sharpe_ratio=sharpe_ratio(volumes, deltas, args...),
-        volatility=volatility(volumes, deltas),
+        :expected_return => expected_return(volumes, deltas, args...),
+        :expected_shortfall => expected_shortfall(volumes, deltas, args...; kwargs...),
+        :sharpe_ratio => sharpe_ratio(volumes, deltas, args...),
+        :volatility => volatility(volumes, deltas),
     )
 end
 
 function financial_summary(returns; risk_level::Real=0.05)
     return (;
-        median_return=median(returns),
-        expected_return=expected_return(returns),
-        expected_shortfall=expected_shortfall(returns; risk_level=risk_level),
-        median_over_expected_shortfall=median_over_expected_shortfall(returns; risk_level=risk_level),
-        sharpe_ratio=sharpe_ratio(returns),
-        volatility=volatility(returns),
+        :median_return => median(returns),
+        :expected_return => expected_return(returns),
+        :expected_shortfall => expected_shortfall(returns; risk_level=risk_level),
+        :median_over_expected_shortfall => median_over_expected_shortfall(returns; risk_level=risk_level),
+        :sharpe_ratio => sharpe_ratio(returns),
+        :volatility => volatility(returns),
     )
 end

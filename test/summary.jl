@@ -10,12 +10,12 @@
             div_val = add_val/add_val
 
             example = (;
-                mean_squared_error=isscalar ? add_val : div_val,
-                root_mean_squared_error=div_val,
-                normalised_root_mean_squared_error=div_val,
-                standardized_mean_squared_error=div_val,
-                mean_absolute_error=isscalar ? add_val : div_val,
-                potential_payoff=div_val
+                :mean_squared_error => isscalar ? add_val : div_val,
+                :root_mean_squared_error => div_val,
+                :normalised_root_mean_squared_error => div_val,
+                :standardized_mean_squared_error => div_val,
+                :mean_absolute_error => isscalar ? add_val : div_val,
+                :potential_payoff => div_val
             )
             return typeof(example)
         end
@@ -112,10 +112,10 @@
             deltas = generate_mvnormal(mean_deltas, num_nodes)
 
             expected_type = typeof((;
-                expected_return=1.0,
-                expected_shortfall=1.0,
-                sharpe_ratio=1.0,
-                volatility=1.0,
+                :expected_return => 1.0,
+                :expected_shortfall => 1.0,
+                :sharpe_ratio => 1.0,
+                :volatility => 1.0,
             ))
 
             summary = financial_summary(volumes, deltas)
@@ -128,12 +128,12 @@
             risk_level = 0.05
 
             expected_type = typeof((;
-                median_return=1.0,
-                expected_return=1.0,
-                expected_shortfall=1.0,
-                median_over_expected_shortfall=1.0,
-                sharpe_ratio=1.0,
-                volatility=1.0,
+                :median_return => 1.0,
+                :expected_return => 1.0,
+                :expected_shortfall => 1.0,
+                :median_over_expected_shortfall => 1.0,
+                :sharpe_ratio => 1.0,
+                :volatility => 1.0,
             ))
 
             summary = financial_summary(returns; risk_level=risk_level)
