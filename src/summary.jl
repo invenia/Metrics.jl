@@ -16,7 +16,7 @@ obs_arrangement(::typeof(regression_summary)) = SingleObs()
 
 """
     financial_summary(returns, args...; kwargs...)
-    financial_summary(volume::AbstractArray, deltas::Union{MvNormal, AbstractMatrix}, args...; kwargs...)
+    financial_summary(volumes::AbstractVector, deltas::Union{MvNormal, AbstractMatrix}, args...; kwargs...)
 
 Calculate the summary of applicable financial metrics.
 `args...` and `kwargs...` are inputs for the functions above.
@@ -27,7 +27,7 @@ Calculate the summary of applicable financial metrics.
 Returns a `NamedTuple` of metric names and results.
 """
 function financial_summary(
-    volumes::AbstractArray, deltas::Union{MvNormal, AbstractMatrix}, args...;
+    volumes::AbstractVector, deltas::Union{MvNormal, AbstractMatrix}, args...;
     per_mwh::Bool=false, kwargs...
 )
     scale = per_mwh ? 1 / sum(abs, volumes) : one(eltype(volumes))
