@@ -10,12 +10,12 @@
             div_val = add_val/add_val
 
             example = (;
-                mean_squared_error=isscalar ? add_val : div_val,
-                root_mean_squared_error=div_val,
-                normalised_root_mean_squared_error=div_val,
-                standardized_mean_squared_error=div_val,
-                mean_absolute_error=isscalar ? add_val : div_val,
-                potential_payoff=div_val
+                :mean_squared_error => isscalar ? add_val : div_val,
+                :root_mean_squared_error => div_val,
+                :normalised_root_mean_squared_error => div_val,
+                :standardized_mean_squared_error => div_val,
+                :mean_absolute_error => isscalar ? add_val : div_val,
+                :potential_payoff => div_val
             )
             return typeof(example)
         end
@@ -112,28 +112,38 @@
             deltas = generate_mvnormal(mean_deltas, num_nodes)
 
             expected_type = typeof((;
-                expected_return=1.0,
-                expected_shortfall=1.0,
-                sharpe_ratio=1.0,
-                volatility=1.0,
+                :expected_return => 1.0,
+                :expected_shortfall => 1.0,
+                :sharpe_ratio => 1.0,
+                :volatility => 1.0,
             ))
 
             summary = financial_summary(volumes, deltas)
 
             @test summary isa expected_type
-       end
+
+            @testset "per MWh" begin
+                summary_mwh = financial_summary(volumes, deltas; per_mwh=true)
+                total_volume = sum(abs, volumes)
+
+                @test summary_mwh.expected_return == summary.expected_return / total_volume
+                @test summary_mwh.expected_shortfall == summary.expected_shortfall / total_volume
+                @test summary_mwh.sharpe_ratio == summary.sharpe_ratio
+                @test summary_mwh.volatility == summary.volatility / total_volume
+            end
+        end
 
         @testset "returns::AbstractVector; risk_level::Real=0.5" begin
             returns = rand(20)
             risk_level = 0.05
 
             expected_type = typeof((;
-                median_return=1.0,
-                expected_return=1.0,
-                expected_shortfall=1.0,
-                median_over_expected_shortfall=1.0,
-                sharpe_ratio=1.0,
-                volatility=1.0,
+                :median_return => 1.0,
+                :expected_return => 1.0,
+                :expected_shortfall => 1.0,
+                :median_over_expected_shortfall => 1.0,
+                :sharpe_ratio => 1.0,
+                :volatility => 1.0,
             ))
 
             summary = financial_summary(returns; risk_level=risk_level)
