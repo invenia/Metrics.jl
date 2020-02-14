@@ -15,12 +15,13 @@ include("regression/gaussian_loglikelihood.jl")
 include("regression/picp.jl")
 include("regression/potential_payoff.jl")
 include("regression/simple.jl")
-# model
-include("model/kullback_leibler.jl")
 # financial
 include("financial/expected_shortfall.jl")
 include("financial/simple.jl")
 include("financial/price_impact.jl")
+# statistical
+include("statistical/bky.jl")
+include("statistical/kullback_leibler.jl")
 # misc
 include("evaluate.jl")
 include("summary.jl")
@@ -55,5 +56,7 @@ export
     median_return,
     expected_shortfall, es,
     financial_summary,
-    price_impact
+    price_impact,
+    # statistical
+    bky_test
 end # module

@@ -35,15 +35,15 @@ seed!(1)
     include("regression/picp.jl")
     include("regression/potential_payoff.jl")
     include("regression/simple.jl")
-    # model
-    include("model/kullback_leibler.jl")
     # financial
     include("financial/expected_shortfall.jl")
     include("financial/price_impact.jl")
     include("financial/simple.jl")
+    # statistical
+    include("statistical/bky.jl")
+    include("statistical/kullback_leibler.jl")
     # misc
     include("evaluate.jl")
     include("deprecated.jl")
     include("summary.jl")
-
 end
