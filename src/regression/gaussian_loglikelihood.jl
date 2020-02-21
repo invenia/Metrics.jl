@@ -50,7 +50,7 @@ end
 
 joint_gaussian_loglikelihood(y_true, y_pred::MvNormal) = loglikelihood(y_pred, y_true)
 
-function joint_gaussian_loglikelihood(y_pred::Union{MvNormal, Sampleable}, y_true)
+function joint_gaussian_loglikelihood(y_pred::Sampleable, y_true)
     return joint_gaussian_loglikelihood(y_true, y_pred)
 end
 
