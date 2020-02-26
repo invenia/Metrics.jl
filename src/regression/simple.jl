@@ -45,7 +45,7 @@ function expected_squared_error(y_true, y_pred::Sampleable)
 end
 
 expected_squared_error(y_true::Sampleable, y_pred) = expected_squared_error(y_pred, y_true)
-obs_arrangement(::typeof(expected_squared_error)) = SingleObs()
+ObservationDims.obs_arrangement(::typeof(expected_squared_error)) = SingleObs()
 const se = expected_squared_error
 
 """
@@ -71,7 +71,7 @@ mean_squared_error(y_true, y_pred::Number) = expected_squared_error(y_true, y_pr
 mean_squared_error(y_true, y_pred::Sampleable) = expected_squared_error(y_true, y_pred) / length(y_true)
 mean_squared_error(y_true, y_pred) = mean_squared_error(y_pred, y_true)
 
-obs_arrangement(::typeof(mean_squared_error)) = SingleObs()
+ObservationDims.obs_arrangement(::typeof(mean_squared_error)) = SingleObs()
 const mse = mean_squared_error
 
 """
@@ -81,7 +81,7 @@ Compute the root of the mean square error between a set of observation `y_true` 
 predictions `y_pred`.
 """
 root_mean_squared_error(y_true, y_pred) = √mean_squared_error(y_true, y_pred)
-obs_arrangement(::typeof(root_mean_squared_error)) = SingleObs()
+ObservationDims.obs_arrangement(::typeof(root_mean_squared_error)) = SingleObs()
 const rmse = root_mean_squared_error
 
 """
@@ -106,7 +106,7 @@ function normalised_root_mean_squared_error(y_true, y_pred, α::Float64)
         (quantile(y_trues, .5 + α) - quantile(y_trues, .5 - α))
 end
 
-obs_arrangement(::typeof(normalised_root_mean_squared_error)) = SingleObs()
+ObservationDims.obs_arrangement(::typeof(normalised_root_mean_squared_error)) = SingleObs()
 const nrmse = normalised_root_mean_squared_error
 
 """
@@ -118,7 +118,7 @@ predictions `y_pred`.
 function standardized_mean_squared_error(y_true, y_pred)
     return mean_squared_error(y_true, y_pred) / var(norm.(y_true))
 end
-obs_arrangement(::typeof(standardized_mean_squared_error)) = SingleObs()
+ObservationDims.obs_arrangement(::typeof(standardized_mean_squared_error)) = SingleObs()
 const smse = standardized_mean_squared_error
 
 """
@@ -181,7 +181,7 @@ function expected_absolute_error(y_true, y_pred::Sampleable)
 end
 
 expected_absolute_error(y_true::Sampleable, y_pred) = expected_absolute_error(y_pred, y_true)
-obs_arrangement(::typeof(expected_absolute_error)) = SingleObs()
+ObservationDims.obs_arrangement(::typeof(expected_absolute_error)) = SingleObs()
 const ae = expected_absolute_error
 
 """
@@ -207,7 +207,7 @@ mean_absolute_error(y_true, y_pred::Number) = expected_absolute_error(y_true, y_
 mean_absolute_error(y_true, y_pred::Sampleable) = expected_absolute_error(y_true, y_pred) / length(y_pred)
 mean_absolute_error(y_true, y_pred) = mean_absolute_error(y_pred, y_true)
 
-obs_arrangement(::typeof(mean_absolute_error)) = SingleObs()
+ObservationDims.obs_arrangement(::typeof(mean_absolute_error)) = SingleObs()
 const mae = mean_absolute_error
 
 """
@@ -239,5 +239,5 @@ function mean_absolute_scaled_error(y_true, y_pred)
 
     return model_forecast_error / one_step_forecast_error
 end
-obs_arrangement(::typeof(mean_absolute_scaled_error)) = SingleObs()
+ObservationDims.obs_arrangement(::typeof(mean_absolute_scaled_error)) = SingleObs()
 const mase = mean_absolute_scaled_error

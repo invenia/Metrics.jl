@@ -5,6 +5,7 @@ using Distributions
 using IndexedDistributions
 using LinearAlgebra: cholesky, det, dot, I, norm, tr
 using NamedDims
+using ObservationDims
 using PSDMats
 using SpecialFunctions
 using StatsUtils: sqrtcov
@@ -25,7 +26,6 @@ include("statistical/kullback_leibler.jl")
 # misc
 include("evaluate.jl")
 include("summary.jl")
-include("deprecated.jl")
 
 export
     evaluate,

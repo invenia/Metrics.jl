@@ -51,7 +51,7 @@ function expected_return(volumes::AbstractVector, deltas::Sampleable{Multivariat
     return expected_return(volumes, mean(deltas), args...)
 end
 expected_return(returns) = mean(returns)
-obs_arrangement(::typeof(expected_return)) = MatrixColsOfObs()
+ObservationDims.obs_arrangement(::typeof(expected_return)) = MatrixColsOfObs()
 
 
 """
@@ -76,7 +76,7 @@ function volatility(volumes::AbstractVector, deltas::Sampleable{Multivariate})
     return norm(sqrtcov(deltas) * volumes, 2)
 end
 volatility(returns) = std(returns)
-obs_arrangement(::typeof(volatility)) = MatrixColsOfObs()
+ObservationDims.obs_arrangement(::typeof(volatility)) = MatrixColsOfObs()
 
 """
     sharpe_ratio(returns::AbstractVector) -> Number
@@ -107,7 +107,7 @@ end
 
 sharpe_ratio(returns) =  mean(returns) / std(returns)
 
-obs_arrangement(::typeof(sharpe_ratio)) = MatrixColsOfObs()
+ObservationDims.obs_arrangement(::typeof(sharpe_ratio)) = MatrixColsOfObs()
 
 
 """
@@ -135,4 +135,4 @@ end
 
 median_return(returns) = median(returns)
 
-obs_arrangement(::typeof(median_return)) = MatrixColsOfObs()
+ObservationDims.obs_arrangement(::typeof(median_return)) = MatrixColsOfObs()

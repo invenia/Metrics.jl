@@ -71,5 +71,5 @@ function kullback_leibler(
     return kullback_leibler(sorted_d1, sorted_d2)
 end
 
-obs_arrangement(::typeof(kullback_leibler)) = SingleObs()
+ObservationDims.obs_arrangement(::typeof(kullback_leibler)) = SingleObs()
 const kl = kullback_leibler

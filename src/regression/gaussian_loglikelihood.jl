@@ -26,7 +26,7 @@ function marginal_gaussian_loglikelihood(y_pred::Sampleable, y_true)
     return marginal_gaussian_loglikelihood(y_true, y_pred)
 end
 
-obs_arrangement(::typeof(marginal_gaussian_loglikelihood)) = MatrixColsOfObs()
+ObservationDims.obs_arrangement(::typeof(marginal_gaussian_loglikelihood)) = MatrixColsOfObs()
 
 """
     joint_gaussian_loglikelihood(y_pred::Distribution{Univariate}, y_true) -> Float64
@@ -54,4 +54,4 @@ function joint_gaussian_loglikelihood(y_pred::Sampleable, y_true)
     return joint_gaussian_loglikelihood(y_true, y_pred)
 end
 
-obs_arrangement(::typeof(joint_gaussian_loglikelihood)) = MatrixColsOfObs()
+ObservationDims.obs_arrangement(::typeof(joint_gaussian_loglikelihood)) = MatrixColsOfObs()

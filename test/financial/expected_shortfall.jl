@@ -115,7 +115,7 @@
         risk_level = 1.1
         @test_throws ArgumentError expected_shortfall(returns; risk_level=risk_level)
 
-        @testset "insurficient samples" begin
+        @testset "insufficient samples" begin
             returns = []
             risk_level = 1/2
             @test expected_shortfall(returns; risk_level=risk_level) === missing
