@@ -14,12 +14,6 @@
                 # y_true is less likely than y_mean
                 @test marginal_gaussian_loglikelihood(y_true, dist) < marginal_gaussian_loglikelihood(y_mean, dist)
             end
-
-            @testset "Arrangements" begin
-                expected = marginal_gaussian_loglikelihood(y_true, dist)
-                @test expected == evaluate(marginal_gaussian_loglikelihood, y_true, dist)
-                @test expected == evaluate(marginal_gaussian_loglikelihood, Tuple(y_true), dist)
-            end
         end
 
         @testset "vector point" begin
@@ -39,15 +33,6 @@
                 @test marginal_gaussian_loglikelihood(y_true, dist) < marginal_gaussian_loglikelihood(y_mean, dist)
                 # using the alternative Canonical form should not change results
                 @test marginal_gaussian_loglikelihood(y_true, dist) ≈ marginal_gaussian_loglikelihood(y_true, canonform(dist))
-            end
-
-            @testset "Observation rearragement" begin
-                expected = marginal_gaussian_loglikelihood(y_true, dist)
-                @test expected == evaluate(marginal_gaussian_loglikelihood, y_true, dist; obsdim=2)
-                obs_iter = [[8., 10, 10], [10., 5, 7], [9., 7, 10], [11., 12, 1]]
-                @test expected == evaluate(marginal_gaussian_loglikelihood, obs_iter, dist)
-                @test expected == evaluate(marginal_gaussian_loglikelihood, y_true', dist; obsdim=1)
-                @test expected == evaluate(marginal_gaussian_loglikelihood, y_true', dist)
             end
 
             @testset "Using IndexedDistributions and AxisArrays" begin
@@ -92,13 +77,6 @@
                 # For unviariate markingal and joint are the same, it is just the normalized likelyhood.
                 @test joint_gaussian_loglikelihood(y_true, dist) ≈ marginal_gaussian_loglikelihood(y_true, dist)
             end
-
-            @testset "Arrangements" begin
-                # test arrangements
-                expected = joint_gaussian_loglikelihood(y_true, dist)
-                @test expected == evaluate(joint_gaussian_loglikelihood, y_true, dist)
-                @test expected == evaluate(joint_gaussian_loglikelihood, Tuple(y_true), dist)
-            end
         end
 
         sqrtcov = rand(3, 3)
@@ -127,15 +105,6 @@
                 # using the alternative canonical form should not change the results
                 @test joint_gaussian_loglikelihood(y_true, dist) ≈ joint_gaussian_loglikelihood(y_true, canonform(dist))
 
-            end
-
-            @testset "Arrangements" begin
-                expected = joint_gaussian_loglikelihood(y_true, dist)
-                @test expected == evaluate(joint_gaussian_loglikelihood, dist, y_true, obsdim=2)
-                obs_iter = [[8., 10, 10], [10., 5, 7], [9., 7, 10], [11., 12, 1]]
-                @test expected == evaluate(joint_gaussian_loglikelihood, obs_iter, dist)
-                @test expected == evaluate(joint_gaussian_loglikelihood, y_true', dist; obsdim=1)
-                @test expected == evaluate(joint_gaussian_loglikelihood, y_true', dist)
             end
 
             @testset "Using IndexedDistributions with AxisArrays" begin

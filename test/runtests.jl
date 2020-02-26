@@ -4,15 +4,8 @@ using FixedPointDecimals
 using IndexedDistributions
 using LinearAlgebra
 using Metrics
-using Metrics:
-    IteratorOfObs,
-    MatrixRowsOfObs,
-    MatrixColsOfObs,
-    ObsArrangement,
-    obs_arrangement,
-    organise_obs,
-    price_impact,
-    SingleObs
+using Metrics: price_impact
+using ObservationDims
 using NamedDims
 using PSDMats
 using Random
@@ -44,6 +37,5 @@ seed!(1)
     include("statistical/kullback_leibler.jl")
     # misc
     include("evaluate.jl")
-    include("deprecated.jl")
     include("summary.jl")
 end

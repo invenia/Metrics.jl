@@ -56,4 +56,4 @@ function bky_test(pvalues::Vector, q=0.05)
     return reject_null
 end
 
-obs_arrangement(::typeof(bky_test)) = MatrixColsOfObs()
+ObservationDims.obs_arrangement(::typeof(bky_test)) = MatrixColsOfObs()

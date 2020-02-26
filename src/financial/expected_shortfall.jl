@@ -37,7 +37,7 @@ function expected_shortfall(returns; risk_level::Real=0.05)
     return -mean(partialsort(returns, 1:last_index))
 end
 
-obs_arrangement(::typeof(expected_shortfall)) = MatrixColsOfObs()
+ObservationDims.obs_arrangement(::typeof(expected_shortfall)) = MatrixColsOfObs()
 const es = expected_shortfall
 
 """
@@ -147,5 +147,5 @@ function median_over_expected_shortfall(
     return m_return / es_return
 end
 
-obs_arrangement(::typeof(median_over_expected_shortfall)) = MatrixColsOfObs()
+ObservationDims.obs_arrangement(::typeof(median_over_expected_shortfall)) = MatrixColsOfObs()
 const evano = median_over_expected_shortfall

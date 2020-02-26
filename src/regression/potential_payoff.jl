@@ -81,4 +81,4 @@ function potential_payoff(y_true, y_pred::Sampleable{Matrixvariate})
     return potential_payoff(vec(y_true), vec(y_pred))
 end
 
-obs_arrangement(::typeof(potential_payoff)) = SingleObs()
+ObservationDims.obs_arrangement(::typeof(potential_payoff)) = SingleObs()
