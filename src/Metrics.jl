@@ -25,6 +25,7 @@ include("financial/price_impact.jl")
 include("statistical/bky.jl")
 include("statistical/diebold_mariano.jl")
 include("statistical/kullback_leibler.jl")
+include("statistical/subsample.jl")
 # misc
 include("evaluate.jl")
 include("summary.jl")
@@ -63,4 +64,8 @@ export
     bky_test,
     dm_mean_test,
     dm_median_test
+    block_subsample,
+    estimate_block_size,
+    estimate_convergence_rate,
+    subsample_ci
 end # module
