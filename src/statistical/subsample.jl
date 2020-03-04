@@ -26,7 +26,8 @@ Subsampling. Springer Science & Business Media, 1999". An important distinction 
 approach that is suggested in the book and the one we take here is that we use the
 difference between each two consecutive quantiles, instead of the quantiles themselves. That
 does not affect the procedure (it's trivial to show all expressions from the book still
-hold), but increases numerical stability.
+hold), but increases numerical stability. We also opt to use weighted linear regression
+instead of regular linear regression for computing the power of the rate.
 
 Returns the estimated exponent, `β`, assuming a rate of the form `b^β`, with `b` the size
 of the block.
@@ -99,9 +100,9 @@ function estimate_convergence_rate(
     mlog = mean(log.(bs))
     diff_y = ys .- ȳ
     diff_log = log.(bs) .- mlog
-    β = - sum(diff_y .* diff_log) / sum(diff_log .^ 2)
+    # Perform weighted linear regression
     βw = - sum(ws .* diff_y .* diff_log) / sum(ws .* (diff_log .^ 2))
-    return β, βw, diff_y, diff_log, ws
+    return βw
 end
 
 """
@@ -174,7 +175,7 @@ function subsample_ci(
         metric;
         α=0.05,
         bmin=50,
-        bmax=300,
+        bmax=300, # we may want to change this default if we use 2 years instead of 1.
         bstep=1,
         bvol=2,
         β=nothing,
