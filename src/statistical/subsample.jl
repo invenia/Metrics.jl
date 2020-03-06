@@ -59,7 +59,7 @@ function estimate_convergence_rate(
     n = length(series)
     bs = Int.(round.(n .^ exps)) # Block sizes
     # Get the different subsamples and apply metric to them
-    subsamples = [metric.(block_subsample(series, b)) for b in bs]
+    subsamples = map(b -> metric.(block_subsample(series, b)), bs)
     # Get the distribution of the differences of the metric
     sample_metric = metric(series)
     diff_samples = [samp .- sample_metric for samp in subsamples]
