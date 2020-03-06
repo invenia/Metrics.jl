@@ -33,7 +33,7 @@ Returns the estimated exponent, `β`, assuming a rate of the form `b^β`, with `
 of the block.
 
 * Arguments:
-- `series`: a numerical array with the time series for which to estimate convergence;
+- `series`: a numerical time-series for which to estimate convergence;
 - `metric`: a function that computes the statistic for which to estimate convergence;
 - `quantmin`: smallest quantile to use in the estimation;
 - `quantstep`: separation between quantiles to use in the estimation;
