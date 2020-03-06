@@ -67,11 +67,12 @@ function estimate_convergence_rate(
     # We don't start at zero because all points must be larger than the cdf at zero
     # if st does not happen to be larger than that, the while loop will update it
     ts = collect(quantmin:quantstep:quantmax)
-    length(ts) < 3 && throw(ArgumentError(
-        """
-        The inverse CDF must be computed at at least 3 points for the convergence rate to be
-        estimated.
-        """))
+     if length(ts < 3)
+         throw(ArgumentError(
+             "The inverse CDF must be computed for at least 3 points for the convergence rate to be estimated."
+         ))
+     end
+
     proceed = false
     quants = [] # just so it lives outside of the while scope
     quant_diffs = [] # just so it lives outside of the while scope
