@@ -88,12 +88,11 @@ function estimate_convergence_rate(
         else
             quantstep += 0.1
             ts = collect(quantmin:quantstep:quantmax)
-            length(ts < 3) && throw(ArgumentError(
-                """Can't estimate convergence rate for this series. Please provide rate
-                explicitly."""
-            ))
-        end
-    end
+            if length(ts < 3)
+                throw(ArgumentError(
+                  "Can't estimate convergence rate for this series. Please provide rate explicitly."
+                ))
+            end
     ys = [mean(log.(q)) for q in quant_diffs]
     ws = 1 ./ [var(log.(q)) for q in quant_diffs]
     ȳ = mean(ys)
