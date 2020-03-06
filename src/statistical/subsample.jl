@@ -67,9 +67,12 @@ function estimate_convergence_rate(
     # We don't start at zero because all points must be larger than the cdf at zero
     # if st does not happen to be larger than that, the while loop will update it
     ts = collect(quantmin:quantstep:quantmax)
-     if length(ts < 3)
+     if length(ts) < 3
          throw(ArgumentError(
-             "The inverse CDF must be computed for at least 3 points for the convergence rate to be estimated."
+            """
+            The inverse CDF must be computed for at least 3 points for the convergence rate
+            to be estimated.
+            """
          ))
      end
 
@@ -89,11 +92,16 @@ function estimate_convergence_rate(
         else
             quantstep += 0.1
             ts = collect(quantmin:quantstep:quantmax)
-            if length(ts < 3)
+            if length(ts) < 3
                 throw(ArgumentError(
-                  "Can't estimate convergence rate for this series. Please provide rate explicitly."
+                    """
+                    Can't estimate convergence rate for this series. Please provide rate
+                    explicitly.
+                    """
                 ))
             end
+        end
+    end
     ys = [mean(log.(q)) for q in quant_diffs]
     ws = 1 ./ [var(log.(q)) for q in quant_diffs]
     ȳ = mean(ys)
