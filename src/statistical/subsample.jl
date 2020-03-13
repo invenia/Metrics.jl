@@ -220,8 +220,8 @@ function subsample_ci(series, b, metric; α=0.05, β=nothing)
     # compute lower and upper bounds
     lower = quantile(metric_series, α / 2)
     upper = quantile(metric_series, 1 - (α / 2))
-    # correct bounds by convergence rate
-    lower_ci = sample_metric - upper / τ
-    upper_ci = sample_metric - lower / τ
-    return lower_ci, upper_ci
+    # apply location and scale estimates
+    lower_corrected = sample_metric - upper / τ
+    upper_corrected = sample_metric - lower / τ
+    return lower_corrected, upper_corrected
 end
