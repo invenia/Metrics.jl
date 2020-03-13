@@ -221,7 +221,7 @@ function subsample_ci(series, b, metric; α=0.05, β=nothing)
     lower = quantile(metric_series, α / 2)
     upper = quantile(metric_series, 1 - (α / 2))
     # correct bounds by convergence rate
-    lower = sample_metric - upper / τ
-    upper = sample_metric - lower / τ
-    return lower, upper
+    lower_ci = sample_metric - upper / τ
+    upper_ci = sample_metric - lower / τ
+    return lower_ci, upper_ci
 end
