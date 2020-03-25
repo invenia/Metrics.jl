@@ -76,30 +76,8 @@ function estimate_convergence_rate(
          ))
      end
 
-    proceed = false
-    quants = [] # just so it lives outside of the while scope
-    quant_diffs = [] # just so it lives outside of the while scope
-    while true
-        # Compute quantiles as the empirical estimator of the inverse cdf
-        quants = [[quantile(s, t) for t in ts] for s in diff_samples]
-        # Compute the differences between consecutive quantiles
-        quant_diffs = [
-            [quant[i + 1] - quant[i] for i in 1:(length(quant) - 1)] for quant in quants
-        ]
+    quant_diffs = _compute_quantile_differences(diff_samples, quantmin, quantstep, quantmax)
 
-        all([all(q .> 0) for q in quant_diffs]) && break # No zeroes
-        # If there are zeroes, make grid coarser
-        quantstep += 0.1
-        ts = collect(quantmin:quantstep:quantmax)
-        if length(ts) < 3
-            throw(ArgumentError(
-                """
-                Can't estimate convergence rate for this series. Please provide rate
-                explicitly.
-                """
-            ))
-        end
-    end
     ys = [mean(log.(q)) for q in quant_diffs]
     ws = 1 ./ [var(log.(q)) for q in quant_diffs]
     ȳ = mean(ys)
@@ -109,6 +87,45 @@ function estimate_convergence_rate(
     # Perform weighted linear regression
     βw = - sum(ws .* diff_y .* diff_log) / sum(ws .* (diff_log .^ 2))
     return βw
+end
+
+"""
+    _compute_quantile_differences(diff_samples, quantmin, quantstep, quantmax)
+
+Compute the differences between consecutive quantiles, ranging between `quantmin` and
+`quantmax` in increments of `quantstep`, of the empirical estimate of the data `diff_samples`.
+"""
+function _compute_quantile_differences(diff_samples, quantmin, quantstep, quantmax)
+
+    quant_diffs = [] # just so it lives outside of the while scope
+
+    not_finished = true
+    while not_finished
+        quant_range = collect(quantmin:quantstep:quantmax)
+        if length(quant_range) < 3
+            throw(ArgumentError(
+                """
+                Can't estimate convergence rate for this series. Please provide rate
+                explicitly.
+                """
+            ))
+        end
+
+        # Compute quantiles as the empirical estimator of the inverse cdf
+        quants = [[quantile(s, t) for t in quant_range] for s in diff_samples]
+
+        # Compute the differences between consecutive quantiles
+        quant_diffs = [
+            [quant[i + 1] - quant[i] for i in 1:(length(quant) - 1)] for quant in quants
+        ]
+
+        not_finished = !all([all(q .> 0) for q in quant_diffs])
+
+        # If there are zeroes, make grid coarser
+        quantstep += 0.1
+    end
+
+    return quant_diffs
 end
 
 """
