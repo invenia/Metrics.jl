@@ -34,6 +34,7 @@ seed!(1)
     include("financial/simple.jl")
     # statistical
     include("statistical/bky.jl")
+    include("statistical/diebold_mariano.jl")
     include("statistical/kullback_leibler.jl")
     # misc
     include("evaluate.jl")
