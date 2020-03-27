@@ -40,9 +40,12 @@ median_over_expected_shortfall
 price_impact
 ```
 
-## Model Metrics
+## Statistical Metrics
 
 ```@docs
+bky_test
+dm_mean_test
+dm_median_test
 kullback_leibler
 ```
 

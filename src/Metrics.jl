@@ -8,6 +8,7 @@ using NamedDims
 using ObservationDims
 using PSDMats
 using SpecialFunctions
+using StatsBase
 using StatsUtils: sqrtcov
 
 include("utils.jl")
@@ -22,6 +23,7 @@ include("financial/simple.jl")
 include("financial/price_impact.jl")
 # statistical
 include("statistical/bky.jl")
+include("statistical/diebold_mariano.jl")
 include("statistical/kullback_leibler.jl")
 # misc
 include("evaluate.jl")
@@ -58,5 +60,7 @@ export
     financial_summary,
     price_impact,
     # statistical
-    bky_test
+    bky_test,
+    dm_mean_test,
+    dm_median_test
 end # module
