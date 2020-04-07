@@ -227,16 +227,18 @@ function subsample_ci(series, b, metric; α=0.05, β=nothing)
     metric_series = metric.(block_subsample(series, b))
     # estimate convergence rates
     β = isnothing(β) ? estimate_convergence_rate(series, metric) : β
-    τ = b ^ β
+    n = length(series)
+    τ_b = b ^ β
+    τ_n = n ^ β
     # compute sample metric
     sample_metric = metric(series)
     # center and scale metrics
-    metric_series = (metric_series .- sample_metric) * τ
+    metric_series = (metric_series .- sample_metric) * τ_b
     # compute lower and upper bounds
     lower = quantile(metric_series, α / 2)
     upper = quantile(metric_series, 1 - (α / 2))
     # apply location and scale estimates
-    lower_corrected = sample_metric - upper / τ
-    upper_corrected = sample_metric - lower / τ
+    lower_corrected = sample_metric - upper / τ_n
+    upper_corrected = sample_metric - lower / τ_n
     return lower_corrected, upper_corrected
 end
