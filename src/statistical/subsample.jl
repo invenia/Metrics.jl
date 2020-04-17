@@ -57,12 +57,15 @@ function estimate_convergence_rate(
     # Exponents used to estimate the rate.
     exps = collect(expmax:-expstep:expmin)
     n = length(series)
-    bs = Int.(round.(n .^ exps)) # Block sizes
+    block_sizes = Int.(round.(n .^ exps))
+
     # Get the different subsamples and apply metric to them
-    subsamples = map(b -> metric.(block_subsample(series, b)), bs)
+    subsamples = map(b -> metric.(block_subsample(series, b)), block_sizes)
+
     # Get the distribution of the differences of the metric
     sample_metric = metric(series)
     diff_samples = [samp .- sample_metric for samp in subsamples]
+
     # Define points to compute inverse cdf
     # We don't start at zero because all points must be larger than the cdf at zero
     # if st does not happen to be larger than that, the while loop will update it
@@ -78,14 +81,9 @@ function estimate_convergence_rate(
 
     quant_diffs = _compute_quantile_differences(diff_samples, quantmin, quantstep, quantmax)
 
-    ys = [mean(log.(q)) for q in quant_diffs]
-    ws = 1 ./ [var(log.(q)) for q in quant_diffs]
-    ȳ = mean(ys)
-    mlog = mean(log.(bs))
-    diff_y = ys .- ȳ
-    diff_log = log.(bs) .- mlog
-    # Perform weighted linear regression
-    βw = - sum(ws .* diff_y .* diff_log) / sum(ws .* (diff_log .^ 2))
+    # We take the negative because we want the slope for the *inverse* of the quantiles
+    βw = -_compute_log_log_slope(block_sizes, quant_diffs)
+
     return βw
 end
 
@@ -126,6 +124,36 @@ function _compute_quantile_differences(diff_samples, quantmin, quantstep, quantm
     end
 
     return quant_diffs
+end
+
+"""
+    _compute_log_log_slope(x, y::Vector{<:Vector}))
+
+Compute the weighted least squares estimate for the slope of the line that best fits to the
+natural logarithm of `x` vs the natural logarithm of `y` where `y ~ x^β`.
+
+Every target `x_i` has multiple responses `y_{ij}`. Additionally, the weights are computed as
+the inverse of the variance of the responses, i.e. `w_i` =  `1 / var.(log.(y_{ij}))`
+
+!!! note
+    This is for internal use only. The assumption made here are specific to the outputs of
+    [`_compute_quantile_differences`](@ref).
+"""
+function _compute_log_log_slope(x, y::Vector{<:Vector})
+
+    log_y = map(q -> mean(log.(q)), y)
+    log_x = log.(x)
+
+    diff_y = log_y .- mean(log_y)
+    diff_x = log_x .- mean(log_x)
+
+    # weight each point inversely to its variance
+    weights = 1 ./ map(q -> var(log.(q)), y)
+
+    all(isfinite.(weights)) || @warn "Not all weights are finite."
+
+    # Use matrix inversion to compute the slope, i.e. converenge rate
+    beta = sum(weights .* diff_y .* diff_x) / sum(weights .* (diff_x .^ 2))
 end
 
 """
