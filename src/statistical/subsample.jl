@@ -3,9 +3,9 @@
 
 Subsample `series` with running (overlapping) blocks of length `b`.
 """
-function block_subsample(series, b)
-    n_blocks = length(series) - b + 1
-    return [series[i:(b + i - 1)] for i in 1:n_blocks]
+function block_subsample(series, block_size)
+    n_blocks = length(series) - block_size + 1
+    return [series[i:(block_size + i - 1)] for i in 1:n_blocks]
 end
 
 """
@@ -164,19 +164,19 @@ end
             series,
             metric;
             α=0.05,
-            bmin=50,
-            bmax=300,
-            bstep=1,
-            bvol=2,
+            sizemin=50,
+            sizemax=300,
+            sizestep=1,
+            blocksvol=2,
             β=nothing,
         )
 
 Estimate optimal block size for computing confidence intervals at a level `α` for `metric`
 over a `series` by minimising their volatility. Optimal size is searched over the range
-`bmin:bstep:bmax` and volatility is computed using `bvol` values above and below a given
-block size. Confidence intervals are computed assuming a convergence rate of `b^β`. If
-`β=nothing`, the rate is estimated via `estimate_convergence_rate`. For details on this
-procedure, see chapter 9 of "Politis, Dimitris N., Joseph P. Romano, and Michael Wolf.
+`sizemin:sizestep:sizemax` and volatility is computed using `blocksvol` values above and
+below a given block size. Confidence intervals are computed assuming a convergence rate of
+`b^β`. If `β=nothing`, the rate is estimated via `estimate_convergence_rate`. For details on
+this procedure, see chapter 9 of "Politis, Dimitris N., Joseph P. Romano, and Michael Wolf.
 Subsampling. Springer Science & Business Media, 1999."
 
 Returns the optimal block size, the (possibly estimated) `β` and the confidence interval
@@ -186,14 +186,14 @@ function estimate_block_size(
         series,
         metric;
         α=0.05,
-        bmin=50,
-        bmax=300,
-        bstep=1,
-        bvol=2,
+        sizemin=50,
+        sizemax=300,
+        sizestep=1,
+        blocksvol=2,
         β=nothing,
     )
     β = isnothing(β) ? estimate_convergence_rate(series, metric) : β
-    bs = collect(bmin:bstep:bmax)
+    bs = collect(sizemin:sizestep:sizemax)
     # compute CIs for each block size
     cis = [subsample_ci(series, b, metric; α=α, β=β) for b in bs]
     # obtain lower and upper bounds
@@ -201,10 +201,10 @@ function estimate_block_size(
     ups = [ci[:upper] for ci in cis]
     # compute volatility indexes
     vols = [
-        std(lows[i - bvol:i + bvol]) + std(ups[i - bvol:i + bvol])
-        for i in (bvol + 1):(length(cis) - bvol)
+        std(lows[i - blocksvol:i + blocksvol]) + std(ups[i - blocksvol:i + blocksvol])
+        for i in (blocksvol + 1):(length(cis) - blocksvol)
     ]
-    imin = findmin(vols)[2] + bvol # + bvol because length(vols) < length(cis)
+    imin = findmin(vols)[2] + blocksvol # + blocksvol because length(vols) < length(cis)
     return (block_size=bs[imin], β=β, ci=cis[imin],)
 end
 
@@ -213,10 +213,10 @@ end
             series,
             metric;
             α=0.05,
-            bmin=100,
-            bmax=300,
-            bstep=5,
-            bvol=3,
+            sizemin=100,
+            sizemax=300,
+            sizestep=5,
+            blocksvol=3,
             β=nothing,
         )
 
@@ -228,10 +228,10 @@ function subsample_ci(
         series,
         metric;
         α=0.05,
-        bmin=50,
-        bmax=300, # we may want to change this default if we use 2 years instead of 1.
-        bstep=1,
-        bvol=2,
+        sizemin=50,
+        sizemax=300, # we may want to change this default if we use 2 years instead of 1.
+        sizestep=1,
+        blocksvol=2,
         β=nothing,
     )
     return estimate_block_size(
@@ -239,10 +239,10 @@ function subsample_ci(
         metric;
         α=α,
         β=β,
-        bmin=bmin,
-        bmax=bmax,
-        bstep=bstep,
-        bvol=bvol
+        sizemin=sizemin,
+        sizemax=sizemax,
+        sizestep=sizestep,
+        blocksvol=blocksvol
     )[:ci] # we just want the CI
 end
 
@@ -255,13 +255,13 @@ and convergence rate `b^β`. If `β=nothing`, the rate is estimated via
 
 Returns a `NamedTuple` with the `:lower` and the `:upper` bounds of the CI.
 """
-function subsample_ci(series, b, metric; α=0.05, β=nothing)
+function subsample_ci(series, block_size, metric; α=0.05, β=nothing)
     # apply metric to subsampled series
-    metric_series = metric.(block_subsample(series, b))
+    metric_series = metric.(block_subsample(series, block_size))
     # estimate convergence rates
     β = isnothing(β) ? estimate_convergence_rate(series, metric) : β
     n = length(series)
-    τ_b = b ^ β
+    τ_b = block_size ^ β
     τ_n = n ^ β
     # compute sample metric
     sample_metric = metric(series)
