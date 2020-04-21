@@ -66,6 +66,5 @@ export
     dm_median_test
     block_subsample,
     estimate_block_size,
-    estimate_convergence_rate,
     subsample_ci
 end # module

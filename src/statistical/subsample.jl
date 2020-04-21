@@ -10,27 +10,26 @@ end
 
 """
     estimate_convergence_rate(
-        series,
-        metric;
-        quantmin=0.10,
-        quantstep=0.01,
-        quantmax=0.80,
-        expmax=0.80,
-        expstep=0.01,
-        expmin=0.10,
+        series, metric;
+        quantmin=0.10, quantstep=0.01, quantmax=0.80, expmax=0.40, expstep=0.05, expmin=0.10,
     )
 
-Estimate convergence rate of the estimator for `metric` over a `series`. For details on this
-procedure, see chapter 8 of "Politis, Dimitris N., Joseph P. Romano, and Michael Wolf.
-Subsampling. Springer Science & Business Media, 1999". An important distinction between the
-approach that is suggested in the book and the one we take here is that we use the
-difference between each two consecutive quantiles, instead of the quantiles themselves. That
-does not affect the procedure (it's trivial to show all expressions from the book still
-hold), but increases numerical stability. We also opt to use weighted linear regression
-instead of regular linear regression for computing the power of the rate.
+Estimate the convergence rate of the estimator for `metric` over a `series`. For details on
+this procedure, see chapter 8 of "Politis, Dimitris N., Joseph P. Romano, and Michael Wolf.
+Subsampling. Springer Science & Business Media, 1999".
+
+An important distinction between the approach that is suggested in the book and the one we
+take here is that we use the _difference_ between each two consecutive quantiles, instead of
+the quantiles themselves. That does not affect the procedure, as it's trivial to show all
+expressions from the book still hold, but increases numerical stability. We also opt to use
+weighted linear regression instead of regular linear regression for computing the power of
+the rate.
 
 Returns the estimated exponent, `β`, assuming a rate of the form `b^β`, with `b` the size
 of the block.
+
+The default values for the quantile and exponent ranges should be good for our use case,
+which is a series of length 1 to 2 years.
 
 * Arguments:
 - `series`: a numerical time-series for which to estimate convergence;
@@ -42,30 +41,10 @@ of the block.
 - `expstep`: separation between exponents to use in the estimation;
 - `expmin`: smallest exponent to use in the estimation.
 """
-# The default values here should be good for our case, which is series of the size of 1 to
-# 2 years.
 function estimate_convergence_rate(
-    series,
-    metric;
-    quantmin=0.10,
-    quantstep=0.01,
-    quantmax=0.80,
-    expmax=0.40,
-    expstep=0.05,
-    expmin=0.10,
+    series, metric;
+    quantmin=0.10, quantstep=0.01, quantmax=0.80, expmax=0.40, expstep=0.05, expmin=0.10,
 )
-    # Exponents used to estimate the rate.
-    exps = collect(expmax:-expstep:expmin)
-    n = length(series)
-    block_sizes = Int.(round.(n .^ exps))
-
-    # Get the different subsamples and apply metric to them
-    subsamples = map(b -> metric.(block_subsample(series, b)), block_sizes)
-
-    # Get the distribution of the differences of the metric
-    sample_metric = metric(series)
-    diff_samples = [samp .- sample_metric for samp in subsamples]
-
     # Define points to compute inverse cdf
     # We don't start at zero because all points must be larger than the cdf at zero
     # if st does not happen to be larger than that, the while loop will update it
@@ -79,6 +58,20 @@ function estimate_convergence_rate(
          ))
      end
 
+    # Exponents used to estimate the rate.
+    exps = collect(expmax:-expstep:expmin)
+    n = length(series)
+    block_sizes = Int.(round.(n .^ exps))
+
+    # Get the different subsamples and apply metric to them
+    subsamples = map(b -> metric.(block_subsample(series, b)), block_sizes)
+
+    # Get the distribution of the differences of the metric
+    sample_metric = metric(series)
+    diff_samples = [samp .- sample_metric for samp in subsamples]
+
+    # Compute the differences between consecutive quantiles of the empirical estimatate of
+    # the samples
     quant_diffs = _compute_quantile_differences(diff_samples, quantmin, quantstep, quantmax)
 
     # We take the negative because we want the slope for the *inverse* of the quantiles
@@ -147,10 +140,20 @@ function _compute_log_log_slope(x, y::Vector{<:Vector})
     diff_y = log_y .- mean(log_y)
     diff_x = log_x .- mean(log_x)
 
-    # weight each point inversely to its variance
-    weights = 1 ./ map(q -> var(log.(q)), y)
+    # compute the variances of the log of the response variables
+    # avoid floating point errors by flooring to 0 if below machine precision.
+    vars = map(y) do _y
+        v = var(log.(_y))
+        return v < eps() ? 0 : v
+    end
 
-    all(isfinite.(weights)) || @warn "Not all weights are finite."
+    # weight each point inversely to its variance
+    weights = 1 ./ vars
+
+    if !all(isfinite.(weights))
+        n = count(.!isfinite.(weights))
+        @warn("$n non-finite weights arose in computing log-log slope.")
+    end
 
     # Use matrix inversion to compute the slope, i.e. converenge rate
     beta = sum(weights .* diff_y .* diff_x) / sum(weights .* (diff_x .^ 2))
