@@ -161,15 +161,15 @@ end
 
 """
     estimate_block_size(
-            series,
-            metric;
-            α=0.05,
-            sizemin=50,
-            sizemax=300,
-            sizestep=1,
-            blocksvol=2,
-            β=nothing,
-        )
+        series,
+        metric;
+        α=0.05,
+        sizemin=50,
+        sizemax=300,
+        sizestep=1,
+        blocksvol=2,
+        β=nothing,
+    )
 
 Estimate optimal block size for computing confidence intervals at a level `α` for `metric`
 over a `series` by minimising their volatility. Optimal size is searched over the range
@@ -183,15 +183,15 @@ Returns the optimal block size, the (possibly estimated) `β` and the confidence
 at level `α` with the optimal block size.
 """
 function estimate_block_size(
-        series,
-        metric;
-        α=0.05,
-        sizemin=50,
-        sizemax=300,
-        sizestep=1,
-        blocksvol=2,
-        β=nothing,
-    )
+    series,
+    metric;
+    α=0.05,
+    sizemin=50,
+    sizemax=300,
+    sizestep=1,
+    blocksvol=2,
+    β=nothing,
+)
     β = isnothing(β) ? estimate_convergence_rate(series, metric) : β
     bs = collect(sizemin:sizestep:sizemax)
     # compute CIs for each block size
