@@ -4,8 +4,8 @@
 
     @testset "main" begin  #TODO: remove when all tests are done - including subsample_ci
         cis = [subsample_ci(randn(1000), mean; β=0.5) for _ in 1:200]
-        low = mean([ci[1] for ci in cis])
-        up = mean([ci[2] for ci in cis])
+        low = mean([ci[:lower] for ci in cis])
+        up = mean([ci[:upper] for ci in cis])
         @test -0.1 < low < 0.0
         @test 0.0 < up < 0.1
     end

@@ -197,15 +197,15 @@ function estimate_block_size(
     # compute CIs for each block size
     cis = [subsample_ci(series, b, metric; α=α, β=β) for b in bs]
     # obtain lower and upper bounds
-    lows = [ci[1] for ci in cis]
-    ups = [ci[2] for ci in cis]
+    lows = [ci[:lower] for ci in cis]
+    ups = [ci[:upper] for ci in cis]
     # compute volatility indexes
     vols = [
         std(lows[i - bvol:i + bvol]) + std(ups[i - bvol:i + bvol])
         for i in (bvol + 1):(length(cis) - bvol)
     ]
     imin = findmin(vols)[2] + bvol # + bvol because length(vols) < length(cis)
-    return bs[imin], β, cis[imin]
+    return (block_size=bs[imin], β=β, ci=cis[imin],)
 end
 
 """
@@ -243,7 +243,7 @@ function subsample_ci(
         bmax=bmax,
         bstep=bstep,
         bvol=bvol
-    )[3] # we just want the CI
+    )[:ci] # we just want the CI
 end
 
 """
@@ -252,6 +252,8 @@ end
 Compute confidence interval for `metric` over a `series` at a level `α` using block size `b`
 and convergence rate `b^β`. If `β=nothing`, the rate is estimated via
 `estimate_convergence_rate`.
+
+Returns a `NamedTuple` with the `:lower` and the `:upper` bounds of the CI.
 """
 function subsample_ci(series, b, metric; α=0.05, β=nothing)
     # apply metric to subsampled series
@@ -271,5 +273,5 @@ function subsample_ci(series, b, metric; α=0.05, β=nothing)
     # apply location and scale estimates
     lower_corrected = sample_metric - upper / τ_n
     upper_corrected = sample_metric - lower / τ_n
-    return lower_corrected, upper_corrected
+    return (lower=lower_corrected, upper=upper_corrected,)
 end
