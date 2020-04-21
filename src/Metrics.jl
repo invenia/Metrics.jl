@@ -64,7 +64,5 @@ export
     bky_test,
     dm_mean_test,
     dm_median_test
-    block_subsample,
-    estimate_block_size,
     subsample_ci
 end # module
