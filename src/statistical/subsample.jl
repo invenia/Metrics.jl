@@ -88,10 +88,9 @@ Compute the differences between consecutive quantiles, ranging between `quantmin
 """
 function _compute_quantile_differences(diff_samples, quantmin, quantstep, quantmax)
 
-    quant_diffs = [] # just so it lives outside of the while scope
+    quant_diffs = [-1] # just so it lives outside of the while scope and triggers the loop.
 
-    not_finished = true
-    while not_finished
+    while !all([all(q .> 0) for q in quant_diffs])
         quant_range = collect(quantmin:quantstep:quantmax)
         if length(quant_range) < 3
             throw(ArgumentError(
@@ -109,8 +108,6 @@ function _compute_quantile_differences(diff_samples, quantmin, quantstep, quantm
         quant_diffs = [
             [quant[i + 1] - quant[i] for i in 1:(length(quant) - 1)] for quant in quants
         ]
-
-        not_finished = !all([all(q .> 0) for q in quant_diffs])
 
         # If there are zeroes, make grid coarser
         quantstep += 0.1
