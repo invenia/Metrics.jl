@@ -63,6 +63,6 @@ export
     # statistical
     bky_test,
     dm_mean_test,
-    dm_median_test
+    dm_median_test,
     subsample_ci
 end # module
