@@ -36,6 +36,7 @@ seed!(1)
     include("statistical/bky.jl")
     include("statistical/diebold_mariano.jl")
     include("statistical/kullback_leibler.jl")
+    include("statistical/subsample.jl")
     # misc
     include("evaluate.jl")
     include("summary.jl")
