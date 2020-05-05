@@ -4,6 +4,14 @@
 Subsample `series` with running (overlapping) blocks of length `b`.
 """
 function block_subsample(series, block_size)
+
+    if block_size > length(series)
+        throw(DomainError(
+            block_size,
+            "block_size cannot exceed the series length $(length(series))."
+        ))
+    end
+
     n_blocks = length(series) - block_size + 1
     return [series[i:(block_size + i - 1)] for i in 1:n_blocks]
 end
