@@ -10,6 +10,16 @@
         @test 0.0 < up < 0.1
     end
 
+    @testset "block_subsample" begin
+        data = collect(1:5)
+
+        result = Metrics.block_subsample(data, 3)
+        @test result == [[1, 2, 3], [2, 3, 4], [3, 4, 5]]
+
+        @test_throws DomainError Metrics.block_subsample(data, 6)
+    end
+
+
     @testset "_compute_quantile_differences" begin
 
         @testset "basic" begin
