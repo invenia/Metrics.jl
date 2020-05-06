@@ -75,14 +75,14 @@
     @testset "estimate_convergence_rate" begin
 
         @testset "basic" begin
-            result = mean(Metrics.estimate_convergence_rate.(eachcol(series), mean))
+            result = mean(Metrics.estimate_convergence_rate.(mean, eachcol(series)))
             # 0.5 is the theoretical value
             @test isapprox(result, 0.5, atol=0.01)
         end
 
         @testset "quantile range too short" begin
             @test_throws ArgumentError Metrics.estimate_convergence_rate(
-                series, mean; quantmin=0.1, quantstep=0.2, quantmax=0.3
+                mean, series; quantmin=0.1, quantstep=0.2, quantmax=0.3
             )
         end
 
@@ -92,7 +92,7 @@
 
         @testset "basic" begin
 
-            result = subsample_ci.(eachcol(series), mean; β=0.5)
+            result = subsample_ci.(mean, eachcol(series); β=0.5)
 
             lower = mean(getfield.(result, :lower))
             upper = mean(getfield.(result, :upper))
@@ -104,20 +104,20 @@
         end
 
         @testset "basic with block size" begin
-            bs = Metrics.estimate_block_size(series, mean)
+            bs = Metrics.estimate_block_size(mean, series)
 
             # check that 3 arg form gives same result 2 arg form
-            result_w_bs = subsample_ci(series, bs.block_size, mean; β=0.5)
+            result_w_bs = subsample_ci(mean, series, bs.block_size; β=0.5)
 
-            @test subsample_ci(series, mean; β=0.5) == result_w_bs
+            @test subsample_ci(mean, series; β=0.5) == result_w_bs
         end
 
         @testset "increasing alpha level contracts ci bounds" begin
 
             # this is expected behaviour since alpha is the level of the test we expect the
             # true value to lie in 1-alpha of the CIs
-            r1 = subsample_ci(series, mean; α=0.1, β=0.5)
-            r2 = subsample_ci(series, mean; α=0.2, β=0.5)
+            r1 = subsample_ci(mean, series; α=0.1, β=0.5)
+            r2 = subsample_ci(mean, series; α=0.2, β=0.5)
 
             @test r1.lower < r2.lower
             @test r1.upper > r2.upper
@@ -128,11 +128,21 @@
 
             kwargs = (sizemin=20, sizemax=100, sizestep=1, blocksvol=3, β=0.123)
 
-            ci_result = subsample_ci(series, mean; kwargs...)
-            bs_result = Metrics.estimate_block_size(series, mean; kwargs...)
+            ci_result = subsample_ci(mean, series; kwargs...)
+            bs_result = Metrics.estimate_block_size(mean, series; kwargs...)
 
             @test bs_result.ci == ci_result
-            @test ci_result == subsample_ci(series, bs_result.block_size, mean; β=0.123)
+            @test ci_result == subsample_ci(mean, series, bs_result.block_size; β=0.123)
+
+        end
+
+        @testset "do-block" begin
+
+            result = subsample_ci(series) do s
+                mean(s)
+            end
+
+            @test result == subsample_ci(mean, series)
 
         end
 
