@@ -215,39 +215,28 @@ end
 
 """
     subsample_ci(
-            series,
-            metric;
-            α=0.05,
-            sizemin=100,
-            sizemax=300,
-            sizestep=5,
-            blocksvol=3,
-            β=nothing,
-        )
+        series, metric;
+        α=0.05, sizemin=100, sizemax=300, sizestep=5, blocksvol=3, β=nothing,
+    )
 
 Compute confidence interval for `metric` over a `series` at a level `α` by estimating the
-block size via `estimate_block_size`. See `estimate_block_size` for a description of the
+block size via [`estimate_block_size`](@ref), which can be consulted for a description of the
 keyword arguments.
+
+!!! note
+    Since `α` is the _level_ of the test, we expect the true value to lie in `1-α` of the CIs.
+
+!!! note
+    The default value of `size_max` was chosen for sampling 1 year of backrun data.
+    If you are sampling 2 years you may want to change this setting.
 """
 function subsample_ci(
-        series,
-        metric;
-        α=0.05,
-        sizemin=50,
-        sizemax=300, # we may want to change this default if we use 2 years instead of 1.
-        sizestep=1,
-        blocksvol=2,
-        β=nothing,
-    )
+    series, metric;
+    α=0.05, sizemin=50, sizemax=300, sizestep=1, blocksvol=2, β=nothing,
+)
     return estimate_block_size(
-        series,
-        metric;
-        α=α,
-        β=β,
-        sizemin=sizemin,
-        sizemax=sizemax,
-        sizestep=sizestep,
-        blocksvol=blocksvol
+        series, metric;
+        α=α, β=β, sizemin=sizemin, sizemax=sizemax, sizestep=sizestep, blocksvol=blocksvol
     )[:ci] # we just want the CI
 end
 

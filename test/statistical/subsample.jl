@@ -2,23 +2,17 @@
 
     seed!(1)
 
-    @testset "main" begin  #TODO: remove when all tests are done - including subsample_ci
-        cis = [subsample_ci(randn(1000), mean; β=0.5) for _ in 1:200]
-        low = mean([ci[:lower] for ci in cis])
-        up = mean([ci[:upper] for ci in cis])
-        @test -0.1 < low < 0.0
-        @test 0.0 < up < 0.1
-    end
+    # synthetic series for testing
+    series = randn(1000, 10)
 
     @testset "block_subsample" begin
-        data = collect(1:5)
+        block_series = collect(1:5)
 
-        result = Metrics.block_subsample(data, 3)
+        result = Metrics.block_subsample(block_series, 3)
         @test result == [[1, 2, 3], [2, 3, 4], [3, 4, 5]]
 
-        @test_throws DomainError Metrics.block_subsample(data, 6)
+        @test_throws DomainError Metrics.block_subsample(block_series, 6)
     end
-
 
     @testset "_compute_quantile_differences" begin
 
@@ -80,8 +74,6 @@
 
     @testset "estimate_convergence_rate" begin
 
-        series = randn(1000, 200)
-
         @testset "basic" begin
             result = mean(Metrics.estimate_convergence_rate.(eachcol(series), mean))
             # 0.5 is the theoretical value
@@ -95,5 +87,56 @@
         end
 
     end
+
+    @testset "subsample_ci" begin
+
+        @testset "basic" begin
+
+            result = subsample_ci.(eachcol(series), mean; β=0.5)
+
+            lower = mean(getfield.(result, :lower))
+            upper = mean(getfield.(result, :upper))
+
+            @test -0.1 < lower < 0.0
+            @test 0.0 < upper < 0.1
+            @test lower < mean(series) < upper
+
+        end
+
+        @testset "basic with block size" begin
+            bs = Metrics.estimate_block_size(series, mean)
+
+            # check that 3 arg form gives same result 2 arg form
+            result_w_bs = subsample_ci(series, bs.block_size, mean; β=0.5)
+
+            @test subsample_ci(series, mean; β=0.5) == result_w_bs
+        end
+
+        @testset "increasing alpha level contracts ci bounds" begin
+
+            # this is expected behaviour since alpha is the level of the test we expect the
+            # true value to lie in 1-alpha of the CIs
+            r1 = subsample_ci(series, mean; α=0.1, β=0.5)
+            r2 = subsample_ci(series, mean; α=0.2, β=0.5)
+
+            @test r1.lower < r2.lower
+            @test r1.upper > r2.upper
+
+        end
+
+        @testset "passing in kwargs for estimating block size" begin
+
+            kwargs = (sizemin=20, sizemax=100, sizestep=1, blocksvol=3, β=0.123)
+
+            ci_result = subsample_ci(series, mean; kwargs...)
+            bs_result = Metrics.estimate_block_size(series, mean; kwargs...)
+
+            @test bs_result.ci == ci_result
+            @test ci_result == subsample_ci(series, bs_result.block_size, mean; β=0.123)
+
+        end
+
+    end
+
 
 end
