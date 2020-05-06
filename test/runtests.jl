@@ -40,4 +40,5 @@ seed!(1)
     # misc
     include("evaluate.jl")
     include("summary.jl")
+    include("deprecated.jl")
 end
