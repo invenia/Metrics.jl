@@ -27,7 +27,7 @@ distribution.
 function expected_shortfall(returns; risk_level::Real=0.05, per_MW=false, volumes=[])
     0 < risk_level < 1 || throw(ArgumentError("risk_level=$risk_level is not between 0 and 1."))
 
-    if per_MW == true && length(volumes) != length(returns)
+    if per_MW && length(volumes) != length(returns)
         throw(ArgumentError("Need corresponding volumes in order to compute per MW."))
     end
 
