@@ -167,7 +167,7 @@ end
 """
     estimate_block_size(
         metric::Function, series;
-        α=0.05, sizemin=50, sizemax=300, sizestep=1, blocksvol=2, β=nothing,
+        α=0.05, β=nothing, sizemin=50, sizemax=300, sizestep=1, blocksvol=2,
     )
 
 Estimate optimal block size for computing confidence intervals at a level `α` for `metric`
@@ -184,33 +184,39 @@ at level `α` with the optimal block size.
 """
 function estimate_block_size(
     metric::Function, series;
-    α=0.05, sizemin=50, sizemax=300, sizestep=1, blocksvol=2, β=nothing,
+    α=0.05, β=nothing, sizemin=50, sizemax=300, sizestep=1, blocksvol=2,
 )
     β = isnothing(β) ? estimate_convergence_rate(metric, series) : β
-    bs = collect(sizemin:sizestep:sizemax)
+    block_sizes = collect(sizemin:sizestep:sizemax)
+
     # compute CIs for each block size
-    cis = [subsample_ci(metric, series, b; α=α, β=β) for b in bs]
+    cis = subsample_ci.(Ref(metric), Ref(series), block_sizes; α=α, β=β)
+
     # obtain lower and upper bounds
-    lows = [ci[:lower] for ci in cis]
-    ups = [ci[:upper] for ci in cis]
-    # compute volatility indexes
-    vols = [
-        std(lows[i - blocksvol:i + blocksvol]) + std(ups[i - blocksvol:i + blocksvol])
-        for i in (blocksvol + 1):(length(cis) - blocksvol)
-    ]
-    imin = findmin(vols)[2] + blocksvol # + blocksvol because length(vols) < length(cis)
-    return (block_size=bs[imin], β=β, ci=cis[imin],)
+    lows = getfield.(cis, :lower)
+    ups = getfield.(cis, :upper)
+
+    # determine block ranges to be used for computing the std of the CI bounds
+    block_ranges = Metrics.block_subsample(1:length(cis), 2 * blocksvol + 1)
+
+    # compute volatility indexes over the block_ranges
+    vols = [std(lows[bs]) + std(ups[bs]) for bs in block_ranges]
+
+    # Find the index of minimum volatility
+    vmin, imin = findmin(vols)
+
+    # Indent imin by blocksvol to give back the index in the cis array
+    return imin + blocksvol
 end
 
 """
-    subsample_ci(
-        metric::Function, series;
-        α=0.05, sizemin=100, sizemax=300, sizestep=5, blocksvol=3, β=nothing,
-    )
+    subsample_ci(metric::Function, series; α=0.05, β=nothing, kwargs...)
 
-Compute confidence interval for `metric` over a `series` at a level `α` by estimating the
-block size via [`estimate_block_size`](@ref), which can be consulted for a description of the
-keyword arguments.
+Compute confidence interval for `metric` over a `series` at a level `α` and convergence rate
+`b^β` by estimating the block size via [`estimate_block_size`](@ref), which can be consulted
+for a description of the remaining `kwargs`.
+
+If `β=nothing`, the rate is estimated via [`estimate_convergence_rate`](@ref).
 
 !!! note
     Since `α` is the _level_ of the test, we expect the true value to lie in `1-α` of the CIs.
@@ -219,20 +225,15 @@ keyword arguments.
     The default value of `size_max` was chosen for sampling 1 year of backrun data.
     If you are sampling 2 years you may want to change this setting.
 """
-function subsample_ci(
-    metric::Function, series;
-    α=0.05, sizemin=50, sizemax=300, sizestep=1, blocksvol=2, β=nothing,
-)
-    return estimate_block_size(
-        metric, series;
-        α=α, β=β, sizemin=sizemin, sizemax=sizemax, sizestep=sizestep, blocksvol=blocksvol
-    )[:ci] # we just want the CI
+function subsample_ci(metric::Function, series; α=0.05, β=nothing, kwargs...)
+    block_size = estimate_block_size(metric, series; α=α, β=β, kwargs...)
+    return subsample_ci(metric, series, block_size; α=α, β=β)
 end
 
 """
-    subsample_ci(metric::Function, series, `block_size`,; α=0.05, β=nothing)
+    subsample_ci(metric::Function, series, block_size; α=0.05, β=nothing)
 
-Compute confidence interval for `metric` over a `series` at a level `α` using a `block size`
+Compute confidence interval for `metric` over a `series` at a level `α` using a `block_size`
 and convergence rate `b^β`. If `β=nothing`, the rate is estimated via
 [`estimate_convergence_rate`](@ref).
 

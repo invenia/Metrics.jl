@@ -88,6 +88,20 @@
 
     end
 
+    @testset "estimate_block_size" begin
+
+        # These results are arbitrary but we should nonetheless check that sensible values
+        # are returned for reasonable inputs
+        @test Metrics.estimate_block_size(mean, series) == 152
+        @test Metrics.estimate_block_size(mean, series, β=0.1234) == 117
+
+        # 2*blocksvol+1 = 252 > length(cis) = 251 (as determined by block_sizes)
+        @test_throws DomainError Metrics.estimate_block_size(mean, series; blocksvol=126)
+
+        # 1001 > length(series[:, 1]) = 1000
+        @test_throws DomainError Metrics.estimate_block_size(mean, series[:, 1], sizemax=1001)
+    end
+
     @testset "subsample_ci" begin
 
         @testset "basic" begin
@@ -107,8 +121,7 @@
             bs = Metrics.estimate_block_size(mean, series)
 
             # check that 3 arg form gives same result 2 arg form
-            result_w_bs = subsample_ci(mean, series, bs.block_size; β=0.5)
-
+            result_w_bs = subsample_ci(mean, series, bs; β=0.5)
             @test subsample_ci(mean, series; β=0.5) == result_w_bs
         end
 
@@ -131,8 +144,7 @@
             ci_result = subsample_ci(mean, series; kwargs...)
             bs_result = Metrics.estimate_block_size(mean, series; kwargs...)
 
-            @test bs_result.ci == ci_result
-            @test ci_result == subsample_ci(mean, series, bs_result.block_size; β=0.123)
+            @test ci_result == subsample_ci(mean, series, bs_result; β=0.123)
 
         end
 
