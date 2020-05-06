@@ -22,8 +22,8 @@
         @test expected_shortfall(returns) == expected_shortfall(returns_2)
 
         @testset "per MW ES" begin
-            returns = rand(100)
-            volumes = rand(100)
+            returns = randn(100)
+            volumes = randn(100)
 
             # Check that it is extensive
             @test expected_shortfall(returns, per_MW=true, volumes=volumes) ≈
