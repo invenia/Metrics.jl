@@ -27,8 +27,18 @@ distribution.
 function expected_shortfall(returns; risk_level::Real=0.05, per_mwh=false, volumes=[])
     0 < risk_level < 1 || throw(ArgumentError("risk_level=$risk_level is not between 0 and 1."))
 
-    if per_mwh && length(volumes) != length(returns)
-        throw(ArgumentError("Need corresponding volumes in order to compute per MW."))
+    if per_mwh
+        isempty(volumes) && throw(
+            ArgumentError("The `volumes` keyword must be set when `per_mwh=true`.")
+        )
+        length(volumes) != length(returns) && throw(
+            DimensionMismatch(
+                """
+                `returns` has length $(length(returns)) but `volumes` has
+                length $(length(volumes)). Their lengths must be the same.
+                """
+            )
+        )
     end
 
     returns = collect(returns)
