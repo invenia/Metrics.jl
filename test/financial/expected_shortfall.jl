@@ -20,6 +20,21 @@
         returns_2[6:end] .= 1000
         shuffle!(returns_2)
         @test expected_shortfall(returns) == expected_shortfall(returns_2)
+
+        @testset "per MW ES" begin
+            returns = randn(100)
+            volumes = rand(100)
+
+            # Check that it is extensive
+            @test expected_shortfall(returns, per_mwh=true, volumes=volumes) ≈
+                expected_shortfall(2 .* returns, per_mwh=true, volumes=2 .* volumes)
+            @test 2 * expected_shortfall(returns, per_mwh=true, volumes=volumes) ≈
+                expected_shortfall(2 .* returns, per_mwh=true, volumes=volumes)
+
+            # Check error
+            @test_throws ArgumentError expected_shortfall(returns, per_mwh=true)
+            @test_throws DimensionMismatch expected_shortfall(returns, per_mwh=true, volumes=rand(5))
+        end
     end
 
     @testset "sample ES" begin
@@ -180,12 +195,6 @@ end
             returns[1:25] .= 0.0
             @test isinf(evano(returns; risk_level=risk_level))
             @test isinf(evaluate(evano, returns; risk_level=risk_level))
-        end
-
-        @testset "DivisionError" begin
-            returns = FixedDecimal{Int, 2}.(zeros(100))
-            @test_throws DivideError evano(returns; risk_level=risk_level)
-            @test_throws DivideError evaluate(evano, returns; risk_level=risk_level)
         end
     end
 

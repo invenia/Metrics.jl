@@ -1,5 +1,5 @@
 """
-    expected_shortfall(returns::AbstractVector; risk_level::Real) -> Number
+    expected_shortfall(returns; risk_level::Real=0.05, per_mwh=false, volumes=[]) -> Number
 
 Calculate the expected shortfall `-𝔼[ r_p | r_p ≤ q_risk_level(r_p) ]`, where `r_p` is
 the portfolio return and `q_risk_level(r_p)` is the lower quantile of the distribution
@@ -7,6 +7,9 @@ of `r_p` characterised by the `risk_level`.
 
 If an insufficient number of `returns` is provided to calculate the expected shortfall
 then this logs a warning and returns `missing`.
+
+If `per_mwh=true`, returns the average return of the bottom quantile divided by the average
+volume of that quantile.
 
 NOTE: Expected shortfall is the _negative_ of the average of the bottom quantile of
 `return_samples`. Assuming average is positive for all `risk_level`, then it is good to
@@ -17,10 +20,26 @@ _minimise_ expected shortfall.
 
 # Keyword Arguments
 - `risk_level::Real`: risk level associated with the lower quantile of the returns
-distribution
+distribution.
+- `per_mwh`: compute expected shortfall per MW.
+- `volumes`: volumes used in case `per_mwh=true`. Ignored otherwise.
 """
-function expected_shortfall(returns; risk_level::Real=0.05)
+function expected_shortfall(returns; risk_level::Real=0.05, per_mwh=false, volumes=[])
     0 < risk_level < 1 || throw(ArgumentError("risk_level=$risk_level is not between 0 and 1."))
+
+    if per_mwh
+        isempty(volumes) && throw(
+            ArgumentError("The `volumes` keyword must be set when `per_mwh=true`.")
+        )
+        length(volumes) != length(returns) && throw(
+            DimensionMismatch(
+                """
+                `returns` has length $(length(returns)) but `volumes` has
+                length $(length(volumes)). Their lengths must be the same.
+                """
+            )
+        )
+    end
 
     returns = collect(returns)
     last_index = floor(Int, risk_level * length(returns))
@@ -34,7 +53,9 @@ function expected_shortfall(returns; risk_level::Real=0.05)
         return missing
     end
 
-    return -mean(partialsort(returns, 1:last_index))
+    scale = per_mwh ? mean(volumes[partialsortperm(returns, 1:last_index)]) : 1.0
+
+    return -mean(partialsort(returns, 1:last_index)) / scale
 end
 
 ObservationDims.obs_arrangement(::typeof(expected_shortfall)) = MatrixColsOfObs()
