@@ -45,7 +45,7 @@ function expected_shortfall(returns; risk_level::Real=0.05, per_MW=false, volume
 
     scale = per_MW ? mean(volumes[partialsortperm(returns, 1:last_index)]) : 1.0
 
-    return valtype(returns)(-mean(partialsort(returns, 1:last_index)) / scale)
+    return -mean(partialsort(returns, 1:last_index)) / scale
 end
 
 ObservationDims.obs_arrangement(::typeof(expected_shortfall)) = MatrixColsOfObs()
