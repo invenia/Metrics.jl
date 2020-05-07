@@ -1,5 +1,5 @@
 """
-    expected_shortfall(returns; risk_level::Real=0.05, per_MW=false, volumes=[]) -> Number
+    expected_shortfall(returns; risk_level::Real=0.05, per_mwh=false, volumes=[]) -> Number
 
 Calculate the expected shortfall `-𝔼[ r_p | r_p ≤ q_risk_level(r_p) ]`, where `r_p` is
 the portfolio return and `q_risk_level(r_p)` is the lower quantile of the distribution
@@ -8,7 +8,7 @@ of `r_p` characterised by the `risk_level`.
 If an insufficient number of `returns` is provided to calculate the expected shortfall
 then this logs a warning and returns `missing`.
 
-If `per_MW=true`, returns the average return of the bottom quantile divided by the average
+If `per_mwh=true`, returns the average return of the bottom quantile divided by the average
 volume of that quantile.
 
 NOTE: Expected shortfall is the _negative_ of the average of the bottom quantile of
@@ -21,13 +21,13 @@ _minimise_ expected shortfall.
 # Keyword Arguments
 - `risk_level::Real`: risk level associated with the lower quantile of the returns
 distribution.
-- `per_MW`: compute expected shortfall per MW.
-- `volumes`: volumes used in case `per_MW=true`. Ignored otherwise.
+- `per_mwh`: compute expected shortfall per MW.
+- `volumes`: volumes used in case `per_mwh=true`. Ignored otherwise.
 """
-function expected_shortfall(returns; risk_level::Real=0.05, per_MW=false, volumes=[])
+function expected_shortfall(returns; risk_level::Real=0.05, per_mwh=false, volumes=[])
     0 < risk_level < 1 || throw(ArgumentError("risk_level=$risk_level is not between 0 and 1."))
 
-    if per_MW && length(volumes) != length(returns)
+    if per_mwh && length(volumes) != length(returns)
         throw(ArgumentError("Need corresponding volumes in order to compute per MW."))
     end
 
@@ -43,7 +43,7 @@ function expected_shortfall(returns; risk_level::Real=0.05, per_MW=false, volume
         return missing
     end
 
-    scale = per_MW ? mean(volumes[partialsortperm(returns, 1:last_index)]) : 1.0
+    scale = per_mwh ? mean(volumes[partialsortperm(returns, 1:last_index)]) : 1.0
 
     return -mean(partialsort(returns, 1:last_index)) / scale
 end
