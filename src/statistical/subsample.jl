@@ -213,8 +213,9 @@ end
     subsample_ci(metric::Function, series; α=0.05, β=nothing, kwargs...)
 
 Compute confidence interval for `metric` over a `series` at a level `α` and convergence rate
-`b^β` by estimating the block size via [`estimate_block_size`](@ref), which can be consulted
-for a description of the remaining `kwargs`.
+`b^β` by estimating the block size via [`estimate_block_size`](@ref).
+
+The `kwargs` are passed to [`estimate_block_size`](@ref) and [`estimate_convergence_rate`](@ref).
 
 If `β=nothing`, the rate is estimated via [`estimate_convergence_rate`](@ref).
 
@@ -225,25 +226,38 @@ If `β=nothing`, the rate is estimated via [`estimate_convergence_rate`](@ref).
     The default value of `size_max` was chosen for sampling 1 year of backrun data.
     If you are sampling 2 years you may want to change this setting.
 """
-function subsample_ci(metric::Function, series; α=0.05, β=nothing, kwargs...)
-    block_size = estimate_block_size(metric, series; α=α, β=β, kwargs...)
-    return subsample_ci(metric, series, block_size; α=α, β=β)
+function subsample_ci(
+    metric::Function, series;
+    α=0.05, β=nothing, sizemin=50, sizemax=300, sizestep=1, blocksvol=2, kwargs...
+)
+    block_size = estimate_block_size(
+        metric,
+        series;
+        α=α,
+        β=β,
+        sizemin=sizemin,
+        sizemax=sizemax,
+        sizestep=sizestep,
+        blocksvol=blocksvol
+    )
+
+    return subsample_ci(metric, series, block_size; α=α, β=β, kwargs...)
 end
 
 """
-    subsample_ci(metric::Function, series, block_size; α=0.05, β=nothing)
+    subsample_ci(metric::Function, series, block_size; α=0.05, β=nothing, kwargs...)
 
 Compute confidence interval for `metric` over a `series` at a level `α` using a `block_size`
 and convergence rate `b^β`. If `β=nothing`, the rate is estimated via
-[`estimate_convergence_rate`](@ref).
+[`estimate_convergence_rate`](@ref) which accepts the `kwargs`.
 
 Returns a `NamedTuple` with the `:lower` and the `:upper` bounds of the CI.
 """
-function subsample_ci(metric::Function, series, block_size; α=0.05, β=nothing)
+function subsample_ci(metric::Function, series, block_size; α=0.05, β=nothing, kwargs...)
     # apply metric to subsampled series
     metric_series = metric.(block_subsample(series, block_size))
     # estimate convergence rates
-    β = isnothing(β) ? estimate_convergence_rate(metric, series) : β
+    β = isnothing(β) ? estimate_convergence_rate(metric, series; kwargs...) : β
     n = length(series)
     τ_b = block_size ^ β
     τ_n = n ^ β

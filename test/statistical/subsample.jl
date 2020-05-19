@@ -137,14 +137,29 @@
 
         end
 
-        @testset "passing in kwargs for estimating block size" begin
+        @testset "passing kwargs" begin
 
-            kwargs = (sizemin=20, sizemax=100, sizestep=1, blocksvol=3, β=0.123)
+            block_kwargs = (sizemin=20, sizemax=100, sizestep=1, blocksvol=3)
+            conv_kwargs = (quantmin=0.2, quantstep=0.01, quantmax=0.7, expmax=0.4, expstep=0.1, expmin=0.10)
 
-            ci_result = subsample_ci(mean, series; kwargs...)
-            bs_result = Metrics.estimate_block_size(mean, series; kwargs...)
+            @testset "estimate block size" begin
+                ci_result = subsample_ci(mean, series; β=0.123, block_kwargs...)
+                bs_result = Metrics.estimate_block_size(mean, series; β=0.123, block_kwargs...)
+                @test ci_result == subsample_ci(mean, series, bs_result; β=0.123)
+            end
 
-            @test ci_result == subsample_ci(mean, series, bs_result; β=0.123)
+            @testset "estimate convergence rate" begin
+                ci_result = subsample_ci(mean, series; conv_kwargs...)
+                beta = Metrics.estimate_convergence_rate(mean, series; conv_kwargs...)
+                @test ci_result == subsample_ci(mean, series; β=beta)
+            end
+
+            @testset "estimate block size and convergence rate" begin
+                ci_result = subsample_ci(mean, series; block_kwargs..., conv_kwargs...)
+                bs_result = Metrics.estimate_block_size(mean, series; block_kwargs...)
+                beta = Metrics.estimate_convergence_rate(mean, series; conv_kwargs...)
+                @test ci_result == subsample_ci(mean, series, bs_result; β=beta)
+            end
 
         end
 
