@@ -49,9 +49,10 @@ function expected_windfall(returns; level::Real=0.05, per_mwh=false, volumes=[])
         return missing
     end
 
-    scale = per_mwh ? mean(volumes[partialsortperm(returns, first_index:last_index)]) : 1.0
+    upper_quantile_inds = partialsortperm(returns, first_index:last_index)
 
-    return mean(partialsort(returns, first_index:last_index)) / scale
+    scale = per_mwh ? mean(@view volumes[upper_quantile_inds]) : 1.0
+    return mean(@view returns[upper_quantile_inds]) / scale
 end
 
 ObservationDims.obs_arrangement(::typeof(expected_windfall)) = MatrixColsOfObs()
