@@ -36,7 +36,6 @@ function expected_windfall(returns; level::Real=0.05, per_mwh=false, volumes=[])
         )
     end
 
-    returns = collect(returns)
     first_index = ceil(Int, (1 - level) * length(returns)) + 1
     last_index = length(returns)
     if first_index > length(returns)
