@@ -16,7 +16,7 @@ volume of that quantile.
 
 # Keyword Arguments
 - `level::Real`: level associated with the upper quantile of the returns distribution.
-- `per_mwh`: compute expected windfall per MW.
+- `per_mwh`: compute expected windfall per MWh.
 - `volumes`: volumes used in case `per_mwh=true`. Ignored otherwise.
 """
 function expected_windfall(returns; level::Real=0.05, per_mwh=false, volumes=[])
