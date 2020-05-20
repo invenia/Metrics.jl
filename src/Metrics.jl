@@ -19,6 +19,7 @@ include("regression/potential_payoff.jl")
 include("regression/simple.jl")
 # financial
 include("financial/expected_shortfall.jl")
+include("financial/expected_windfall.jl")
 include("financial/simple.jl")
 include("financial/price_impact.jl")
 # statistical
@@ -59,7 +60,7 @@ export
     sharpe_ratio,
     median_over_expected_shortfall, evano,
     median_return,
-    expected_shortfall, es,
+    expected_shortfall, es, expected_windfall, ew,
     financial_summary,
     price_impact,
     # statistical
