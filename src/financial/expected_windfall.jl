@@ -83,7 +83,8 @@ function expected_windfall(
     pi = price_impact(volumes, args...)
 
     if haskey(kwargs, :per_mwh) && kwargs[:per_mwh]
-        return expected_windfall(returns; volumes=volumes, kwargs...) - pi
+        vols = fill(sum(abs.(volumes)), length(returns))
+        return expected_windfall(returns; volumes=vols, kwargs...) - pi
     end
 
     exp_windfall = expected_windfall(returns; kwargs...)

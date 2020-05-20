@@ -1,4 +1,4 @@
-Method@testset "expected windfall" begin
+@testset "expected windfall" begin
     @testset "simple EW" begin
         # basic usage
         returns = collect(1:100)
@@ -41,13 +41,14 @@ Method@testset "expected windfall" begin
         # using samples
         volumes = [1, -2, 3, -4, 5, -6, 7, -8, 9, -10]
         samples = Matrix(I, (10, 10))
-        expected = mean([1, 3, 5, 7, 9])  # = 6.0
+        expected = mean([1, 3, 5, 7, 9])
         @test expected_windfall(volumes, samples; level=0.5) == expected
+        @test expected_windfall(volumes, samples; per_mwh=true, level=0.5) == 0.09090909090909091
         @test evaluate(expected_windfall, volumes, samples; level=0.5) == expected
 
         # using diagonal matrix of samples - requires AbstractArray
         sample_deltas = Diagonal(1:10)
-        expected =  mean([1, 3, 5, 7, 9].^2)  # = 44.0
+        expected =  mean([1, 3, 5, 7, 9].^2)
         @test expected_windfall(volumes, sample_deltas; level=0.5) == expected
 
         # generate samples from distribution of deltas
@@ -58,6 +59,7 @@ Method@testset "expected windfall" begin
 
         expected = 63.79924794553865
         @test expected_windfall(volumes, samples) ≈ expected
+        @test expected_windfall(volumes, samples; per_mwh=true) == 0.5799931631412605
         @test evaluate(expected_windfall, volumes, samples; obsdim=2) ≈ expected
 
         # with price impact EW should decrease (due to sign)
@@ -111,14 +113,6 @@ Method@testset "expected windfall" begin
         samples = rand(delta_dist, 3)
 
         bad_args = (volumes, supply_pi, demand_pi)  # length(bad_args) exceeds limit of 3
-
-        # expected return
-        @test_throws MethodError expected_return(volumes, deltas, bad_args...)
-        @test_throws MethodError expected_return(volumes, samples, bad_args...)
-        @test_throws MethodError expected_return(volumes, delta_dist, bad_args...)
-
-        # sharpe ratio
-        @test_throws MethodError sharpe_ratio(volumes, samples, bad_args...)
 
         # expected windfall
         @test_throws MethodError expected_windfall(volumes, deltas, bad_args...)
