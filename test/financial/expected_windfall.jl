@@ -1,4 +1,4 @@
-@testset "expected windfall" begin
+Method@testset "expected windfall" begin
     @testset "simple EW" begin
         # basic usage
         returns = collect(1:100)
@@ -113,16 +113,16 @@
         bad_args = (volumes, supply_pi, demand_pi)  # length(bad_args) exceeds limit of 3
 
         # expected return
-        @test_throws AssertionError expected_return(volumes, deltas, bad_args...)
-        @test_throws AssertionError expected_return(volumes, samples, bad_args...)
-        @test_throws AssertionError expected_return(volumes, delta_dist, bad_args...)
+        @test_throws MethodError expected_return(volumes, deltas, bad_args...)
+        @test_throws MethodError expected_return(volumes, samples, bad_args...)
+        @test_throws MethodError expected_return(volumes, delta_dist, bad_args...)
 
         # sharpe ratio
-        @test_throws AssertionError sharpe_ratio(volumes, samples, bad_args...)
+        @test_throws MethodError sharpe_ratio(volumes, samples, bad_args...)
 
         # expected windfall
-        @test_throws AssertionError expected_windfall(volumes, deltas, bad_args...)
-        @test_throws AssertionError expected_windfall(volumes, samples, bad_args...)
-        @test_throws AssertionError expected_windfall(volumes, delta_dist, bad_args...)
+        @test_throws MethodError expected_windfall(volumes, deltas, bad_args...)
+        @test_throws MethodError expected_windfall(volumes, samples, bad_args...)
+        @test_throws MethodError expected_windfall(volumes, delta_dist, bad_args...)
     end
 end

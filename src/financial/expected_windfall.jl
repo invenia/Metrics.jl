@@ -77,7 +77,9 @@ given a portfolio of `volumes` and a sample of price `deltas`.
 function expected_windfall(
     volumes::AbstractVector, deltas::AbstractArray, args...; kwargs...,
 )
-    @assert length(args) < 3
+    length(args) >= 3 && throw(MethodError(
+        "Too many arguments. Please check `expected_windfall`'s docstring."
+    ))
     returns = _calculate_returns(volumes, deltas)
     pi = price_impact(volumes, args...)
     exp_windfall = expected_windfall(returns; kwargs...)
@@ -107,7 +109,9 @@ function expected_windfall(
     volumes::AbstractVector, deltas::Sampleable{Multivariate}, args...;
     kwargs...
 )
-    @assert length(args) < 3
+    length(args) >= 3 && throw(MethodError(
+        "Too many arguments. Please check `expected_windfall`'s docstring."
+    ))
     mean_returns = expected_return(volumes, deltas, args...)
     sigma_returns = volatility(volumes, deltas)
     return_dist = Normal(mean_returns, sigma_returns)
