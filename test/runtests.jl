@@ -30,6 +30,7 @@ seed!(1)
     include("regression/simple.jl")
     # financial
     include("financial/expected_shortfall.jl")
+    include("financial/expected_windfall.jl")
     include("financial/price_impact.jl")
     include("financial/simple.jl")
     # statistical
