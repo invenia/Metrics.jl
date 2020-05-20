@@ -21,6 +21,12 @@
         shuffle!(returns_2)
         @test expected_windfall(returns) == expected_windfall(returns_2)
 
+        # hard shifts should shift the result
+        @test expected_windfall(returns) + 1000 == expected_windfall(returns .+ 1000)
+
+        # should be linear on scalar multiplication
+        @test expected_windfall(2 .* returns) == 2 * expected_windfall(returns)
+
         @testset "per MW ES" begin
             returns = randn(100)
             volumes = rand(100)
