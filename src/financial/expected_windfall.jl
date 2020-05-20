@@ -36,6 +36,7 @@ function expected_windfall(returns; level::Real=0.05, per_mwh=false, volumes=[])
         )
     end
 
+    returns = collect(returns) # required for iterators
     first_index = ceil(Int, (1 - level) * length(returns)) + 1
     last_index = length(returns)
     if first_index > length(returns)
@@ -91,38 +92,4 @@ function expected_windfall(
     exp_windfall = expected_windfall(returns; kwargs...)
 
     return exp_windfall - pi
-end
-
-"""
-    expected_windfall(
-        volumes::AbstractVector, deltas::Sampleable{Multivariate}, args...;
-        kwargs...
-    ) -> Number
-
-Calculate the analytic expected windfall of the distribution of `returns` - with
-[`price impact`](@ref price_impact) ``w'μ − w'Πw`` -  according to a certain `level`
-given a portfolio of `volumes` and known `distribution` of price deltas.
-
-# Arguments
-- `volumes::AbstractVector`: the portfolio of `volumes`
-- `deltas::Sampleable{Multivariate}`: the joint distribution of the price deltas
-- `args`: The [`price impact`](@ref price_impact) arguments (excluding `volumes`).
-
-# Keyword Arguments
-- `kwargs::Real`: risk level associated with the lower quantile of the returns distribution
-"""
-function expected_windfall(
-    volumes::AbstractVector, deltas::Sampleable{Multivariate}, args...;
-    kwargs...
-)
-    length(args) >= 3 && throw(MethodError(
-        "Too many arguments. Please check `expected_windfall`'s docstring."
-    ))
-    mean_returns = expected_return(volumes, deltas, args...)
-    sigma_returns = volatility(volumes, deltas)
-    return_dist = Normal(mean_returns, sigma_returns)
-    if haskey(kwargs, :per_mwh) && kwargs[:per_mwh]
-        return expected_windfall(return_dist; volumes=volumes, kwargs...)
-    end
-    return expected_windfall(return_dist; kwargs...)
 end
