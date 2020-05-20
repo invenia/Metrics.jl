@@ -85,18 +85,9 @@
 
     @testset "erroring" begin
         returns = collect(1:100)
-        level = 1  # wants Float64
-        @test_throws ArgumentError expected_windfall(returns; level=level)
-        level = 0  # wants Float64
-        @test_throws ArgumentError expected_windfall(returns; level=level)
-        level = 1.0
-        @test_throws ArgumentError expected_windfall(returns; level=level)
-        level = 0.0
-        @test_throws ArgumentError expected_windfall(returns; level=level)
-        level = -0.5
-        @test_throws ArgumentError expected_windfall(returns; level=level)
-        level = 1.1
-        @test_throws ArgumentError expected_windfall(returns; level=level)
+        for level in (1, 0, 1.0, 0.0, -0.5, 1.1)
+            @test_throws ArgumentError expected_windfall(returns; level=level)
+        end
 
         @testset "insufficient samples" begin
             returns = []
