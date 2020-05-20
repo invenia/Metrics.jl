@@ -82,6 +82,11 @@ function expected_windfall(
     ))
     returns = _calculate_returns(volumes, deltas)
     pi = price_impact(volumes, args...)
+
+    if haskey(kwargs, :per_mwh) && kwargs[:per_mwh]
+        return expected_windfall(returns; volumes=volumes, kwargs...) - pi
+    end
+
     exp_windfall = expected_windfall(returns; kwargs...)
 
     return exp_windfall - pi
@@ -115,5 +120,8 @@ function expected_windfall(
     mean_returns = expected_return(volumes, deltas, args...)
     sigma_returns = volatility(volumes, deltas)
     return_dist = Normal(mean_returns, sigma_returns)
+    if haskey(kwargs, :per_mwh) && kwargs[:per_mwh]
+        return expected_windfall(return_dist; volumes=volumes, kwargs...)
+    end
     return expected_windfall(return_dist; kwargs...)
 end
