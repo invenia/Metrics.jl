@@ -1,7 +1,7 @@
 name = "Metrics"
 uuid = "273c2e6c-7e43-11e9-12af-8fca11176a4c"
 authors = ["Invenia Technical Computing Corporation"]
-version = "0.10.4"
+version = "0.10.5"
 
 [deps]
 AxisArrays = "39de3d68-74b9-583c-8d2d-e117c070f3a9"
@@ -18,9 +18,10 @@ StatsUtils = "d94fc345-0ff4-56ba-a2b2-f5d62e4638cc"
 Test = "8dfed614-e22c-5e08-85e1-65c5234f0b40"
 
 [compat]
-Distributions = "0.21.3"
+Distributions = "0.21.3, 0.22, 0.23"
 IndexedDistributions = "1.2"
 ObservationDims = "0.1"
+PSDMats = "1.0.3"
 StatsUtils = "1.1"
 julia = "1.1"
 
