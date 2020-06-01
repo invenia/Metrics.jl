@@ -49,5 +49,6 @@ function financial_summary(returns; risk_level::Real=0.05)
         :median_over_expected_shortfall => median_over_expected_shortfall(returns; risk_level=risk_level),
         :sharpe_ratio => sharpe_ratio(returns),
         :volatility => volatility(returns),
+        :mean_over_expected_shortfall => mean_over_es(returns; risk_level=risk_level),
     )
 end

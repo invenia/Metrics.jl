@@ -1,6 +1,5 @@
 using AxisArrays
 using Distributions
-using FixedPointDecimals
 using IndexedDistributions
 using LinearAlgebra
 using Metrics

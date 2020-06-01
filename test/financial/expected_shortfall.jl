@@ -262,3 +262,81 @@ end
         )
     end
 end
+
+
+@testset "mean over es" begin
+    @testset "simple case" begin
+        # Basic usage
+        returns = collect(100:200)
+
+        # Default risk_level is 0.05
+        expected = -1.4705882352941178
+        @test mean_over_es(returns) == expected
+
+        @testset "order shouldn't matter" begin
+            shuffle!(returns)
+            @test mean_over_es(returns) == expected
+        end
+
+        risk_level = 0.25
+        @testset "test different risk level" begin
+            expected = -1.3392857142857142
+            @test mean_over_es(returns; risk_level=risk_level) == expected
+            @test evaluate(mean_over_es, returns; risk_level=risk_level) == expected
+        end
+
+        @testset "NaN" begin
+            @test isnan(mean_over_es(zeros(100); risk_level=risk_level))
+            @test isnan(evaluate(mean_over_es, zeros(100); risk_level=risk_level))
+        end
+        @testset "Inf" begin
+            returns = collect(1.0:100.0)
+            returns[1:25] .= 0.0
+            @test isinf(mean_over_es(returns; risk_level=risk_level))
+            @test isinf(evaluate(mean_over_es, returns; risk_level=risk_level))
+        end
+    end
+
+    volumes = [6, -7, 8, -9, 10, -11, 12, -13, 14, -15]
+    @testset "sample mean over es" begin
+        @testset "using samples" begin
+            samples = Matrix(I, (10, 10))
+            expected = -0.045454545454545435
+            @test mean_over_es(volumes, samples; risk_level=0.5) == expected
+            @test evaluate(mean_over_es, volumes, samples; risk_level=0.5) == expected
+        end
+
+        sample_deltas = Diagonal(1:10)
+        expected = -0.10810810810810813
+        @testset "method works with AbstractArray" begin
+            @test mean_over_es(volumes, sample_deltas; risk_level=0.5) == expected
+        end
+
+        # with price impact mean over es should decrease since expected shortfall increases
+        @testset "mean over es decreases with pi" begin
+            nonzero_pi = (supply_pi=fill(0.1, 10), demand_pi=fill(0.1, 10))
+            @test mean_over_es(volumes, sample_deltas, nonzero_pi...; risk_level=0.5) < expected
+            @test evaluate(mean_over_es, volumes, sample_deltas, nonzero_pi...; risk_level=0.5, obsdim=2) < expected
+        end
+
+        seed!(1234)
+        samples = rand(MvNormal(ones(20)), 50)
+        # generate samples from distribution of deltas
+        @testset "using samples from delta distribution" begin
+            volumes = repeat([1, -2, 3, -4, 5, -6, 7, -8, 9, -10], 2)
+
+            expected = 0.049878054824448854
+            @test mean_over_es(volumes, samples) ≈ expected
+            @test evaluate(mean_over_es, volumes, samples; obsdim=2) ≈ expected
+        end
+
+        @testset "too few samples" begin
+            @test mean_over_es(volumes, samples; risk_level=0.01) === missing
+        end
+
+        # single sample should not work given `risk_level=1` but not otherwise.
+        @testset "MethodError for single sample" begin
+            @test_throws MethodError mean_over_es([-5], [10]; risk_level=0.99)
+        end
+    end
+end
