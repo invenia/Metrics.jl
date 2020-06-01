@@ -59,6 +59,7 @@ export
     volatility,
     sharpe_ratio,
     median_over_expected_shortfall, evano,
+    mean_over_es,
     median_return,
     expected_shortfall, es, expected_windfall, ew,
     financial_summary,

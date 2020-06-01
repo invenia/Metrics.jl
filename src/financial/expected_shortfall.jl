@@ -170,3 +170,41 @@ end
 
 ObservationDims.obs_arrangement(::typeof(median_over_expected_shortfall)) = MatrixColsOfObs()
 const evano = median_over_expected_shortfall
+
+"""
+    mean_over_expected_shortfall(returns::AbstractVector; kwargs...) -> Number
+    mean_over_expected_shortfall(
+        volumes::AbstractVector,
+        deltas::AbstractMatrix,
+        args...;
+        kwargs...
+    ) -> Number
+
+Calculate the `mean(returns) / expected_shortfall(returns)` metric.
+
+For the function that takes in `returns`, we must assume that the price impact has already
+been included.
+
+# Arguments
+- `returns::AbstractVector`: An iterator of returns over some time or of some portfolio
+- `volumes::AbstractVector`: The MWs volumes of the portfolio
+- `deltas::AbstractMatrix`: The sample of price deltas
+- `args`: The [`price impact`](@ref price_impact) arguments (excluding `volumes`).
+
+# Keyword Arguments
+- `kwargs`: The [`expected shortfall`](@ref expected_shortfall) keyword arguments.
+"""
+function mean_over_expected_shortfall(returns; kwargs...)
+    return mean(returns) / expected_shortfall(returns; kwargs...)
+end
+
+function mean_over_expected_shortfall(
+    volumes::AbstractVector, deltas::AbstractMatrix, args...; kwargs...
+)
+    m_return = expected_return(volumes, deltas, args...)
+    es_return = expected_shortfall(volumes, deltas, args...; kwargs...)
+    return m_return / es_return
+end
+
+ObservationDims.obs_arrangement(::typeof(mean_over_expected_shortfall)) = MatrixColsOfObs()
+const mean_over_es = mean_over_expected_shortfall
