@@ -65,20 +65,6 @@ julia> b = AxisArray([1, 2, 3], Axis{:node}(["c", "b", "a"]));
 julia> Metrics._match(a, b)
 ([2, 1, 3], [3, 2, 1])
 ```
-
-```jldoctest; setup = :(using AxisArrays, Distributions, IndexedDistributions, Metrics)
-julia> a = AxisArray([1, 2, 3], Axis{:node}(["b", "a", "c"]));
-
-julia> d = IndexedDistribution(MvNormal(ones(3)), ["c", "b", "a"]);
-
-julia> Metrics._match(a, d)
-([2, 1, 3], IndexedDistribution{Multivariate,Continuous,MvNormal{Float64,PDMats.PDMat{Float64,Array{Float64,2}},Array{Float64,1}}}(FullNormal(
-dim: 3
-μ: [0.0, 0.0, 0.0]
-Σ: [1.0 0.0 0.0; 0.0 1.0 0.0; 0.0 0.0 1.0]
-)
-, ["a", "b", "c"]))
-```
 """
 function _match(a::AxisArray, d::IndexedDistribution{F, S, <:AbstractMvNormal}) where {F, S}
     # marginal_gaussian_loglikelihood, etc. can accept multiple observations at a time
