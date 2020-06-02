@@ -1,5 +1,7 @@
 using AxisArrays
 using Distributions
+using Documenter: doctest
+using FixedPointDecimals
 using IndexedDistributions
 using LinearAlgebra
 using Metrics
@@ -21,6 +23,8 @@ include("test_utils/stats.jl")
 
 seed!(1)
 @testset "Metrics.jl" begin
+    doctest(Metrics)
+
     include("utils.jl")
     # regression
     include("regression/gaussian_loglikelihood.jl")
