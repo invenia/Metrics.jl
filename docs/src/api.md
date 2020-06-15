@@ -1,56 +1,55 @@
-# API
+# Public API
 
 ```@index
 Modules = [Metrics]
 ```
 
 ## Evaluate
-```@docs
-evaluate
+
+```@autodocs
+Modules = [Metrics]
+Pages = ["evaluate.jl"]
 ```
 
 ## Regression Metrics
 
-```@docs
-expected_squared_error
-expected_absolute_error
-mean_squared_error
-root_mean_squared_error
-normalised_root_mean_squared_error
-standardized_mean_squared_error
-mean_absolute_error
-mean_absolute_scaled_error
-prediction_interval_coverage_probability
-window_prediction_interval_coverage_probability
-adjusted_prediction_interval_coverage_probability
-potential_payoff
-marginal_gaussian_loglikelihood
-joint_gaussian_loglikelihood
+```@autodocs
+Modules = [Metrics]
+Pages = [
+    "regression/simple.jl",
+    "regression/gaussian_loglikelihood.jl",
+    "regression/picp.jl",
+    "regression/potential_payoff.jl",
+]
 ```
 
 ## Financial Metrics
 
-```@docs
-expected_return
-volatility
-sharpe_ratio
-median_return
-expected_shortfall
-median_over_expected_shortfall
-price_impact
+```@autodocs
+Modules = [Metrics]
+Pages = [
+    "financial/simple.jl",
+    "financial/expected_shortfall.jl",
+    "financial/expected_windfall.jl",
+    "financial/price_impact.jl",
+]
 ```
 
 ## Statistical Metrics
 
-```@docs
-bky_test
-dm_mean_test
-dm_median_test
-kullback_leibler
+```@autodocs
+Modules = [Metrics]
+Pages = [
+    "statistical/bky.jl",
+    "statistical/diebold_mariano.jl",
+    "statistical/kullback_leibler.jl",
+    "statistical/subsample.jl",
+]
 ```
 
 ## Summary Functions
-```@docs
-regression_summary
-financial_summary
+
+```@autodocs
+Modules = [Metrics]
+Pages = ["summary.jl"]
 ```
