@@ -51,9 +51,6 @@ evaluate(mse, truths, predictions)
 
 All of the `regression` and `financial` metrics can be computed in one function call using the [`regression_summary`](@ref) and [`financial_summary`](@ref) functions, respectively.
 
-The following metrics are calculated in each summary
-* `regression`: [`mean_squared_error`](@ref), [`root_mean_squared_error`](@ref), [`normalised_root_mean_squared_error`](@ref), [`standardized_mean_squared_error`](@ref), [`mean_absolute_error`](@ref), [`potential_payoff`](@ref).
-* `financial`: [`expected_return`](@ref), [`expected_shortfall`](@ref), [`sharpe_ratio`](@ref), [`volatility`](@ref) for PO evaluation, where [`median_over_expected_shortfall`](@ref) and [`median_return`](@ref) are also computed for financial return evaluation.
 
 The summary functions make calculating these metrics much easier and efficient and are particularly useful in backruns and hyper-parameter tuning jobs.
 As with other metrics, summary functions are also compatible with [`evaluate`](@ref).

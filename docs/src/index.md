@@ -32,11 +32,6 @@ This would typically be used during the [`RiskAnalysis`](https://gitlab.invenia.
 ### Traits and `evaluate`
 
 As with [`BaselineModels`](https://gitlab.invenia.ca/research/BaselineModels.jl) this package uses [traits](https://white.ucc.asn.au/2018/10/03/Dispatch,-Traits-and-Metaprogramming-Over-Reflection.html).
-The only trait in current use is the `ObsArrangement`, which specifies the arrangement a metric expects the provided data to be in.
-This is mostly taken care of by the [`evaluate`](@ref) function.
-Below are the possible values of this trait:
 
-* `SingleObs`: assumes data is a single `observation` but does not assume any specific dimension, e.g. can be a `Number`, `AbstractArray{<:Number}`, etc.
-* `IteratorOfObs`: assumes data is a collection of single `observations`, e.g. `Vector{<:Number}`, and is normally aggreated via `mean` or `sum`.
-* `MatrixRowsOfObs`: assumes data has rows as `observations` and columns as `features`.
-* `MatrixColsOfObs`: assumes data has rows as `features` and columns as `observations`.
+The only trait in current use is the `ObsArrangement`, which is imported from [ObservationDims.jl](https://github.com/invenia/ObservationDims.jl) and specifies the arrangement a metric expects the provided data to be in.
+This is mostly taken care of by the [`evaluate`](@ref) function.
