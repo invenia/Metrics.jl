@@ -167,7 +167,12 @@ end
 """
     estimate_block_size(
         metric::Function, series;
-        α=0.05, β=nothing, sizemin=50, sizemax=300, sizestep=1, blocksvol=2,
+        α=0.05,
+        β=nothing,
+        sizemin=ceil(Int, 0.1 * length(series)),
+        sizemax=ceil(Int, 0.8 * length(series)),
+        sizestep=1,
+        blocksvol=2,
     )
 
 Estimate optimal block size for computing confidence intervals at a level `α` for `metric`
@@ -184,27 +189,14 @@ at level `α` with the optimal block size.
 """
 function estimate_block_size(
     metric::Function, series;
-    α=0.05, β=nothing, sizemin=50, sizemax=300, sizestep=1, blocksvol=2,
+    α=0.05,
+    β=nothing,
+    sizemin=ceil(Int, 0.1 * length(series)),
+    sizemax=ceil(Int, 0.8 * length(series)),
+    sizestep=1,
+    blocksvol=2,
 )
     β = isnothing(β) ? estimate_convergence_rate(metric, series) : β
-
-    # Check limits
-    len = length(series)
-    if sizemin >= len
-        @warn """
-            sizemin = $sizemin >=  length(series) = $len.
-            Using sizemin = 0.1 * length(series) = $(0.1 * len).
-            """
-        sizemin = 0.1 * len
-    end
-    if sizemax >= len
-        @warn """
-            sizemax = $sizemax >=  length(series) = $len.
-            Using sizemax = 0.8 * length(series) = $(0.8 * len).
-            """
-        sizemax = 0.8 * len
-    end
-
     block_sizes = collect(sizemin:sizestep:sizemax)
 
     # compute CIs for each block size
@@ -228,7 +220,16 @@ function estimate_block_size(
 end
 
 """
-    subsample_ci(metric::Function, series; α=0.05, β=nothing, kwargs...)
+    subsample_ci(
+        metric::Function, series;
+        α=0.05,
+        β=nothing,
+        sizemin=ceil(Int, 0.1 * length(series)),
+        sizemax=ceil(Int, 0.8 * length(series)),
+        sizestep=1,
+        blocksvol=2,
+        kwargs...
+    )
 
 Compute confidence interval for `metric` over a `series` at a level `α` and convergence rate
 `b^β` by estimating the block size via [`estimate_block_size`](@ref).
@@ -246,7 +247,13 @@ If `β=nothing`, the rate is estimated via [`estimate_convergence_rate`](@ref).
 """
 function subsample_ci(
     metric::Function, series;
-    α=0.05, β=nothing, sizemin=50, sizemax=300, sizestep=1, blocksvol=2, kwargs...
+    α=0.05,
+    β=nothing,
+    sizemin=ceil(Int, 0.1 * length(series)),
+    sizemax=ceil(Int, 0.8 * length(series)),
+    sizestep=1,
+    blocksvol=2,
+    kwargs...
 )
     β = isnothing(β) ? estimate_convergence_rate(metric, series; kwargs...) : β
     block_size = estimate_block_size(
