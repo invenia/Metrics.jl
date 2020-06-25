@@ -1,7 +1,7 @@
 name = "Metrics"
 uuid = "273c2e6c-7e43-11e9-12af-8fca11176a4c"
 authors = ["Invenia Technical Computing Corporation"]
-version = "0.10.7"
+version = "0.10.8"
 
 [deps]
 AxisArrays = "39de3d68-74b9-583c-8d2d-e117c070f3a9"

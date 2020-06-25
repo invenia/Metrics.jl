@@ -2,7 +2,6 @@ module Metrics
 
 using AxisArrays
 using Distributions
-using Documenter: doctest
 using IndexedDistributions
 using LinearAlgebra: cholesky, det, dot, I, norm, tr
 using NamedDims
@@ -11,8 +10,6 @@ using PSDMats
 using SpecialFunctions
 using StatsBase
 using StatsUtils: sqrtcov
-
-doctest(Metrics)
 
 include("utils.jl")
 # regression
