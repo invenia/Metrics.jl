@@ -187,6 +187,24 @@ function estimate_block_size(
     α=0.05, β=nothing, sizemin=50, sizemax=300, sizestep=1, blocksvol=2,
 )
     β = isnothing(β) ? estimate_convergence_rate(metric, series) : β
+
+    # Check limits
+    len = length(series)
+    if sizemin >= len
+        @warn """
+            sizemin = $sizemin >=  length(series) = $len.
+            Using sizemin = 0.1 * length(series) = $(0.1 * len).
+            """
+        sizemin = 0.1 * len
+    end
+    if sizemax >= len
+        @warn """
+            sizemax = $sizemax >=  length(series) = $len.
+            Using sizemax = 0.8 * length(series) = $(0.8 * len).
+            """
+        sizemax = 0.8 * len
+    end
+
     block_sizes = collect(sizemin:sizestep:sizemax)
 
     # compute CIs for each block size
