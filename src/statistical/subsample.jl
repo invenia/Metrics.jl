@@ -230,6 +230,7 @@ function subsample_ci(
     metric::Function, series;
     α=0.05, β=nothing, sizemin=50, sizemax=300, sizestep=1, blocksvol=2, kwargs...
 )
+    β = isnothing(β) ? estimate_convergence_rate(metric, series; kwargs...) : β
     block_size = estimate_block_size(
         metric,
         series;
