@@ -88,15 +88,21 @@
 
     end
 
+    # These are the old default arguments for estimating block sizes. We will use them for
+    # the tests because: 1. it preserves the old numerical comparisons; 2. it leads to much
+    # faster tests, as the current defaults scale with the data set size, and we use a very
+    # large one in these tests.
+    old_block_args = (sizemin=50, sizemax=300)
+
     @testset "estimate_block_size" begin
 
         # These results are arbitrary but we should nonetheless check that sensible values
         # are returned for reasonable inputs
-        @test Metrics.estimate_block_size(mean, series) == 152
-        @test Metrics.estimate_block_size(mean, series, β=0.1234) == 117
+        @test Metrics.estimate_block_size(mean, series; old_block_args...) == 152
+        @test Metrics.estimate_block_size(mean, series; β=0.1234, old_block_args...) == 117
 
         # 2*blocksvol+1 = 252 > length(cis) = 251 (as determined by block_sizes)
-        @test_throws DomainError Metrics.estimate_block_size(mean, series; blocksvol=126)
+        @test_throws DomainError Metrics.estimate_block_size(mean, series; blocksvol=126, old_block_args...)
 
         # 1001 > length(series[:, 1]) = 1000
         @test_throws DomainError Metrics.estimate_block_size(mean, series[:, 1], sizemax=1001)
@@ -106,7 +112,7 @@
 
         @testset "basic" begin
 
-            result = subsample_ci.(mean, eachcol(series); β=0.5)
+            result = subsample_ci.(mean, eachcol(series); β=0.5, old_block_args...)
 
             lower = mean(getfield.(result, :lower))
             upper = mean(getfield.(result, :upper))
@@ -118,19 +124,19 @@
         end
 
         @testset "basic with block size" begin
-            bs = Metrics.estimate_block_size(mean, series)
+            bs = Metrics.estimate_block_size(mean, series; old_block_args...)
 
             # check that 3 arg form gives same result 2 arg form
-            result_w_bs = subsample_ci(mean, series, bs; β=0.5)
-            @test subsample_ci(mean, series; β=0.5) == result_w_bs
+            result_w_bs = subsample_ci(mean, series, bs; β=0.5, old_block_args...)
+            @test subsample_ci(mean, series; β=0.5, old_block_args...) == result_w_bs
         end
 
         @testset "increasing alpha level contracts ci bounds" begin
 
             # this is expected behaviour since alpha is the level of the test we expect the
             # true value to lie in 1-alpha of the CIs
-            r1 = subsample_ci(mean, series; α=0.1, β=0.5)
-            r2 = subsample_ci(mean, series; α=0.2, β=0.5)
+            r1 = subsample_ci(mean, series; α=0.1, β=0.5, old_block_args...)
+            r2 = subsample_ci(mean, series; α=0.2, β=0.5, old_block_args...)
 
             @test r1.lower < r2.lower
             @test r1.upper > r2.upper
@@ -149,9 +155,9 @@
             end
 
             @testset "estimate convergence rate" begin
-                ci_result = subsample_ci(mean, series; conv_kwargs...)
+                ci_result = subsample_ci(mean, series; old_block_args..., conv_kwargs...)
                 beta = Metrics.estimate_convergence_rate(mean, series; conv_kwargs...)
-                @test ci_result == subsample_ci(mean, series; β=beta)
+                @test ci_result == subsample_ci(mean, series; β=beta, old_block_args...)
             end
 
             @testset "estimate block size and convergence rate" begin
@@ -165,11 +171,11 @@
 
         @testset "do-block" begin
 
-            result = subsample_ci(series) do s
+            result = subsample_ci(series; old_block_args...) do s
                 mean(s)
             end
 
-            @test result == subsample_ci(mean, series)
+            @test result == subsample_ci(mean, series; old_block_args...)
 
         end
 
