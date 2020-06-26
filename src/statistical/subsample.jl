@@ -234,8 +234,10 @@ end
 Compute confidence interval for `metric` over a `series` at a level `α` and convergence rate
 `b^β` by estimating the block size via [`estimate_block_size`](@ref).
 
-The `kwargs` are passed to [`estimate_block_size`](@ref) and [`estimate_convergence_rate`](@ref).
-
+The `sizemin`, `sizemax`, `sizestep`, and `blocksvol` keyword arguments are passed to
+[`estimate_block_size`](@ref).
+The remaining `kwargs` are passed to [`estimate_convergence_rate`](@ref) (if `β` is not
+provided) and [`subsample_ci`](@ref).
 If `β=nothing`, the rate is estimated via [`estimate_convergence_rate`](@ref).
 
 !!! note
