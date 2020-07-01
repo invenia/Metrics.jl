@@ -4,6 +4,7 @@ using AxisArrays
 using Distributions
 using Documenter: doctest
 using IndexedDistributions
+using Intervals
 using LinearAlgebra: cholesky, det, dot, I, norm, tr
 using NamedDims
 using ObservationDims
