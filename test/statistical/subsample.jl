@@ -138,8 +138,8 @@
             r1 = subsample_ci(mean, series; α=0.1, β=0.5, old_block_args...)
             r2 = subsample_ci(mean, series; α=0.2, β=0.5, old_block_args...)
 
-            @test r1.first < r2.first
-            @test r1.last > r2.last
+            @test first(r1) < first(r2)
+            @test last(r1) > last(r2)
 
         end
 
