@@ -203,8 +203,8 @@ function estimate_block_size(
     cis = subsample_ci.(Ref(metric), Ref(series), block_sizes; α=α, β=β)
 
     # obtain lower and upper bounds
-    lows = getfield.(cis, :lower)
-    ups = getfield.(cis, :upper)
+    lows = first.(cis)
+    ups = last.(cis)
 
     # determine block ranges to be used for computing the std of the CI bounds
     block_ranges = Metrics.block_subsample(1:length(cis), 2 * blocksvol + 1)
@@ -279,7 +279,7 @@ Compute confidence interval for `metric` over a `series` at a level `α` using a
 and convergence rate `b^β`. If `β=nothing`, the rate is estimated via
 [`estimate_convergence_rate`](@ref) which accepts the `kwargs`.
 
-Returns a `NamedTuple` with the `:lower` and the `:upper` bounds of the CI.
+Returns the confidence interval as `Closed` `Interval`.
 """
 function subsample_ci(metric::Function, series, block_size; α=0.05, β=nothing, kwargs...)
     # apply metric to subsampled series
@@ -299,5 +299,5 @@ function subsample_ci(metric::Function, series, block_size; α=0.05, β=nothing,
     # apply location and scale estimates
     lower_corrected = sample_metric - upper / τ_n
     upper_corrected = sample_metric - lower / τ_n
-    return (lower=lower_corrected, upper=upper_corrected,)
+    return Interval(lower_corrected, upper_corrected)
 end
