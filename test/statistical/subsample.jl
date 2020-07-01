@@ -108,8 +108,8 @@
 
             result = subsample_ci.(mean, eachcol(series); β=0.5)
 
-            lower = mean(getfield.(result, :lower))
-            upper = mean(getfield.(result, :upper))
+            lower = mean(getfield.(result, :first))
+            upper = mean(getfield.(result, :last))
 
             @test -0.1 < lower < 0.0
             @test 0.0 < upper < 0.1
@@ -132,8 +132,8 @@
             r1 = subsample_ci(mean, series; α=0.1, β=0.5)
             r2 = subsample_ci(mean, series; α=0.2, β=0.5)
 
-            @test r1.lower < r2.lower
-            @test r1.upper > r2.upper
+            @test r1.first < r2.first
+            @test r1.last > r2.last
 
         end
 
