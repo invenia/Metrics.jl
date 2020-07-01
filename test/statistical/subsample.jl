@@ -114,8 +114,8 @@
 
             result = subsample_ci.(mean, eachcol(series); β=0.5, old_block_args...)
 
-            lower = mean(getfield.(result, :first))
-            upper = mean(getfield.(result, :last))
+            lower = mean(first, result)
+            upper = mean(last, result)
 
             @test -0.1 < lower < 0.0
             @test 0.0 < upper < 0.1
