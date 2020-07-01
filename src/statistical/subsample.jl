@@ -203,8 +203,8 @@ function estimate_block_size(
     cis = subsample_ci.(Ref(metric), Ref(series), block_sizes; α=α, β=β)
 
     # obtain lower and upper bounds
-    lows = getfield.(cis, :first)
-    ups = getfield.(cis, :last)
+    lows = first.(cis)
+    ups = last.(cis)
 
     # determine block ranges to be used for computing the std of the CI bounds
     block_ranges = Metrics.block_subsample(1:length(cis), 2 * blocksvol + 1)
