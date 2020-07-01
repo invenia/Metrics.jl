@@ -279,8 +279,7 @@ Compute confidence interval for `metric` over a `series` at a level `α` using a
 and convergence rate `b^β`. If `β=nothing`, the rate is estimated via
 [`estimate_convergence_rate`](@ref) which accepts the `kwargs`.
 
-Returns a `Closed` `Interval` with `:first` and `:last` being the lower and upper bounds 
-of the CI respectively.
+Returns the confidence interval as `Closed` `Interval`.
 """
 function subsample_ci(metric::Function, series, block_size; α=0.05, β=nothing, kwargs...)
     # apply metric to subsampled series
