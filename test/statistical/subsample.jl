@@ -112,7 +112,7 @@
 
         @testset "basic" begin
 
-            result = subsample_ci.(mean, eachcol(series); β=0.5, old_block_args...)
+            result = subsample_ci.(mean, eachcol(series); old_block_args...)
 
             lower = mean(first, result)
             upper = mean(last, result)
@@ -127,7 +127,7 @@
             bs = Metrics.estimate_block_size(mean, series; old_block_args...)
 
             # check that 3 arg form gives same result 2 arg form
-            result_w_bs = subsample_ci(mean, series, bs; β=0.5, old_block_args...)
+            result_w_bs = subsample_ci(mean, series, bs; old_block_args...)
             @test subsample_ci(mean, series; β=0.5, old_block_args...) == result_w_bs
         end
 
@@ -155,16 +155,37 @@
             end
 
             @testset "estimate convergence rate" begin
-                ci_result = subsample_ci(mean, series; old_block_args..., conv_kwargs...)
+                ci_result = subsample_ci(mean, series; β=nothing, old_block_args..., conv_kwargs...)
                 beta = Metrics.estimate_convergence_rate(mean, series; conv_kwargs...)
                 @test ci_result == subsample_ci(mean, series; β=beta, old_block_args...)
             end
 
             @testset "estimate block size and convergence rate" begin
-                ci_result = subsample_ci(mean, series; block_kwargs..., conv_kwargs...)
+                ci_result = subsample_ci(mean, series; β=nothing, block_kwargs..., conv_kwargs...)
                 bs_result = Metrics.estimate_block_size(mean, series; block_kwargs...)
                 beta = Metrics.estimate_convergence_rate(mean, series; conv_kwargs...)
                 @test ci_result == subsample_ci(mean, series, bs_result; β=beta)
+            end
+
+            @testset "default β" begin
+                for metric in [
+                    mean,
+                    median,
+                    mean_over_es,
+                    median_over_es,
+                    expected_shortfall,
+                    expected_windfall,
+                ]
+                    # Choosing a large sizemin because of ES and EW.
+                    # Choosing a small range of sizes to save time.
+                    # Calling `vec` because `series` is a matrix and that changes ES behaviour.
+                    ci_result = subsample_ci(metric, vec(series), sizemin=1000, sizemax=1010)
+                    @test ci_result == subsample_ci(
+                        metric, vec(series), β=0.5, sizemin=1000, sizemax=1010
+                    )
+                    ci_result = subsample_ci(metric, vec(series), 1000)
+                    @test ci_result == subsample_ci(metric, vec(series), 1000, β=0.5)
+                end
             end
 
         end
@@ -175,7 +196,7 @@
                 mean(s)
             end
 
-            @test result == subsample_ci(mean, series; old_block_args...)
+            @test result == subsample_ci(mean, series; β=nothing, old_block_args...)
 
         end
 
