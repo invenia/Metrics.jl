@@ -170,6 +170,7 @@ end
 
 ObservationDims.obs_arrangement(::typeof(median_over_expected_shortfall)) = MatrixColsOfObs()
 const evano = median_over_expected_shortfall
+const median_over_es = median_over_expected_shortfall
 
 """
     mean_over_expected_shortfall(returns::AbstractVector; kwargs...) -> Number
