@@ -216,7 +216,7 @@ function estimate_block_size(
     vmin, imin = findmin(vols)
 
     # Indent imin by blocksvol to give back the index in the cis array
-    return imin + blocksvol
+    return block_sizes[imin + blocksvol]
 end
 
 """
