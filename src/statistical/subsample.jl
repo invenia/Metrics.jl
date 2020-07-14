@@ -220,10 +220,29 @@ function estimate_block_size(
 end
 
 """
+    EspecialMetrics <: Type
+
+Union of all unary types for the metrics for which we have computed the β values.
+See: https://docs.google.com/document/d/12g0uPpcWva-HpXi6OoPnR2FysqMCjJoOqJcpqkLzt3E
+"""
+EspecialMetrics = Union{typeof.(
+    [mean, median, mean_over_es, median_over_es, expected_shortfall, expected_windfall]
+)...}
+
+"""
+    default_β(f)
+
+Default value of exponent of the convergence rate for metric `f`. If unknown, returns
+`nothing`.
+"""
+default_β(f::Function) = nothing
+default_β(f::EspecialMetrics) = 0.5
+
+"""
     subsample_ci(
         metric::Function, series;
         α=0.05,
-        β=nothing,
+        β=default_β(metric),
         sizemin=ceil(Int, 0.1 * length(series)),
         sizemax=ceil(Int, 0.8 * length(series)),
         sizestep=1,
@@ -236,8 +255,8 @@ Compute confidence interval for `metric` over a `series` at a level `α` and con
 
 The `sizemin`, `sizemax`, `sizestep`, and `blocksvol` keyword arguments are passed to
 [`estimate_block_size`](@ref).
-The remaining `kwargs` are passed to [`estimate_convergence_rate`](@ref) (if `β` is not
-provided) and [`subsample_ci`](@ref).
+The remaining `kwargs` are passed to [`estimate_convergence_rate`](@ref) (if `β` is
+`nothing`) and [`subsample_ci`](@ref).
 If `β=nothing`, the rate is estimated via [`estimate_convergence_rate`](@ref).
 
 !!! note
@@ -250,7 +269,7 @@ If `β=nothing`, the rate is estimated via [`estimate_convergence_rate`](@ref).
 function subsample_ci(
     metric::Function, series;
     α=0.05,
-    β=nothing,
+    β=default_β(metric),
     sizemin=ceil(Int, 0.1 * length(series)),
     sizemax=ceil(Int, 0.8 * length(series)),
     sizestep=1,
@@ -271,71 +290,12 @@ function subsample_ci(
 
     return subsample_ci(metric, series, block_size; α=α, β=β, kwargs...)
 end
-
-# Union of all unary types for the metrics for which we have computed the β values.
-# See: https://docs.google.com/document/d/12g0uPpcWva-HpXi6OoPnR2FysqMCjJoOqJcpqkLzt3E
-EspecialMetrics = Union{typeof.(
-    [mean, median, mean_over_es, median_over_es, expected_shortfall, expected_windfall]
-)...}
 
 """
     subsample_ci(
-        metric::EspecialMetrics, series;
-        α=0.05,
-        β=0.5,
-        sizemin=ceil(Int, 0.1 * length(series)),
-        sizemax=ceil(Int, 0.8 * length(series)),
-        sizestep=1,
-        blocksvol=2,
-        kwargs...
+        metric::Function, series, block_size;
+        α=0.05, β=default_β(metric), kwargs...
     )
-
-Compute confidence interval for `metric` that is in the set `[mean, median, mean_over_es,
-median_over_es, expected_shortfall, expected_windfall]` over a `series` at a level `α` and
-convergence rate `b^β` by estimating the block size via [`estimate_block_size`](@ref).
-
-The `sizemin`, `sizemax`, `sizestep`, and `blocksvol` keyword arguments are passed to
-[`estimate_block_size`](@ref).
-The remaining `kwargs` are passed to [`estimate_convergence_rate`](@ref) (if `β=nothing`)
-and [`subsample_ci`](@ref).
-By default, `β=0.5`, as discussed in
-https://docs.google.com/document/d/12g0uPpcWva-HpXi6OoPnR2FysqMCjJoOqJcpqkLzt3E.
-If `β=nothing`, the rate is estimated via [`estimate_convergence_rate`](@ref).
-
-!!! note
-    Since `α` is the _level_ of the test, we expect the true value to lie in `1-α` of the CIs.
-
-!!! note
-    The default value of `size_max` was chosen for sampling 1 year of backrun data.
-    If you are sampling 2 years you may want to change this setting.
-"""
-function subsample_ci(
-    metric::EspecialMetrics, series;
-    α=0.05,
-    β=0.5,
-    sizemin=ceil(Int, 0.1 * length(series)),
-    sizemax=ceil(Int, 0.8 * length(series)),
-    sizestep=1,
-    blocksvol=2,
-    kwargs...
-)
-    β = isnothing(β) ? estimate_convergence_rate(metric, series; kwargs...) : β
-    block_size = estimate_block_size(
-        metric,
-        series;
-        α=α,
-        β=β,
-        sizemin=sizemin,
-        sizemax=sizemax,
-        sizestep=sizestep,
-        blocksvol=blocksvol
-    )
-    return subsample_ci(metric, series, block_size; α=α, β=β, kwargs...)
-end
-
-
-"""
-    subsample_ci(metric::Function, series, block_size; α=0.05, β=nothing, kwargs...)
 
 Compute confidence interval for `metric` over a `series` at a level `α` using a `block_size`
 and convergence rate `b^β`. If `β=nothing`, the rate is estimated via
@@ -343,11 +303,10 @@ and convergence rate `b^β`. If `β=nothing`, the rate is estimated via
 
 Returns the confidence interval as `Closed` `Interval`.
 """
-function subsample_ci(metric::Function, series, block_size; α=0.05, β=nothing, kwargs...)
-    return _subsample_ci(metric, series, block_size; α=α, β=β, kwargs...)
-end
-
-function _subsample_ci(metric::Function, series, block_size; α=0.05, β=nothing, kwargs...)
+function subsample_ci(
+    metric::Function, series, block_size;
+    α=0.05, β=default_β(metric), kwargs...
+)
     # apply metric to subsampled series
     metric_series = metric.(block_subsample(series, block_size))
     # estimate convergence rates
@@ -366,22 +325,4 @@ function _subsample_ci(metric::Function, series, block_size; α=0.05, β=nothing
     lower_corrected = sample_metric - upper / τ_n
     upper_corrected = sample_metric - lower / τ_n
     return Interval(lower_corrected, upper_corrected)
-end
-
-"""
-    subsample_ci(metric::EspecialMetrics, series, block_size; α=0.05, β=0.5, kwargs...)
-
-Compute confidence interval for `metric` that is in the set `[mean, median, mean_over_es,
-median_over_es, expected_shortfall, expected_windfall]` over a `series` at a level `α` using
-a `block_size` and convergence rate `b^β`. By default, `β=0.5`, as discussed in
-https://docs.google.com/document/d/12g0uPpcWva-HpXi6OoPnR2FysqMCjJoOqJcpqkLzt3E. If
-`β=nothing`, the rate is estimated via [`estimate_convergence_rate`](@ref) which accepts
-the `kwargs`.
-
-Returns the confidence interval as `Closed` `Interval`.
-"""
-function subsample_ci(
-    metric::EspecialMetrics, series, block_size; α=0.05, β=0.5, kwargs...
-)
-    return _subsample_ci(metric, series, block_size; α=α, β=β, kwargs...)
 end
