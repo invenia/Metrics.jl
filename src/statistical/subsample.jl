@@ -220,23 +220,21 @@ function estimate_block_size(
 end
 
 """
-    EspecialMetrics <: Type
-
-Union of all unary types for the metrics for which we have computed the β values.
-See: https://docs.google.com/document/d/12g0uPpcWva-HpXi6OoPnR2FysqMCjJoOqJcpqkLzt3E
-"""
-EspecialMetrics = Union{typeof.(
-    [mean, median, mean_over_es, median_over_es, expected_shortfall, expected_windfall]
-)...}
-
-"""
     default_β(f)
 
 Default value of exponent of the convergence rate for metric `f`. If unknown, returns
 `nothing`.
 """
 default_β(f::Function) = nothing
-default_β(f::EspecialMetrics) = 0.5
+# Metrics for which we have computed the β values.
+# See: https://docs.google.com/document/d/12g0uPpcWva-HpXi6OoPnR2FysqMCjJoOqJcpqkLzt3E
+default_β(f::typeof(mean)) = 0.5
+default_β(f::typeof(median)) = 0.5
+default_β(f::typeof(mean_over_es)) = 0.5
+default_β(f::typeof(median_over_es)) = 0.5
+default_β(f::typeof(expected_shortfall)) = 0.5
+default_β(f::typeof(expected_windfall)) = 0.5
+
 
 """
     subsample_ci(
