@@ -168,6 +168,8 @@
             end
 
             @testset "default β" begin
+                series = rand(10_000)
+
                 for metric in [
                     mean,
                     median,
@@ -178,13 +180,12 @@
                 ]
                     # Choosing a large sizemin so that ES and EW have sufficient samples to be computed.
                     # Choosing a small range of sizes to save time.
-                    # Calling `vec` because `series` is a matrix and that changes ES behaviour.
-                    ci_result = subsample_ci(metric, vec(series), sizemin=1000, sizemax=1010)
+                    ci_result = subsample_ci(metric, series, sizemin=1000, sizemax=1010)
                     @test ci_result == subsample_ci(
-                        metric, vec(series), β=0.5, sizemin=1000, sizemax=1010
+                        metric, series, β=0.5, sizemin=1000, sizemax=1010
                     )
-                    ci_result = subsample_ci(metric, vec(series), 1000)
-                    @test ci_result == subsample_ci(metric, vec(series), 1000, β=0.5)
+                    ci_result = subsample_ci(metric, series, 1000)
+                    @test ci_result == subsample_ci(metric, series, 1000, β=0.5)
                 end
             end
 
