@@ -98,8 +98,8 @@
 
         # These results are arbitrary but we should nonetheless check that sensible values
         # are returned for reasonable inputs
-        @test Metrics.estimate_block_size(mean, series; old_block_args...) == 152
-        @test Metrics.estimate_block_size(mean, series; β=0.1234, old_block_args...) == 117
+        @test Metrics.estimate_block_size(mean, series; old_block_args...) == 201
+        @test Metrics.estimate_block_size(mean, series; β=0.1234, old_block_args...) == 166
 
         # 2*blocksvol+1 = 252 > length(cis) = 251 (as determined by block_sizes)
         @test_throws DomainError Metrics.estimate_block_size(mean, series; blocksvol=126, old_block_args...)
@@ -112,7 +112,7 @@
 
         @testset "basic" begin
 
-            result = subsample_ci.(mean, eachcol(series); β=0.5, old_block_args...)
+            result = subsample_ci.(mean, eachcol(series); old_block_args...)
 
             lower = mean(first, result)
             upper = mean(last, result)
@@ -127,7 +127,7 @@
             bs = Metrics.estimate_block_size(mean, series; old_block_args...)
 
             # check that 3 arg form gives same result 2 arg form
-            result_w_bs = subsample_ci(mean, series, bs; β=0.5, old_block_args...)
+            result_w_bs = subsample_ci(mean, series, bs; old_block_args...)
             @test subsample_ci(mean, series; β=0.5, old_block_args...) == result_w_bs
         end
 
@@ -155,16 +155,38 @@
             end
 
             @testset "estimate convergence rate" begin
-                ci_result = subsample_ci(mean, series; old_block_args..., conv_kwargs...)
+                ci_result = subsample_ci(mean, series; β=nothing, old_block_args..., conv_kwargs...)
                 beta = Metrics.estimate_convergence_rate(mean, series; conv_kwargs...)
                 @test ci_result == subsample_ci(mean, series; β=beta, old_block_args...)
             end
 
             @testset "estimate block size and convergence rate" begin
-                ci_result = subsample_ci(mean, series; block_kwargs..., conv_kwargs...)
+                ci_result = subsample_ci(mean, series; β=nothing, block_kwargs..., conv_kwargs...)
                 bs_result = Metrics.estimate_block_size(mean, series; block_kwargs...)
                 beta = Metrics.estimate_convergence_rate(mean, series; conv_kwargs...)
                 @test ci_result == subsample_ci(mean, series, bs_result; β=beta)
+            end
+
+            @testset "default β" begin
+                series = rand(10_000)
+
+                for metric in [
+                    mean,
+                    median,
+                    mean_over_es,
+                    median_over_es,
+                    expected_shortfall,
+                    expected_windfall,
+                ]
+                    # Choosing a large sizemin so that ES and EW have sufficient samples to be computed.
+                    # Choosing a small range of sizes to save time.
+                    ci_result = subsample_ci(metric, series, sizemin=1000, sizemax=1010)
+                    @test ci_result == subsample_ci(
+                        metric, series, β=0.5, sizemin=1000, sizemax=1010
+                    )
+                    ci_result = subsample_ci(metric, series, 1000)
+                    @test ci_result == subsample_ci(metric, series, 1000, β=0.5)
+                end
             end
 
         end
@@ -175,7 +197,7 @@
                 mean(s)
             end
 
-            @test result == subsample_ci(mean, series; old_block_args...)
+            @test result == subsample_ci(mean, series; β=nothing, old_block_args...)
 
         end
 

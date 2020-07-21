@@ -216,14 +216,31 @@ function estimate_block_size(
     vmin, imin = findmin(vols)
 
     # Indent imin by blocksvol to give back the index in the cis array
-    return imin + blocksvol
+    return block_sizes[imin + blocksvol]
 end
+
+"""
+    default_β(f)
+
+Default value of exponent of the convergence rate for metric `f`. If unknown, returns
+`nothing`.
+"""
+default_β(f) = nothing
+# Metrics for which we have computed the β values.
+# See: https://docs.google.com/document/d/12g0uPpcWva-HpXi6OoPnR2FysqMCjJoOqJcpqkLzt3E
+default_β(f::typeof(mean)) = 0.5
+default_β(f::typeof(median)) = 0.5
+default_β(f::typeof(mean_over_es)) = 0.5
+default_β(f::typeof(median_over_es)) = 0.5
+default_β(f::typeof(expected_shortfall)) = 0.5
+default_β(f::typeof(expected_windfall)) = 0.5
+
 
 """
     subsample_ci(
         metric::Function, series;
         α=0.05,
-        β=nothing,
+        β=default_β(metric),
         sizemin=ceil(Int, 0.1 * length(series)),
         sizemax=ceil(Int, 0.8 * length(series)),
         sizestep=1,
@@ -236,8 +253,8 @@ Compute confidence interval for `metric` over a `series` at a level `α` and con
 
 The `sizemin`, `sizemax`, `sizestep`, and `blocksvol` keyword arguments are passed to
 [`estimate_block_size`](@ref).
-The remaining `kwargs` are passed to [`estimate_convergence_rate`](@ref) (if `β` is not
-provided) and [`subsample_ci`](@ref).
+The remaining `kwargs` are passed to [`estimate_convergence_rate`](@ref) (if `β` is
+`nothing`) and [`subsample_ci`](@ref).
 If `β=nothing`, the rate is estimated via [`estimate_convergence_rate`](@ref).
 
 !!! note
@@ -246,11 +263,17 @@ If `β=nothing`, the rate is estimated via [`estimate_convergence_rate`](@ref).
 !!! note
     The default value of `size_max` was chosen for sampling 1 year of backrun data.
     If you are sampling 2 years you may want to change this setting.
+
+!!! warning "Default β"
+    If the `β` keyword is not provided it defaults to `default_β(metric)`.
+    For anonymous function [`default_β`](@ref) will always be `nothing`. 
+    It is important to be aware of this when passing an anonymous function,
+    for example when using `do`-block syntax to define the metric.
 """
 function subsample_ci(
     metric::Function, series;
     α=0.05,
-    β=nothing,
+    β=default_β(metric),
     sizemin=ceil(Int, 0.1 * length(series)),
     sizemax=ceil(Int, 0.8 * length(series)),
     sizestep=1,
@@ -273,7 +296,10 @@ function subsample_ci(
 end
 
 """
-    subsample_ci(metric::Function, series, block_size; α=0.05, β=nothing, kwargs...)
+    subsample_ci(
+        metric::Function, series, block_size;
+        α=0.05, β=default_β(metric), kwargs...
+    )
 
 Compute confidence interval for `metric` over a `series` at a level `α` using a `block_size`
 and convergence rate `b^β`. If `β=nothing`, the rate is estimated via
@@ -281,7 +307,10 @@ and convergence rate `b^β`. If `β=nothing`, the rate is estimated via
 
 Returns the confidence interval as `Closed` `Interval`.
 """
-function subsample_ci(metric::Function, series, block_size; α=0.05, β=nothing, kwargs...)
+function subsample_ci(
+    metric::Function, series, block_size;
+    α=0.05, β=default_β(metric), kwargs...
+)
     # apply metric to subsampled series
     metric_series = metric.(block_subsample(series, block_size))
     # estimate convergence rates
