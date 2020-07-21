@@ -176,7 +176,7 @@
                     expected_shortfall,
                     expected_windfall,
                 ]
-                    # Choosing a large sizemin because of ES and EW.
+                    # Choosing a large sizemin so that ES and EW have sufficient samples to be computed.
                     # Choosing a small range of sizes to save time.
                     # Calling `vec` because `series` is a matrix and that changes ES behaviour.
                     ci_result = subsample_ci(metric, vec(series), sizemin=1000, sizemax=1010)
