@@ -263,6 +263,12 @@ If `β=nothing`, the rate is estimated via [`estimate_convergence_rate`](@ref).
 !!! note
     The default value of `size_max` was chosen for sampling 1 year of backrun data.
     If you are sampling 2 years you may want to change this setting.
+
+!!! warning "Default β"
+    If the `β` keyword is not provided it defaults to `default_β(metric)`.
+    For anonymous function [`default_β`](@ref) will always be `nothing`. 
+    It is important to be aware of this when passing an anonymous function,
+    for example when using `do`-block syntax to define the metric.
 """
 function subsample_ci(
     metric::Function, series;
