@@ -225,7 +225,7 @@ end
 Default value of exponent of the convergence rate for metric `f`. If unknown, returns
 `nothing`.
 """
-default_β(f::Function) = nothing
+default_β(f) = nothing
 # Metrics for which we have computed the β values.
 # See: https://docs.google.com/document/d/12g0uPpcWva-HpXi6OoPnR2FysqMCjJoOqJcpqkLzt3E
 default_β(f::typeof(mean)) = 0.5
