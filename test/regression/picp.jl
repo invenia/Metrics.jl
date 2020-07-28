@@ -30,7 +30,7 @@
     Returns an iterator of observations
     """
     function rand_out_of_dist(dist, n_samples)
-        basis = max((rand(dist) for _ in 1:100)...)
+        basis = max((rand(dist) for _ in 1:500)...)
         center = mean(dist)
         return [center .+ 10*(rand()-0.5).*basis for ii in 1:n_samples]
     end
