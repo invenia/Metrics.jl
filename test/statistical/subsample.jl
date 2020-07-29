@@ -96,11 +96,6 @@
 
     @testset "estimate_block_size" begin
 
-        # These results are arbitrary but we should nonetheless check that sensible values
-        # are returned for reasonable inputs
-        @test 100 < Metrics.estimate_block_size(mean, series; old_block_args...) < 250
-        @test 100 < Metrics.estimate_block_size(mean, series; β=0.1234, old_block_args...) < 250
-
         # 2*blocksvol+1 = 252 > length(cis) = 251 (as determined by block_sizes)
         @test_throws DomainError Metrics.estimate_block_size(mean, series; blocksvol=126, old_block_args...)
 
