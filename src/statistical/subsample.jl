@@ -1,9 +1,11 @@
 """
-    block_subsample(series, b)
+    block_subsample(series, block_size; circular=false)
 
 Subsample `series` with running (overlapping) blocks of length `b`.
+
+If `circular`, blocks wrap around the end of the `series`.
 """
-function block_subsample(series, block_size)
+function block_subsample(series, block_size; circular=false)
 
     if block_size > length(series)
         throw(DomainError(
@@ -11,9 +13,17 @@ function block_subsample(series, block_size)
             "block_size cannot exceed the series length $(length(series))."
         ))
     end
-
+    # TODO implement this in a nicer way
     n_blocks = length(series) - block_size + 1
-    return [series[i:(block_size + i - 1)] for i in 1:n_blocks]
+    if !circular
+        return [series[i:(block_size + i - 1)] for i in 1:n_blocks]
+    else
+        regular = [series[i:(block_size + i - 1)] for i in 1:n_blocks]
+        wrapping = [
+            vcat(series[(end - block_size + i):end], series[1:i - 1]) for i in 2:block_size
+        ]
+        return vcat(regular, wrapping)
+    end
 end
 
 """
@@ -298,7 +308,7 @@ end
 """
     subsample_ci(
         metric::Function, series, block_size;
-        α=0.05, β=default_β(metric), studentise=true, kwargs...
+        α=0.05, β=default_β(metric), studentise=true, circular=false, kwargs...
     )
 
 Compute confidence interval for `metric` over a `series` at a level `α` using a `block_size`
@@ -310,14 +320,16 @@ chapters 2 and 11 of "Politis, Dimitris N., Joseph P. Romano, and
 Michael Wolf. Subsampling. Springer Science & Business Media, 1999." for the theory. For
 heavy tailed data, it is recommended to use this option.
 
+If `circular`, the subsampled blocks wrap around the end of `series`.
+
 Returns the confidence interval as `Closed` `Interval`.
 """
 function subsample_ci(
     metric::Function, series, block_size;
-    α=0.05, β=default_β(metric), studentise=true, kwargs...
+    α=0.05, β=default_β(metric), studentise=true, circular=false, kwargs...
 )
     # apply metric to subsampled series
-    blocks = block_subsample(series, block_size)
+    blocks = block_subsample(series, block_size; circular=circular)
     metric_series = metric.(blocks)
     # By default Statistics uses the unbiased version of `var`.
     σ_b = studentise ? std.(blocks) : ones(length(blocks))
