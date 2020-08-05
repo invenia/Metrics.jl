@@ -266,7 +266,7 @@ If `β=nothing`, the rate is estimated via [`estimate_convergence_rate`](@ref).
 
 !!! warning "Default β"
     If the `β` keyword is not provided it defaults to `default_β(metric)`.
-    For anonymous function [`default_β`](@ref) will always be `nothing`. 
+    For anonymous function [`default_β`](@ref) will always be `nothing`.
     It is important to be aware of this when passing an anonymous function,
     for example when using `do`-block syntax to define the metric.
 """
@@ -298,35 +298,44 @@ end
 """
     subsample_ci(
         metric::Function, series, block_size;
-        α=0.05, β=default_β(metric), kwargs...
+        α=0.05, β=default_β(metric), studentise=true, kwargs...
     )
 
 Compute confidence interval for `metric` over a `series` at a level `α` using a `block_size`
 and convergence rate `b^β`. If `β=nothing`, the rate is estimated via
 [`estimate_convergence_rate`](@ref) which accepts the `kwargs`.
 
+If `studentise`, the roots are studentised using the unbiased sample standard deviation. See
+chapters 2 and 11 of "Politis, Dimitris N., Joseph P. Romano, and
+Michael Wolf. Subsampling. Springer Science & Business Media, 1999." for the theory. For
+heavy tailed data, it is recommended to use this option.
+
 Returns the confidence interval as `Closed` `Interval`.
 """
 function subsample_ci(
     metric::Function, series, block_size;
-    α=0.05, β=default_β(metric), kwargs...
+    α=0.05, β=default_β(metric), studentise=true, kwargs...
 )
     # apply metric to subsampled series
-    metric_series = metric.(block_subsample(series, block_size))
+    blocks = block_subsample(series, block_size)
+    metric_series = metric.(blocks)
+    # By default Statistics uses the unbiased version of `var`.
+    σ_b = studentise ? std.(blocks) : ones(length(blocks))
     # estimate convergence rates
     β = isnothing(β) ? estimate_convergence_rate(metric, series; kwargs...) : β
     n = length(series)
     τ_b = block_size ^ β
     τ_n = n ^ β
+    σ_n = studentise ? std(series) : 1.0
     # compute sample metric
     sample_metric = metric(series)
     # center and scale metrics
-    metric_series = (metric_series .- sample_metric) * τ_b
+    metric_series = (metric_series .- sample_metric) * τ_b ./ σ_b
     # compute lower and upper bounds
     lower = quantile(metric_series, α / 2)
     upper = quantile(metric_series, 1 - (α / 2))
     # apply location and scale estimates
-    lower_corrected = sample_metric - upper / τ_n
-    upper_corrected = sample_metric - lower / τ_n
+    lower_corrected = sample_metric - upper / τ_n * σ_n
+    upper_corrected = sample_metric - lower / τ_n * σ_n
     return Interval(lower_corrected, upper_corrected)
 end
