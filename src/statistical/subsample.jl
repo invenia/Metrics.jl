@@ -175,6 +175,76 @@ function _compute_log_log_slope(x, y::Vector{<:Vector})
 end
 
 """
+    compute_distance(cdf1, cdf2, locations)
+
+Computes the unormalised squared L2 distance between two functions at a discrete set of
+`locations`.
+"""
+function compute_distance(cdf1, cdf2, locations)
+    return sum(x -> x^2, (cdf1.(locations) .- cdf2.(locations)))
+end
+
+"""
+    adaptive_block_size(
+        metric::Function, series;
+        sizemin=ceil(Int, 0.1 * length(series)),
+        sizemax=ceil(Int, 0.8 * length(series)),
+        sizestep=2,
+        circular=false,
+        numpoints=50,
+    )
+
+Estimate the optimal block size for computing the subsampled confidence interval of `metric`
+over `series` using the adaptive method proposed in "Friedrich Götze and Alfredas Račkauskas
+Lecture Notes-Monograph Series Vol. 36, State of the Art in Probability and Statistics
+(2001), pp. 286-309".
+
+Optimal size is searched over the range `sizemin:sizestep:sizemax`. If any of those
+quantities is an odd number, the next integer is taken.
+
+If `circular`, blocks wrap around the end of the `series`.
+
+`numpoints` controls the number of points over the empirical CDFs are compared.
+"""
+function adaptive_block_size(
+    metric::Function, series;
+    sizemin=ceil(Int, 0.1 * length(series)),
+    sizemax=ceil(Int, 0.8 * length(series)),
+    sizestep=2,
+    circular=false,
+    numpoints=50,
+)
+    sizemin = isodd(sizemin) ? sizemin + 1 : sizemin
+    sizemax = isodd(sizemax) ? sizemax + 1 : sizemax
+    sizestep = isodd(sizestep) ? sizestep + 1 : sizestep
+
+    block_sizes = collect(sizemin:sizestep:sizemax)
+    half_block_sizes = Int.(block_sizes ./ 2)
+
+    # Build blocks for each size
+    block_sets = block_subsample.(Ref(series), block_sizes; circular=circular)
+    half_block_sets = block_subsample.(Ref(series), half_block_sizes; circular=circular)
+
+    # Build metrics series
+    metric_series = map(x -> metric.(x), block_sets)
+    half_metric_series = map(x -> metric.(x), half_block_sets)
+
+    # Compute empirical CDFs
+    ecdfs = ecdf.(metric_series)
+    half_ecdfs = ecdf.(half_metric_series)
+
+    # Define locations to compute distance between CDFs
+    # Makes it such that all CDFs are evaluated at the same points
+    center = median(mean.(metric_series))
+    width = median(std.(metric_series))
+    locations = (center - width):(2 * width) / numpoints:(center + width)
+
+    Δs = compute_distance.(ecdfs, half_ecdfs, Ref(locations))
+
+    return block_sizes[findmin(Δs)[2]]
+end
+
+"""
     estimate_block_size(
         metric::Function, series;
         α=0.05,
