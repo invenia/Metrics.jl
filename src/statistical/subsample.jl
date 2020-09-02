@@ -235,8 +235,57 @@ function adaptive_block_size(
 
     # Define locations to compute distance between CDFs
     # Makes it such that all CDFs are evaluated at the same points
+    # Focuses on the central region of the support, because that should be modelled better
     center = median(mean.(metric_series))
     width = median(std.(metric_series))
+    locations = (center - width):(2 * width) / numpoints:(center + width)
+
+    Δs = compute_distance.(ecdfs, half_ecdfs, Ref(locations))
+
+    return block_sizes[findmin(Δs)[2]]
+end
+
+function paired_adaptive_block_size(
+    metric::Function, series1, series2;
+    sizemin=ceil(Int, 0.1 * length(series1)),
+    sizemax=ceil(Int, 0.8 * length(series2)),
+    sizestep=2,
+    circular=false,
+    numpoints=50,
+)
+    length(series1) != length(series2) && throw(DimensionMismatch(
+        "Both series must have the same length. Got $(length(series1)) and $(length(series2))."
+    ))
+    sizemin = isodd(sizemin) ? sizemin + 1 : sizemin
+    sizemax = isodd(sizemax) ? sizemax + 1 : sizemax
+    sizestep = isodd(sizestep) ? sizestep + 1 : sizestep
+
+    block_sizes = collect(sizemin:sizestep:sizemax)
+    half_block_sizes = Int.(block_sizes ./ 2)
+
+    # Build blocks for each size
+    block_sets1 = block_subsample.(Ref(series1), block_sizes; circular=circular)
+    half_block_sets1 = block_subsample.(Ref(series1), half_block_sizes; circular=circular)
+    block_sets2 = block_subsample.(Ref(series2), block_sizes; circular=circular)
+    half_block_sets2 = block_subsample.(Ref(series2), half_block_sizes; circular=circular)
+
+    # Build metrics series
+    metric_series1 = map(x -> metric.(x), block_sets1)
+    half_metric_series1 = map(x -> metric.(x), half_block_sets1)
+    metric_series2 = map(x -> metric.(x), block_sets2)
+    half_metric_series2 = map(x -> metric.(x), half_block_sets2)
+    diff_series = metric_series1 .- metric_series2
+    half_diff_series = half_metric_series1 .- half_metric_series2
+
+    # Compute empirical CDFs
+    ecdfs = ecdf.(diff_series)
+    half_ecdfs = ecdf.(half_diff_series)
+
+    # Define locations to compute distance between CDFs
+    # Makes it such that all CDFs are evaluated at the same points
+    # Focuses on the central region of the support, because that should be modelled better
+    center = median(mean.(diff_series))
+    width = median(std.(diff_series))
     locations = (center - width):(2 * width) / numpoints:(center + width)
 
     Δs = compute_distance.(ecdfs, half_ecdfs, Ref(locations))
@@ -401,7 +450,7 @@ function subsample_ci(
     # apply metric to subsampled series
     blocks = block_subsample(series, block_size; circular=circular)
     metric_series = metric.(blocks)
-    # By default Statistics uses the unbiased version of `var`.
+    # By default, Statistics uses the unbiased version of `var`.
     σ_b = studentise ? std.(blocks) : ones(length(blocks))
     # estimate convergence rates
     β = isnothing(β) ? estimate_convergence_rate(metric, series; kwargs...) : β
@@ -420,4 +469,60 @@ function subsample_ci(
     lower_corrected = sample_metric - upper / τ_n * σ_n
     upper_corrected = sample_metric - lower / τ_n * σ_n
     return Interval(lower_corrected, upper_corrected)
+end
+
+function subsample_difference_ci(
+    metric::Function, series1, series2, block_size;
+    α=0.05, β=default_β(metric), studentise=false, circular=false, kwargs...
+)
+    length(series1) != length(series2) && throw(DimensionMismatch(
+        "Both series must have the same length. Got $(length(series1)) and $(length(series2))."
+    ))
+    # apply metric to subsampled series and get the differences
+    blocks1 = block_subsample(series1, block_size; circular=circular)
+    metric_series1 = metric.(blocks1)
+    blocks2 = block_subsample(series2, block_size; circular=circular)
+    metric_series2 = metric.(blocks2)
+    diff_series = metric_series1 .- metric_series2
+    # By default, Statistics uses the unbiased version of `var`. TODO: this makes no sense, think about it later
+    σ_b = studentise ? std.(blocks1) : ones(length(blocks1))
+    # estimate convergence rates. TODO: this makes no sense, think about it later
+    β = isnothing(β) ? estimate_convergence_rate(metric, series; kwargs...) : β
+    n = length(series1)
+    τ_b = block_size ^ β
+    τ_n = n ^ β
+    σ_n = studentise ? std(series1) : 1.0 # TODO: this makes no sense, think about it later
+    # compute sample difference
+    sample_diff = metric(series1) .- metric(series2)
+    # center and scale metrics
+    diff_series = (diff_series .- sample_diff) * τ_b ./ σ_b
+    # compute lower and upper bounds
+    lower = quantile(diff_series, α / 2)
+    upper = quantile(diff_series, 1 - (α / 2))
+    # apply location and scale estimates
+    lower_corrected = sample_diff - upper / τ_n * σ_n
+    upper_corrected = sample_diff - lower / τ_n * σ_n
+    return Interval(lower_corrected, upper_corrected)
+end
+
+function subsample_difference_ci(
+    metric::Function, series1, series2;
+    α=0.05,
+    β=default_β(metric),
+    studentise=false,
+    circular=false,
+    sizemin=ceil(Int, 0.1 * length(series1)),
+    sizemax=ceil(Int, 0.8 * length(series1)),
+    sizestep=1,
+    numpoints=50,
+    kwargs...
+)
+    block_size = paired_adaptive_block_size(
+        metric, series1, series2,
+        sizemin=sizemin, sizemax=sizemax, sizestep=sizestep, numpoints=numpoints
+    )
+    return subsample_difference_ci(
+        metric, series1, series2, block_size;
+        α=α, β=β, studentise=studentise, circular=circular, kwargs...
+    )
 end
