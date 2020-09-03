@@ -58,7 +58,7 @@ end
         returns, volumes;
         risk_level::Real=0.05,
         per_mwh=false,
-    ) -> LittleDict{Symbol, Union{Real, Missing}}
+    ) -> NamedTuple
 
 Calculate and stores basic financial data about a set of returns and volumes.
 Values that cannot be calculated will be missing.
@@ -77,7 +77,7 @@ as it is just the sum of daily return per MWh fractions.
 - `per_mwh=false`: Compute quantities per MWh.
 
 # Returns
-- `LittleDict{Symbol, Union{Real, Missing}}`: Calculated basic financial statistics.
+- `NamedTuple`: Calculated basic financial statistics.
     Keys of the returned dictionary:
     :traded_periods - Number of time periods traded
     :total_volume - Total volume traded
@@ -129,7 +129,7 @@ function financial_summary(
     # we know the value of correctly.
     # Return the stats dict here so we don't try to do any work on empty array.
     if isempty(returns)
-        return LittleDict{Symbol, Union{Real, Missing}}(
+        return (;
             :traded_periods => traded_periods,
             :total_volume => missing,
             :mean_volume => missing,
@@ -190,7 +190,7 @@ function financial_summary(
         )
 
         # We now have everything we need to build up our stats dictionary
-        return LittleDict{Symbol, Union{Real, Missing}}(
+        return (;
             :traded_periods => traded_periods,
             :total_volume => sum(volumes),
             # Calling `float()` here because statistics over money should not have precision
