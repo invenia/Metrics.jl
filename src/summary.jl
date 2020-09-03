@@ -113,9 +113,6 @@ function financial_summary(
         )
     end
 
-    # We want the traded periods INCLUDING the missing values
-    traded_periods = length(returns)
-
     # Get rid of missing values
     # We want to get rid of values that have a missing in either the volume or
     # the returns vector, so we can't just use skipmissing
@@ -130,7 +127,6 @@ function financial_summary(
     # Return the stats dict here so we don't try to do any work on empty array.
     if isempty(returns)
         return (;
-            :traded_periods => traded_periods,
             :total_volume => missing,
             :mean_volume => missing,
             :median_volume => missing,
@@ -139,9 +135,6 @@ function financial_summary(
             :mean_return => missing,
             :median_return => missing,
             :std_return => missing,
-            :probability_of_win => missing,
-            :profit_if_win => missing,
-            :profit_if_lose => missing,
             :expected_shortfall => missing,
             :expected_windfall => missing,
             :mean_over_expected_shortfall => missing,
@@ -153,28 +146,10 @@ function financial_summary(
         # We want the actual total.
         volumes = abs.(volumes)
 
-        # Determine the profit when we have a positive return(win) or negative return(lose).
-        win_returns = returns[returns .>=0]
-        lose_returns = returns[returns .< 0]
-
         # Determine scaling factor
         # Calling `float()` here because statistics over money should not have precision
         # only up to cents, thus we have to remove the `FixedDecimal`s.
         scale = per_mwh ? convert.(Float64, volumes) : ones(length(returns))
-
-        # Check if we need to use a missing here in case we have no positive returns.
-        if length(win_returns) == 0
-            profit_if_win = missing
-        else
-            profit_if_win = mean(win_returns) / mean(scale[returns .>=0])
-        end
-
-        # Check if we need to use a missing here in case we have no negative returns.
-        if length(lose_returns) == 0
-            profit_if_lose = missing
-        else
-            profit_if_lose = mean(lose_returns) / mean(scale[returns .< 0])
-        end
 
         # Not using scale directly below because the total dollar is also dollar.
         # Note that sum(returns ./ scale) is not an extensive property
@@ -191,7 +166,6 @@ function financial_summary(
 
         # We now have everything we need to build up our stats dictionary
         return (;
-            :traded_periods => traded_periods,
             :total_volume => sum(volumes),
             # Calling `float()` here because statistics over money should not have precision
             # only up to cents, thus we have to remove the `FixedDecimal`s.
@@ -205,9 +179,6 @@ function financial_summary(
             :total_return => total_return,
             :mean_return =>  mean(returns) / mean(scale),
             :std_return => length(returns) <= 1 ? missing : std(returns) / mean(scale),
-            :probability_of_win => sum(returns .>= 0) / length(returns),
-            :profit_if_win => profit_if_win,
-            :profit_if_lose => profit_if_lose,
             # take results from the other financial_summary method
             :median_return => fin_sum.median_return,
             :expected_shortfall => fin_sum.expected_shortfall,

@@ -169,7 +169,6 @@
             # The keys we expect in our dictionary
             # Sort them becaue ordering doesn't matter and it makes comparison easier.
             expected_keys = sort([
-                :traded_periods,
                 :total_volume,
                 :mean_volume,
                 :median_volume,
@@ -178,9 +177,6 @@
                 :mean_return,
                 :median_return,
                 :std_return,
-                :probability_of_win,
-                :profit_if_win,
-                :profit_if_lose,
                 :expected_shortfall,
                 :expected_windfall,
                 :mean_over_expected_shortfall,
@@ -196,8 +192,6 @@
 
                 @test sort(collect(keys(result))) == expected_keys
 
-                @test isequal(result[:traded_periods], 0)
-
                 @test isequal(result[:total_volume], missing)
                 @test isequal(result[:mean_volume], missing)
                 @test isequal(result[:median_volume], missing)
@@ -207,11 +201,6 @@
                 @test isequal(result[:mean_return], missing)
                 @test isequal(result[:median_return], missing)
                 @test isequal(result[:std_return], missing)
-
-                @test isequal(result[:probability_of_win], missing)
-
-                @test isequal(result[:profit_if_win], missing)
-                @test isequal(result[:profit_if_lose], missing)
 
                 @test isequal(result[:expected_shortfall], missing)
 
@@ -227,8 +216,6 @@
 
                 @test sort(collect(keys(result)))  == expected_keys
 
-                @test isequal(result[:traded_periods], 0)
-
                 @test isequal(result[:total_volume], missing)
                 @test isequal(result[:mean_volume], missing)
                 @test isequal(result[:median_volume], missing)
@@ -238,11 +225,6 @@
                 @test isequal(result[:mean_return], missing)
                 @test isequal(result[:median_return], missing)
                 @test isequal(result[:std_return], missing)
-
-                @test isequal(result[:probability_of_win], missing)
-
-                @test isequal(result[:profit_if_win], missing)
-                @test isequal(result[:profit_if_lose], missing)
 
                 @test isequal(result[:expected_shortfall], missing)
 
@@ -287,8 +269,6 @@
 
                 @test sort(collect(keys(result))) == expected_keys
 
-                @test isequal(result[:traded_periods], 6)
-
                 @test isequal(result[:total_volume], 21)
                 @test isequal(result[:mean_volume], 3.5)
                 @test isequal(result[:median_volume], 3.5)
@@ -299,10 +279,6 @@
                 @test isequal(result[:median_return], 3.5)
                 @test isequal(result[:std_return], 1.8708286933869707)
 
-                @test isequal(result[:probability_of_win], 1)
-
-                @test isequal(result[:profit_if_win], 3.5)
-                @test isequal(result[:profit_if_lose], missing)
 
                 # ES uses bottom 5% by default, so for test_returns this is just the worst return.
                 @test isequal(result[:expected_shortfall], -1.0)
@@ -318,8 +294,6 @@
 
                 @test sort(collect(keys(result)))  == expected_keys
 
-                @test isequal(result[:traded_periods], 6)
-
                 @test isequal(result[:total_volume], 21)
                 @test isequal(result[:mean_volume], 3.5)
                 @test isequal(result[:median_volume], 3.5)
@@ -329,11 +303,6 @@
                 @test isequal(result[:mean_return], -3.5)
                 @test isequal(result[:median_return], -3.5)
                 @test isequal(result[:std_return], 1.8708286933869707)
-
-                @test isequal(result[:probability_of_win], 0)
-
-                @test isequal(result[:profit_if_win], missing)
-                @test isequal(result[:profit_if_lose], -3.5)
 
                 # ES uses bottom 5% by default, so for test_returns this is just the worst return.
                 @test isequal(result[:expected_shortfall], 6.0)
@@ -349,8 +318,6 @@
 
                 @test sort(collect(keys(result)))  == expected_keys
 
-                @test isequal(result[:traded_periods], 6)
-
                 @test isequal(result[:total_volume], 21)
                 @test isequal(result[:mean_volume], 3.5)
                 @test isequal(result[:median_volume], 3.5)
@@ -360,11 +327,6 @@
                 @test isequal(result[:mean_return], -0.5)
                 @test isequal(result[:median_return], -0.5)
                 @test isequal(result[:std_return], 4.230839160261236)
-
-                @test isequal(result[:probability_of_win], 0.5)
-
-                @test isequal(result[:profit_if_win], 3)
-                @test isequal(result[:profit_if_lose], -4)
 
                 # ES uses bottom 5% by default, so for test_returns this is just the worst return.
                 @test isequal(result[:expected_shortfall], 6.0)
@@ -385,8 +347,6 @@
 
                 @test sort(collect(keys(result)))  == expected_keys
 
-                @test isequal(result[:traded_periods], 6)
-
                 @test isequal(result[:total_volume], 21)
                 @test isequal(result[:mean_volume], 3.5)
                 @test isequal(result[:median_volume], 3.5)
@@ -396,11 +356,6 @@
                 @test isequal(result[:mean_return], -0.5)
                 @test isequal(result[:median_return], -0.5)
                 @test isequal(result[:std_return], 4.230839160261236)
-
-                @test isequal(result[:probability_of_win], 0.5)
-
-                @test isequal(result[:profit_if_win], 3)
-                @test isequal(result[:profit_if_lose], -4)
 
                 @test isequal(result[:expected_shortfall], 4)
                 @test isequal(result[:mean_over_expected_shortfall], -0.125)
@@ -424,8 +379,6 @@
 
                 @test sort(collect(keys(result)))  == expected_keys
 
-                @test isequal(result[:traded_periods], 6)
-
                 @test isequal(result[:total_volume], 21)
                 @test isequal(result[:mean_volume], 3.5)
                 @test isequal(result[:median_volume], 3.5)
@@ -435,11 +388,6 @@
                 @test isequal(result[:mean_return], -0.5)
                 @test isequal(result[:median_return], -0.5)
                 @test isequal(result[:std_return], 4.230839160261236)
-
-                @test isequal(result[:probability_of_win], 0.5)
-
-                @test isequal(result[:profit_if_win], 3)
-                @test isequal(result[:profit_if_lose], -4)
 
                 @test isequal(result[:expected_shortfall], 4)
                 @test isequal(result[:mean_over_expected_shortfall], -0.125)
@@ -459,8 +407,6 @@
 
                 @test sort(collect(keys(result)))  == expected_keys
 
-                @test isequal(result[:traded_periods], 6)
-
                 @test isequal(result[:total_volume], 21)
                 @test isequal(result[:mean_volume], 3.5)
                 @test isequal(result[:median_volume], 3.5)
@@ -470,11 +416,6 @@
                 @test isequal(result[:mean_return], 3.5)
                 @test isequal(result[:median_return], 3.5)
                 @test isequal(result[:std_return], 1.8708286933869707)
-
-                @test isequal(result[:probability_of_win], 1)
-
-                @test isequal(result[:profit_if_win], 3.5)
-                @test isequal(result[:profit_if_lose], missing)
 
                 @test isequal(result[:expected_shortfall], FD(-1))
                 @test isequal(result[:mean_over_expected_shortfall], 3.5 / -FD(1))
@@ -495,8 +436,6 @@
                 @test sort(collect(keys(result)))  == expected_keys
 
                 # Test that every key has the expected value.
-                @test isequal(result[:traded_periods], 3)
-
                 @test isequal(result[:total_volume], missing)
                 @test isequal(result[:mean_volume], missing)
                 @test isequal(result[:median_volume], missing)
@@ -506,11 +445,6 @@
                 @test isequal(result[:mean_return], missing)
                 @test isequal(result[:median_return], missing)
                 @test isequal(result[:std_return], missing)
-
-                @test isequal(result[:probability_of_win], missing)
-
-                @test isequal(result[:profit_if_win], missing)
-                @test isequal(result[:profit_if_lose], missing)
 
                 @test isequal(result[:expected_shortfall], missing)
 
@@ -534,8 +468,6 @@
                 # Test that every key has the expected value.
                 @test sort(collect(keys(result)))  == expected_keys
 
-                @test isequal(result[:traded_periods], 10)
-
                 @test isequal(result[:total_volume], 21)
                 @test isequal(result[:mean_volume], 3.5)
                 @test isequal(result[:median_volume], 3.5)
@@ -545,11 +477,6 @@
                 @test isequal(result[:mean_return], -0.5)
                 @test isequal(result[:median_return], -0.5)
                 @test isequal(result[:std_return], 4.230839160261236)
-
-                @test isequal(result[:probability_of_win], 0.5)
-
-                @test isequal(result[:profit_if_win], 3)
-                @test isequal(result[:profit_if_lose], -4)
 
                 @test isequal(result[:expected_shortfall], 4)
 
@@ -579,8 +506,6 @@
                 # Test that every key has the expected value.
                 @test sort(collect(keys(result)))  == expected_keys
 
-                @test result[:traded_periods] == 10
-
                 @test result[:total_volume] == 13
                 @test result[:mean_volume] == 3.25
                 @test result[:median_volume] == 3.5
@@ -590,11 +515,6 @@
                 @test result[:mean_return] == 0.75
                 @test result[:median_return] == 2.0
                 @test result[:std_return] == 4.7871355387816905
-
-                @test result[:probability_of_win] == 0.75
-
-                @test result[:profit_if_win] == 3
-                @test result[:profit_if_lose] == -6
 
                 @test result[:expected_shortfall] == 2.5
 
