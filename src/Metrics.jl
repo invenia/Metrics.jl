@@ -1,12 +1,16 @@
 module Metrics
 
 using AxisArrays
+using DataFrames: disallowmissing
 using Distributions
+using FixedPointDecimals # required for load_financial_data
 using IndexedDistributions
 using Intervals
 using LinearAlgebra: cholesky, det, dot, I, norm, tr
 using NamedDims
+using NaNMath
 using ObservationDims
+using OrderedCollections: LittleDict
 using PSDMats
 using SpecialFunctions
 using StatsBase
