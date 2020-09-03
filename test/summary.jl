@@ -181,10 +181,10 @@
                 :probability_of_win,
                 :profit_if_win,
                 :profit_if_lose,
-                :es,
-                :ew,
-                Symbol("mean/es"),
-                Symbol("median/es"),
+                :expected_shortfall,
+                :expected_windfall,
+                :mean_over_expected_shortfall,
+                :median_over_expected_shortfall,
             ])
 
             @testset "weird inputs" begin
@@ -213,10 +213,10 @@
                 @test isequal(result[:profit_if_win], missing)
                 @test isequal(result[:profit_if_lose], missing)
 
-                @test isequal(result[:es], missing)
+                @test isequal(result[:expected_shortfall], missing)
 
-                @test isequal(result[Symbol("mean/es")], missing)
-                @test isequal(result[Symbol("median/es")], missing)
+                @test isequal(result[:mean_over_expected_shortfall], missing)
+                @test isequal(result[:median_over_expected_shortfall], missing)
 
 
                 # Empty Input but the type is FixedDecimal, which doesn't have a NaN type
@@ -244,10 +244,10 @@
                 @test isequal(result[:profit_if_win], missing)
                 @test isequal(result[:profit_if_lose], missing)
 
-                @test isequal(result[:es], missing)
+                @test isequal(result[:expected_shortfall], missing)
 
-                @test isequal(result[Symbol("mean/es")], missing)
-                @test isequal(result[Symbol("median/es")], missing)
+                @test isequal(result[:mean_over_expected_shortfall], missing)
+                @test isequal(result[:median_over_expected_shortfall], missing)
 
             end
 
@@ -256,7 +256,7 @@
                 test_returns = [1, 2, 3, 4, 5, 6]
                 test_volumes = [1, 2, 3, 4, 5, 6, 7, 9]
 
-                @test_throws ErrorException financial_summary(test_returns, test_volumes, expected_shortfall_percentile=50)
+                @test_throws ErrorException financial_summary(test_returns, test_volumes, risk_level=0.5)
             end
 
             @testset "NaN return/volume" begin
@@ -268,7 +268,7 @@
                     # es percentile to 50 so that es metrics are
                     # not 'missing' (!isnan(missing) == missing)
                     result = financial_summary(test_returns, test_volumes,
-                                            expected_shortfall_percentile=50, per_mwh=per_mwh)
+                                            risk_level=0.5, per_mwh=per_mwh)
 
                     for val in values(result)
                         @test !isnan(val)
@@ -283,7 +283,7 @@
                 test_returns = [1, 2, 3, 4, 5, 6]
                 test_volumes = [1, 2, 3, 4, 5, 6]
 
-                result = financial_summary(test_returns, test_volumes, expected_shortfall_percentile=20)
+                result = financial_summary(test_returns, test_volumes, risk_level=0.2)
 
                 @test sort(collect(keys(result))) == expected_keys
 
@@ -305,16 +305,16 @@
                 @test isequal(result[:profit_if_lose], missing)
 
                 # ES uses bottom 5% by default, so for test_returns this is just the worst return.
-                @test isequal(result[:es], -1.0)
-                @test isequal(result[Symbol("mean/es")], 3.5 / -1.0)
-                @test isequal(result[Symbol("median/es")], 3.5 / -1.0)
+                @test isequal(result[:expected_shortfall], -1.0)
+                @test isequal(result[:mean_over_expected_shortfall], 3.5 / -1.0)
+                @test isequal(result[:median_over_expected_shortfall], 3.5 / -1.0)
 
 
                 # Test input with only losses
                 test_returns = [-1.0, -2.0, -3.0, -4.0, -5.0, -6.0]
                 test_volumes = [1, 2, 3, 4, 5, 6]
 
-                result = financial_summary(test_returns, test_volumes, expected_shortfall_percentile=20)
+                result = financial_summary(test_returns, test_volumes, risk_level=0.2)
 
                 @test sort(collect(keys(result)))  == expected_keys
 
@@ -336,16 +336,16 @@
                 @test isequal(result[:profit_if_lose], -3.5)
 
                 # ES uses bottom 5% by default, so for test_returns this is just the worst return.
-                @test isequal(result[:es], 6.0)
-                @test isequal(result[Symbol("mean/es")], -3.5 / 6.0)
-                @test isequal(result[Symbol("median/es")], -3.5 / 6.0)
+                @test isequal(result[:expected_shortfall], 6.0)
+                @test isequal(result[:mean_over_expected_shortfall], -3.5 / 6.0)
+                @test isequal(result[:median_over_expected_shortfall], -3.5 / 6.0)
 
 
                 # Test input with some losses
                 test_returns = [1.0, -2.0, 3.0, -4.0, 5.0, -6.0]
                 test_volumes = [1, 2, 3, 4, 5, 6]
 
-                result = financial_summary(test_returns, test_volumes, expected_shortfall_percentile=20)
+                result = financial_summary(test_returns, test_volumes, risk_level=0.2)
 
                 @test sort(collect(keys(result)))  == expected_keys
 
@@ -367,20 +367,20 @@
                 @test isequal(result[:profit_if_lose], -4)
 
                 # ES uses bottom 5% by default, so for test_returns this is just the worst return.
-                @test isequal(result[:es], 6.0)
-                @test isequal(result[Symbol("mean/es")], -0.5 / 6.0)
-                @test isequal(result[Symbol("median/es")], -0.5 / 6.0)
+                @test isequal(result[:expected_shortfall], 6.0)
+                @test isequal(result[:mean_over_expected_shortfall], -0.5 / 6.0)
+                @test isequal(result[:median_over_expected_shortfall], -0.5 / 6.0)
 
 
                 # Test with a larger ES percentage
                 test_returns = [1.0, -2.0, 3.0, -4.0, 5.0, -6.0]
                 test_volumes = [1, 2, 3, 4, 5, 6]
-                test_es_percentile = 50
+                test_es_percentile = 0.5
 
                 result = financial_summary(
                     test_returns,
                     test_volumes;
-                    expected_shortfall_percentile=test_es_percentile
+                    risk_level=test_es_percentile
                 )
 
                 @test sort(collect(keys(result)))  == expected_keys
@@ -402,9 +402,9 @@
                 @test isequal(result[:profit_if_win], 3)
                 @test isequal(result[:profit_if_lose], -4)
 
-                @test isequal(result[:es], 4)
-                @test isequal(result[Symbol("mean/es")], -0.125)
-                @test isequal(result[Symbol("median/es")], -0.125)
+                @test isequal(result[:expected_shortfall], 4)
+                @test isequal(result[:mean_over_expected_shortfall], -0.125)
+                @test isequal(result[:median_over_expected_shortfall], -0.125)
 
             end
 
@@ -414,12 +414,12 @@
                 test_returns = [1.0, -2.0, 3.0, -4.0, 5.0, -6.0]
                 test_volumes = [-1, -2, -3, 4, 5, 6]
                 test_unchanged_volumes = [-1, -2, -3, 4, 5, 6]
-                test_es_percentile = 50
+                test_es_percentile = 0.5
 
                 result = financial_summary(
                     test_returns,
                     test_volumes;
-                    expected_shortfall_percentile=test_es_percentile
+                    risk_level=test_es_percentile
                 )
 
                 @test sort(collect(keys(result)))  == expected_keys
@@ -441,9 +441,9 @@
                 @test isequal(result[:profit_if_win], 3)
                 @test isequal(result[:profit_if_lose], -4)
 
-                @test isequal(result[:es], 4)
-                @test isequal(result[Symbol("mean/es")], -0.125)
-                @test isequal(result[Symbol("median/es")], -0.125)
+                @test isequal(result[:expected_shortfall], 4)
+                @test isequal(result[:mean_over_expected_shortfall], -0.125)
+                @test isequal(result[:median_over_expected_shortfall], -0.125)
 
                 # Test that the volumes didn't get changed by calling the function.
                 @test test_volumes == test_unchanged_volumes
@@ -455,7 +455,7 @@
                 test_returns = [FD(1), FD(2), FD(3), FD(4), FD(5), FD(6)]
                 test_volumes = [FD(1), FD(2), FD(3), FD(4), FD(5), FD(6)]
 
-                result = financial_summary(test_returns, test_volumes, expected_shortfall_percentile=20)
+                result = financial_summary(test_returns, test_volumes, risk_level=0.2)
 
                 @test sort(collect(keys(result)))  == expected_keys
 
@@ -476,9 +476,9 @@
                 @test isequal(result[:profit_if_win], 3.5)
                 @test isequal(result[:profit_if_lose], missing)
 
-                @test isequal(result[:es], FD(-1))
-                @test isequal(result[Symbol("mean/es")], 3.5 / -FD(1))
-                @test isequal(result[Symbol("median/es")], 3.5 / -FD(1))
+                @test isequal(result[:expected_shortfall], FD(-1))
+                @test isequal(result[:mean_over_expected_shortfall], 3.5 / -FD(1))
+                @test isequal(result[:median_over_expected_shortfall], 3.5 / -FD(1))
 
             end
 
@@ -512,10 +512,10 @@
                 @test isequal(result[:profit_if_win], missing)
                 @test isequal(result[:profit_if_lose], missing)
 
-                @test isequal(result[:es], missing)
+                @test isequal(result[:expected_shortfall], missing)
 
-                @test isequal(result[Symbol("mean/es")], missing)
-                @test isequal(result[Symbol("median/es")], missing)
+                @test isequal(result[:mean_over_expected_shortfall], missing)
+                @test isequal(result[:median_over_expected_shortfall], missing)
 
                 # Test some missing values added to a previous dataset
                 # A few negative volumes we expect to be absolute valued
@@ -523,12 +523,12 @@
                 test_volumes = [-1, missing, -2, -3, missing, 4, 5, missing, 6, missing]
 
                 test_unchanged_volumes = [-1, missing, -2, -3, missing, 4, 5, missing, 6, missing]
-                test_es_percentile = 50
+                test_es_percentile = 0.5
 
                 result = financial_summary(
                     test_returns,
                     test_volumes;
-                    expected_shortfall_percentile=test_es_percentile
+                    risk_level=test_es_percentile
                 )
 
                 # Test that every key has the expected value.
@@ -551,10 +551,10 @@
                 @test isequal(result[:profit_if_win], 3)
                 @test isequal(result[:profit_if_lose], -4)
 
-                @test isequal(result[:es], 4)
+                @test isequal(result[:expected_shortfall], 4)
 
-                @test isequal(result[Symbol("mean/es")], -0.125)
-                @test isequal(result[Symbol("median/es")], -0.125)
+                @test isequal(result[:mean_over_expected_shortfall], -0.125)
+                @test isequal(result[:median_over_expected_shortfall], -0.125)
 
                 # Test that the volumes didn't get changed by calling the function.
                 @test isequal(test_volumes, test_unchanged_volumes)
@@ -568,12 +568,12 @@
                 # [-1, -3, 4, 5]
 
                 test_unchanged_volumes = [-1, missing, -2, -3, missing, 4, 5, missing, 6, missing]
-                test_es_percentile = 50
+                test_es_percentile = 0.5
 
                 result = financial_summary(
                     test_returns,
                     test_volumes;
-                    expected_shortfall_percentile=test_es_percentile
+                    risk_level=test_es_percentile
                 )
 
                 # Test that every key has the expected value.
@@ -596,10 +596,10 @@
                 @test result[:profit_if_win] == 3
                 @test result[:profit_if_lose] == -6
 
-                @test result[:es] == 2.5
+                @test result[:expected_shortfall] == 2.5
 
-                @test result[Symbol("mean/es")] == 0.3
-                @test result[Symbol("median/es")] == 0.8
+                @test result[:mean_over_expected_shortfall] == 0.3
+                @test result[:median_over_expected_shortfall] == 0.8
 
                 # Test that the volumes didn't get changed by calling the function.
                 @test isequal(test_volumes, test_unchanged_volumes)

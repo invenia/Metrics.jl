@@ -40,12 +40,12 @@ function financial_summary(
     )
 end
 
-function financial_summary(returns; risk_level::Real=0.05)
+function financial_summary(returns; risk_level::Real=0.05, kwargs...)
     return (;
         :median_return => median(returns),
         :expected_return => expected_return(returns),
-        :expected_shortfall => expected_shortfall(returns; risk_level=risk_level),
-        :expected_windfall => expected_windfall(returns; level=risk_level),
+        :expected_shortfall => expected_shortfall(returns; risk_level=risk_level, kwargs...),
+        :expected_windfall => expected_windfall(returns; level=risk_level, kwargs...),
         :median_over_expected_shortfall => median_over_expected_shortfall(returns; risk_level=risk_level),
         :sharpe_ratio => sharpe_ratio(returns),
         :volatility => volatility(returns),
@@ -54,10 +54,9 @@ function financial_summary(returns; risk_level::Real=0.05)
 end
 
 """
-    summary(
-        returns,
-        volumes;
-        expected_shortfall_percentile::Real=5,
+    financial_summary(
+        returns, volumes;
+        risk_level::Real=0.05,
         per_mwh=false,
     ) -> LittleDict{Symbol, Union{Real, Missing}}
 
@@ -74,8 +73,7 @@ as it is just the sum of daily return per MWh fractions.
 - `volumes`: Volume associated with the same index of financial return.
 
 # Keyword Arguments
-- `expected_shortfall_percentile::Real=5`: The percentile for expected shortfall
-calculations. For the default, the returns must be in the bottom 5 percent of returns.
+- `risk_level::Real=5`: The risk level for expected shortfall. For the default, the returns must be in the bottom 5 percent of returns.
 - `per_mwh=false`: Compute quantities per MWh.
 
 # Returns
@@ -93,18 +91,17 @@ calculations. For the default, the returns must be in the bottom 5 percent of re
     :probability_of_win - Probability that the financial return of a period is positive
     :profit_if_win - Mean return of all positive periods
     :profit_if_lose - Mean return of all negative periods
-    :es - expected shortfall of returns i.e. -E[r | r <= q_α(r)], q_α is the α-percentile
-    :ew - expected windfall of returns.
-    Symbol("mean/es") - Mean return divided by expected shortfall
-    Symbol("median/es") - Median return divided by expected shortfall
+    :expected_shortfall - expected shortfall of returns i.e. -E[r | r <= q_α(r)], q_α is the
+    α-percentile
+    :expected_windfall - expected windfall of returns.
+    :mean_over_expected_shortfall - Mean return divided by expected shortfall
+    :median_over_expected_shortfall - Median return divided by expected shortfall
     """
 function financial_summary(
-    returns,
-    volumes;
-    expected_shortfall_percentile::Real=5,
+    returns, volumes;
+    risk_level::Real=0.05,
     per_mwh=false,
 )
-
     # We expect these to be equal in size
     if length(returns) != length(volumes)
         error(
@@ -145,10 +142,10 @@ function financial_summary(
             :probability_of_win => missing,
             :profit_if_win => missing,
             :profit_if_lose => missing,
-            :es => missing,
-            :ew => missing,
-            Symbol("mean/es") => missing,
-            Symbol("median/es") => missing,
+            :expected_shortfall => missing,
+            :expected_windfall => missing,
+            :mean_over_expected_shortfall => missing,
+            :median_over_expected_shortfall => missing,
         )
     else
 
@@ -179,62 +176,44 @@ function financial_summary(
             profit_if_lose = mean(lose_returns) / mean(scale[returns .< 0])
         end
 
-        # These are used multiple times so put them in a variable
-        mean_return = mean(returns) / mean(scale)
-        # Notice that here we are computing the median of the ratios, not the ratio of the
-        # medians. For discussion, see https://gitlab.invenia.ca/invenia/Metrics.jl/-/issues/56
-        median_return = NaNMath.median(returns ./ scale)
         # Not using scale directly below because the total dollar is also dollar.
         # Note that sum(returns ./ scale) is not an extensive property
         # and as a metric it is not grounded in any practical principle,
         # yet it can be used heuristically in some analyses if regarded with scrutiny.
         total_return = per_mwh ? sum(returns) : sum(returns ./ scale)
-        # Calling `float()` here because statistics over money should not have precision
-        # only up to cents, thus we have to remove the `FixedDecimal`s.
-        shortfall = Metrics.expected_shortfall(
-            float.(returns),
-            risk_level = expected_shortfall_percentile / 100,
+
+        fin_sum = financial_summary(
+            float.(returns);
+            risk_level=risk_level,
             per_mwh=per_mwh,
-            volumes=volumes, # Will be ignored if per_mwh=false
-        )
-        windfall = Metrics.expected_windfall(
-            float.(returns),
-            level = expected_shortfall_percentile / 100,
-            per_mwh=per_mwh,
-            volumes=volumes, # Will be ignored if per_mwh=false
+            volumes=volumes,
         )
 
         # We now have everything we need to build up our stats dictionary
         return LittleDict{Symbol, Union{Real, Missing}}(
             :traded_periods => traded_periods,
-
             :total_volume => sum(volumes),
             # Calling `float()` here because statistics over money should not have precision
             # only up to cents, thus we have to remove the `FixedDecimal`s.
             :mean_volume => mean(float.(volumes)),
             :median_volume => median(float.(volumes)),
-
             # Calculating the `std` when we have ≤ 1 FixedDecimal values will result in
             # attempting to convert a `NaN` into a FixedDecimal which will error. As a work
             # around we'll use `missing` in these cases.
             # See: https://github.com/JuliaLang/julia/issues/25300
             :std_volume => length(volumes) <= 1 ? missing : std(volumes),
-
             :total_return => total_return,
-            :mean_return => mean_return,
-            :median_return => median_return,
+            :mean_return =>  mean(returns) / mean(scale),
             :std_return => length(returns) <= 1 ? missing : std(returns) / mean(scale),
-
             :probability_of_win => sum(returns .>= 0) / length(returns),
             :profit_if_win => profit_if_win,
             :profit_if_lose => profit_if_lose,
-
-            :es => shortfall,
-            :ew => windfall,
-            # assuming shrtfall is negative and mean return and median returns positive,
-            # we take the negative of `mean/es` and `median/es` so that larger is better.
-            Symbol("mean/es") => mean_return / shortfall,
-            Symbol("median/es") => median_return / shortfall,
+            # take results from the other financial_summary method
+            :median_return => fin_sum.median_return,
+            :expected_shortfall => fin_sum.expected_shortfall,
+            :expected_windfall => fin_sum.expected_windfall,
+            :mean_over_expected_shortfall => fin_sum.mean_over_expected_shortfall,
+            :median_over_expected_shortfall => fin_sum.median_over_expected_shortfall,
         )
 
     end
