@@ -373,15 +373,15 @@ default_β(f::typeof(expected_windfall)) = 0.5
         sizemin=ceil(Int, 0.1 * length(series)),
         sizemax=ceil(Int, 0.8 * length(series)),
         sizestep=1,
-        blocksvol=2,
+        numpoints=50,
         kwargs...
     )
 
 Compute confidence interval for `metric` over a `series` at a level `α` and convergence rate
-`b^β` by estimating the block size via [`estimate_block_size`](@ref).
+`b^β` by estimating the block size via [`adaptive_block_size`](@ref).
 
-The `sizemin`, `sizemax`, `sizestep`, and `blocksvol` keyword arguments are passed to
-[`estimate_block_size`](@ref).
+The `sizemin`, `sizemax`, `sizestep`, and `numpoints` keyword arguments are passed to
+[`adaptive_block_size`](@ref).
 The remaining `kwargs` are passed to [`estimate_convergence_rate`](@ref) (if `β` is
 `nothing`) and [`subsample_ci`](@ref).
 If `β=nothing`, the rate is estimated via [`estimate_convergence_rate`](@ref).
@@ -406,11 +406,11 @@ function subsample_ci(
     sizemin=ceil(Int, 0.1 * length(series)),
     sizemax=ceil(Int, 0.8 * length(series)),
     sizestep=1,
-    blocksvol=2,
+    numpoints=50,
     kwargs...
 )
     β = isnothing(β) ? estimate_convergence_rate(metric, series; kwargs...) : β
-    block_size = estimate_block_size(
+    block_size = adaptive_block_size(
         metric,
         series;
         α=α,
@@ -418,7 +418,7 @@ function subsample_ci(
         sizemin=sizemin,
         sizemax=sizemax,
         sizestep=sizestep,
-        blocksvol=blocksvol
+        numpoints=numpoints
     )
 
     return subsample_ci(metric, series, block_size; α=α, β=β, kwargs...)
