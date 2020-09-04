@@ -73,13 +73,13 @@ as it is just the sum of daily return per MWh fractions.
 - `volumes`: Volume associated with the same index of financial return.
 
 # Keyword Arguments
-- `risk_level::Real=5`: The risk level for expected shortfall. For the default, the returns must be in the bottom 5 percent of returns.
+- `risk_level::Real=5`: The risk level for expected shortfall. For the default, the returns
+must be in the bottom 5 percent of returns.
 - `per_mwh=false`: Compute quantities per MWh.
 
 # Returns
 - `NamedTuple`: Calculated basic financial statistics.
     Keys of the returned dictionary:
-    :traded_periods - Number of time periods traded
     :total_volume - Total volume traded
     :mean_volume - Mean volume traded of a period
     :median_volume - Median volume traded of a period
@@ -88,9 +88,6 @@ as it is just the sum of daily return per MWh fractions.
     :mean_return - Mean financial return of a period
     :median_return - Median financial return of a period
     :std_return - standard deviation of the period financial returns
-    :probability_of_win - Probability that the financial return of a period is positive
-    :profit_if_win - Mean return of all positive periods
-    :profit_if_lose - Mean return of all negative periods
     :expected_shortfall - expected shortfall of returns i.e. -E[r | r <= q_α(r)], q_α is the
     α-percentile
     :expected_windfall - expected windfall of returns.
