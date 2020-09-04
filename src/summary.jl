@@ -125,68 +125,66 @@ function financial_summary(
     # Make everything missing if the return vector is empty, except traded periods which
     # we know the value of correctly.
     # Return the stats dict here so we don't try to do any work on empty array.
-    if isempty(returns)
-        return (;
-            :total_volume => missing,
-            :mean_volume => missing,
-            :median_volume => missing,
-            :std_volume => missing,
-            :total_return => missing,
-            :mean_return => missing,
-            :median_return => missing,
-            :std_return => missing,
-            :expected_shortfall => missing,
-            :expected_windfall => missing,
-            :mean_over_expected_shortfall => missing,
-            :median_over_expected_shortfall => missing,
-        )
-    else
 
-        # Take the absolute of volumes, we don't want our volume negating itself here.
-        # We want the actual total.
-        volumes = abs.(volumes)
+    all_missing = (;
+        :total_volume => missing,
+        :mean_volume => missing,
+        :median_volume => missing,
+        :std_volume => missing,
+        :total_return => missing,
+        :mean_return => missing,
+        :median_return => missing,
+        :std_return => missing,
+        :expected_shortfall => missing,
+        :expected_windfall => missing,
+        :mean_over_expected_shortfall => missing,
+        :median_over_expected_shortfall => missing,
+    )
 
-        # Determine scaling factor
+    isempty(returns) && return all_missing
+
+    # Take the absolute of volumes, we don't want our volume negating itself here.
+    # We want the actual total.
+    volumes = abs.(volumes)
+
+    # Determine scaling factor
+    # Calling `float()` here because statistics over money should not have precision
+    # only up to cents, thus we have to remove the `FixedDecimal`s.
+    scale = per_mwh ? convert.(Float64, volumes) : ones(length(returns))
+
+    # Not using scale directly below because the total dollar is also dollar.
+    # Note that sum(returns ./ scale) is not an extensive property
+    # and as a metric it is not grounded in any practical principle,
+    # yet it can be used heuristically in some analyses if regarded with scrutiny.
+    total_return = per_mwh ? sum(returns) : sum(returns ./ scale)
+
+    fin_sum = financial_summary(
+        float.(returns);
+        risk_level=risk_level,
+        per_mwh=per_mwh,
+        volumes=volumes,
+    )
+
+    # We now have everything we need to build up our stats dictionary
+    return (;
+        :total_volume => sum(volumes),
         # Calling `float()` here because statistics over money should not have precision
         # only up to cents, thus we have to remove the `FixedDecimal`s.
-        scale = per_mwh ? convert.(Float64, volumes) : ones(length(returns))
-
-        # Not using scale directly below because the total dollar is also dollar.
-        # Note that sum(returns ./ scale) is not an extensive property
-        # and as a metric it is not grounded in any practical principle,
-        # yet it can be used heuristically in some analyses if regarded with scrutiny.
-        total_return = per_mwh ? sum(returns) : sum(returns ./ scale)
-
-        fin_sum = financial_summary(
-            float.(returns);
-            risk_level=risk_level,
-            per_mwh=per_mwh,
-            volumes=volumes,
-        )
-
-        # We now have everything we need to build up our stats dictionary
-        return (;
-            :total_volume => sum(volumes),
-            # Calling `float()` here because statistics over money should not have precision
-            # only up to cents, thus we have to remove the `FixedDecimal`s.
-            :mean_volume => mean(float.(volumes)),
-            :median_volume => median(float.(volumes)),
-            # Calculating the `std` when we have ≤ 1 FixedDecimal values will result in
-            # attempting to convert a `NaN` into a FixedDecimal which will error. As a work
-            # around we'll use `missing` in these cases.
-            # See: https://github.com/JuliaLang/julia/issues/25300
-            :std_volume => length(volumes) <= 1 ? missing : std(volumes),
-            :total_return => total_return,
-            :mean_return =>  mean(returns) / mean(scale),
-            :std_return => length(returns) <= 1 ? missing : std(returns) / mean(scale),
-            # take results from the other financial_summary method
-            :median_return => fin_sum.median_return,
-            :expected_shortfall => fin_sum.expected_shortfall,
-            :expected_windfall => fin_sum.expected_windfall,
-            :mean_over_expected_shortfall => fin_sum.mean_over_expected_shortfall,
-            :median_over_expected_shortfall => fin_sum.median_over_expected_shortfall,
-        )
-
-    end
-
+        :mean_volume => mean(float.(volumes)),
+        :median_volume => median(float.(volumes)),
+        # Calculating the `std` when we have ≤ 1 FixedDecimal values will result in
+        # attempting to convert a `NaN` into a FixedDecimal which will error. As a work
+        # around we'll use `missing` in these cases.
+        # See: https://github.com/JuliaLang/julia/issues/25300
+        :std_volume => length(volumes) <= 1 ? missing : std(volumes),
+        :total_return => total_return,
+        :mean_return =>  mean(returns) / mean(scale),
+        :std_return => length(returns) <= 1 ? missing : std(returns) / mean(scale),
+        # take results from the other financial_summary method
+        :median_return => fin_sum.median_return,
+        :expected_shortfall => fin_sum.expected_shortfall,
+        :expected_windfall => fin_sum.expected_windfall,
+        :mean_over_expected_shortfall => fin_sum.mean_over_expected_shortfall,
+        :median_over_expected_shortfall => fin_sum.median_over_expected_shortfall,
+    )
 end
