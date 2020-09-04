@@ -46,10 +46,10 @@ function financial_summary(returns; risk_level::Real=0.05, kwargs...)
         :expected_return => expected_return(returns),
         :expected_shortfall => expected_shortfall(returns; risk_level=risk_level, kwargs...),
         :expected_windfall => expected_windfall(returns; level=risk_level, kwargs...),
-        :median_over_expected_shortfall => median_over_expected_shortfall(returns; risk_level=risk_level),
+        :median_over_expected_shortfall => median_over_es(returns; risk_level=risk_level, kwargs...),
         :sharpe_ratio => sharpe_ratio(returns),
         :volatility => volatility(returns),
-        :mean_over_expected_shortfall => mean_over_es(returns; risk_level=risk_level),
+        :mean_over_expected_shortfall => mean_over_es(returns; risk_level=risk_level, kwargs...),
     )
 end
 
@@ -162,6 +162,13 @@ function financial_summary(
         volumes=volumes,
     )
 
+    # We cannot use the mean and median from the other financial output
+    # since it doesn't account for scale so we must compute and store those:
+    mean_return = mean(returns) / mean(scale)
+    # Notice that here we are computing the median of the ratios, not the ratio of the
+    # medians. For discussion, see https://gitlab.invenia.ca/invenia/Metrics.jl/-/issues/56
+    median_return = NaNMath.median(returns ./ scale)
+
     # We now have everything we need to build up our stats dictionary
     return (;
         :total_volume => sum(volumes),
@@ -175,13 +182,13 @@ function financial_summary(
         # See: https://github.com/JuliaLang/julia/issues/25300
         :std_volume => length(volumes) <= 1 ? missing : std(volumes),
         :total_return => total_return,
-        :mean_return =>  mean(returns) / mean(scale),
+        :mean_return => mean_return,
         :std_return => length(returns) <= 1 ? missing : std(returns) / mean(scale),
         # take results from the other financial_summary method
-        :median_return => fin_sum.median_return,
+        :median_return => median_return,
         :expected_shortfall => fin_sum.expected_shortfall,
         :expected_windfall => fin_sum.expected_windfall,
-        :mean_over_expected_shortfall => fin_sum.mean_over_expected_shortfall,
-        :median_over_expected_shortfall => fin_sum.median_over_expected_shortfall,
+        :mean_over_expected_shortfall => mean_return / fin_sum.expected_shortfall,
+        :median_over_expected_shortfall => median_return / fin_sum.expected_shortfall,
     )
 end
