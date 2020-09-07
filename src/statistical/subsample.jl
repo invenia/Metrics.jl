@@ -413,8 +413,6 @@ function subsample_ci(
     block_size = adaptive_block_size(
         metric,
         series;
-        α=α,
-        β=β,
         sizemin=sizemin,
         sizemax=sizemax,
         sizestep=sizestep,
