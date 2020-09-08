@@ -1,11 +1,13 @@
 module Metrics
 
 using AxisArrays
+using DataFrames: disallowmissing
 using Distributions
 using IndexedDistributions
 using Intervals
 using LinearAlgebra: cholesky, det, dot, I, norm, tr
 using NamedDims
+using NaNMath
 using ObservationDims
 using PSDMats
 using SpecialFunctions
