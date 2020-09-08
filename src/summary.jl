@@ -73,7 +73,7 @@ as it is just the sum of daily return per MWh fractions.
 - `volumes`: Volume associated with the same index of financial return.
 
 # Keyword Arguments
-- `risk_level::Real=5`: The risk level for expected shortfall. For the default, the returns
+- `risk_level::Real=0.05`: The risk level for expected shortfall. For the default, the returns
 must be in the bottom 5 percent of returns.
 - `per_mwh=false`: Compute quantities per MWh.
 
@@ -183,9 +183,9 @@ function financial_summary(
         :std_volume => length(volumes) <= 1 ? missing : std(volumes),
         :total_return => total_return,
         :mean_return => mean_return,
-        :std_return => length(returns) <= 1 ? missing : std(returns) / mean(scale),
-        # take results from the other financial_summary method
         :median_return => median_return,
+        # take results from the other financial_summary method
+        :std_return => length(returns) <= 1 ? missing : std(returns) / mean(scale),
         :expected_shortfall => fin_sum.expected_shortfall,
         :expected_windfall => fin_sum.expected_windfall,
         :mean_over_expected_shortfall => mean_return / fin_sum.expected_shortfall,
