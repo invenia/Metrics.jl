@@ -238,7 +238,15 @@ function adaptive_block_size(
     # Focuses on the central region of the support, because that should be modelled better
     center = median(mean.(metric_series))
     width = median(std.(metric_series))
-    locations = (center - width):(2 * width) / numpoints:(center + width)
+    if width == 0
+        @warn """
+            Failed to estimate block size. The metric value is identical for every block.
+            Returning smallest possible block size.
+        """
+        @info "Standard deviation of metrics over blocks: $(std.(metric_series))."
+        return sizemin
+    end 
+    locations = (center - width):(2.0 * width) / numpoints:(center + width)
 
     Δs = compute_distance.(ecdfs, half_ecdfs, Ref(locations))
 
