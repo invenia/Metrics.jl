@@ -93,3 +93,23 @@ function expected_windfall(
 
     return exp_windfall - pi
 end
+
+"""
+    expected_windfall_over_expected_shortfall(returns::AbstractVector; kwargs...) -> Number
+
+Calculate the `expected_windfall(returns) / expected_shortfall(returns)` metric.
+
+We assume that the price impact has already been included.
+
+# Arguments
+- `returns::AbstractVector`: An iterator of returns over some time or of some portfolio
+
+# Keyword Arguments
+- `kwargs`: The [`expected shortfall`](@ref expected_shortfall) and
+[`expected windfall`](@ref expected_windfall) keyword arguments.
+"""
+function expected_windfall_over_expected_shortfall(returns; kwargs...)
+    return expected_windfall(returns; kwargs...) / expected_shortfall(returns; kwargs...)
+end
+
+const ew_over_es = expected_windfall_over_expected_shortfall
