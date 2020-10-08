@@ -16,6 +16,7 @@ using StatsUtils: sqrtcov
 
 include("utils.jl")
 # regression
+include("regression/asymmetric.jl")
 include("regression/gaussian_loglikelihood.jl")
 include("regression/picp.jl")
 include("regression/potential_payoff.jl")
@@ -39,6 +40,7 @@ include("deprecated.jl")
 export
     evaluate,
     # regression
+    asymmetric_absolute_error,
     expected_squared_error, se,
     mean_squared_error, mse,
     root_mean_squared_error, rmse,
