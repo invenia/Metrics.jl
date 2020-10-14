@@ -11,6 +11,9 @@
         result = Metrics.block_subsample(block_series, 3)
         @test result == [[1, 2, 3], [2, 3, 4], [3, 4, 5]]
 
+        result = Metrics.block_subsample(block_series, 3, circular=true)
+        @test result == [[1, 2, 3], [2, 3, 4], [3, 4, 5], [4, 5, 1], [5, 1, 2]]
+
         @test_throws DomainError Metrics.block_subsample(block_series, 6)
     end
 
@@ -103,7 +106,14 @@
         @test_throws DomainError Metrics.estimate_block_size(mean, series[:, 1], sizemax=1001)
     end
 
-    @testset "subsample_ci" begin
+    @testset "adaptive_block_size" begin
+        # 1001 > length(series[:, 1]) = 1000
+        @test_throws DomainError Metrics.adaptive_block_size(mean, series[:, 1], sizemin=998, sizemax=1001)
+
+        @test_throws DimensionMismatch Metrics.adaptive_block_size(mean, randn(5), randn(4))
+    end
+
+    @testset "subsample_ci and subsample_difference_ci" begin
 
         @testset "basic" begin
 
@@ -116,6 +126,17 @@
             @test 0.0 < upper < 0.1
             @test lower < mean(series) < upper
 
+            result = map(
+                x -> subsample_difference_ci(mean, x[1], x[2]; sizemin=4, sizemax=80),
+                [(randn(10000), randn(10000)) for _ in 1:10],
+            )
+
+            lower = mean(first, result)
+            upper = mean(last, result)
+
+            @test -0.1 < lower < 0.0
+            @test 0.0 < upper < 0.1
+
         end
 
         @testset "basic with block size" begin
@@ -124,6 +145,12 @@
             # check that 3 arg form gives same result 2 arg form
             result_w_bs = subsample_ci(mean, series, bs; old_block_args...)
             @test subsample_ci(mean, series; β=0.5, old_block_args...) == result_w_bs
+
+            bs = Metrics.adaptive_block_size(mean, series[:, 1], series[:, 2]; old_block_args...)
+
+            # check that 3 arg form gives same result 2 arg form
+            result_w_bs = subsample_difference_ci(mean, series[:, 1], series[:, 2], bs; old_block_args...)
+            @test subsample_difference_ci(mean, series[:, 1], series[:, 2]; β=0.5, old_block_args...) == result_w_bs
         end
 
         @testset "increasing alpha level contracts ci bounds" begin
@@ -147,12 +174,23 @@
                 ci_result = subsample_ci(mean, series; β=0.123, block_kwargs...)
                 bs_result = Metrics.adaptive_block_size(mean, series; block_kwargs...)
                 @test ci_result == subsample_ci(mean, series, bs_result; β=0.123)
+
+                ci_result = subsample_difference_ci(mean, series[:, 1], series[:, 2]; β=0.123, block_kwargs...)
+                bs_result = Metrics.adaptive_block_size(mean, series[:, 1], series[:, 2]; block_kwargs...)
+                @test ci_result == subsample_difference_ci(mean, series[:, 1], series[:, 2], bs_result; β=0.123)
             end
 
             @testset "estimate convergence rate" begin
                 ci_result = subsample_ci(mean, series; β=nothing, old_block_args..., conv_kwargs...)
                 beta = Metrics.estimate_convergence_rate(mean, series; conv_kwargs...)
                 @test ci_result == subsample_ci(mean, series; β=beta, old_block_args...)
+
+                # ci_result = subsample_difference_ci(
+                #     mean, series[:, 1], series[:, 2];
+                #     β=nothing, old_block_args..., conv_kwargs...
+                # )
+                # beta = Metrics.estimate_convergence_rate(mean, series[:, 1], series[:, 2]; conv_kwargs...)
+                # @test ci_result == subsample_difference_ci(mean, series[:, 1], series[:, 2]; β=beta, old_block_args...)
             end
 
             @testset "estimate block size and convergence rate" begin
@@ -160,6 +198,14 @@
                 bs_result = Metrics.adaptive_block_size(mean, series; block_kwargs...)
                 beta = Metrics.estimate_convergence_rate(mean, series; conv_kwargs...)
                 @test ci_result == subsample_ci(mean, series, bs_result; β=beta)
+
+                # ci_result = subsample_difference_ci(
+                #     mean, series[:, 1], series[:, 2];
+                #     β=nothing, block_kwargs..., conv_kwargs...
+                # )
+                # bs_result = Metrics.adaptive_block_size(mean, series[:, 1], series[:, 2]; block_kwargs...)
+                # beta = Metrics.estimate_convergence_rate(mean, series[:, 1], series[:, 2]; conv_kwargs...)
+                # @test ci_result == subsample_difference_ci(mean, series[:, 1], series[:, 2], bs_result; β=beta)
             end
 
             @testset "default β" begin
@@ -172,6 +218,7 @@
                     median_over_es,
                     expected_shortfall,
                     expected_windfall,
+                    ew_over_es,
                 ]
                     # Choosing a large sizemin so that ES and EW have sufficient samples to be computed.
                     # Choosing a small range of sizes to save time.
@@ -181,6 +228,30 @@
                     )
                     ci_result = subsample_ci(metric, series, 1000)
                     @test ci_result == subsample_ci(metric, series, 1000, β=0.5)
+                end
+            end
+
+            @testset "default sizemin" begin
+                sseries = rand(200)
+
+                for metric in [
+                    mean_over_es,
+                    median_over_es,
+                    expected_shortfall,
+                    expected_windfall,
+                    ew_over_es,
+                ]
+                    ci_result = subsample_ci(metric, sseries, sizemin=40, sizemax=100)
+                    @test ci_result == subsample_ci(metric, sseries, sizemax=100)
+                end
+
+                for metric in [
+                    mean,
+                    median,
+                    x -> mean(x) + median(x), # just a random lambda
+                ]
+                    ci_result = subsample_ci(metric, sseries, sizemin=4, sizemax=100)
+                    @test ci_result == subsample_ci(metric, sseries, sizemax=100)
                 end
             end
 
