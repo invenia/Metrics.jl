@@ -245,7 +245,7 @@ function adaptive_block_size(
         """
         @info "Standard deviation of metrics over blocks: $(std.(metric_series))."
         return sizemin
-    end 
+    end
     locations = (center - width):(2.0 * width) / numpoints:(center + width)
 
     Δs = compute_distance.(ecdfs, half_ecdfs, Ref(locations))
@@ -323,6 +323,11 @@ Michael Wolf. Subsampling. Springer Science & Business Media, 1999."
 
 Returns the optimal block size, the (possibly estimated) `β` and the confidence interval
 at level `α` with the optimal block size.
+
+* NOTE: The estimation method implemented here is obsolete and shown to be less efficient
+(see https://docs.google.com/document/d/1R6eIpZakzAJZHnO8JcxrCfcBbFdYjWfuEk29rS8nVYk/edit#heading=h.8495mh10rdjq).
+Unless you know exactly what you are doing, [`adaptive_block_size`](@ref) should be used
+instead.
 """
 function estimate_block_size(
     metric::Function, series;
