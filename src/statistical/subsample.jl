@@ -13,12 +13,11 @@ function block_subsample(series, block_size; circular=false)
             "block_size cannot exceed the series length $(length(series))."
         ))
     end
-    # TODO implement this in a nicer way
     n_blocks = length(series) - block_size + 1
+    regular = [series[i:(block_size + i - 1)] for i in 1:n_blocks]
     if !circular
-        return [series[i:(block_size + i - 1)] for i in 1:n_blocks]
+        return regular
     else
-        regular = [series[i:(block_size + i - 1)] for i in 1:n_blocks]
         wrapping = [
             vcat(series[(end - block_size + i):end], series[1:i - 1]) for i in 2:block_size
         ]
@@ -204,7 +203,7 @@ quantities is an odd number, the next integer is taken.
 
 If `circular`, blocks wrap around the end of the `series`.
 
-`numpoints` controls the number of points over the empirical CDFs are compared.
+`numpoints` controls the number of points over which the empirical CDFs are compared.
 """
 function adaptive_block_size(
     metric::Function, series;
@@ -253,7 +252,22 @@ function adaptive_block_size(
     return block_sizes[findmin(Δs)[2]]
 end
 
-function paired_adaptive_block_size(
+"""
+    adaptive_block_size(
+        metric::Function, series1, series2;
+        sizemin=ceil(Int, 0.1 * length(series1)),
+        sizemax=ceil(Int, 0.8 * length(series2)),
+        sizestep=2,
+        circular=false,
+        numpoints=50,
+    )
+
+Estimate the optimal block size for computing the subsampled confidence interval of the
+difference in `metric` over `series1` and `series2` using the adaptive method proposed in
+"Friedrich Götze and Alfredas Račkauskas Lecture Notes-Monograph Series Vol. 36, State of
+the Art in Probability and Statistics (2001), pp. 286-309".
+"""
+function adaptive_block_size(
     metric::Function, series1, series2;
     sizemin=ceil(Int, 0.1 * length(series1)),
     sizemax=ceil(Int, 0.8 * length(series2)),
@@ -528,7 +542,7 @@ function subsample_difference_ci(
     numpoints=50,
     kwargs...
 )
-    block_size = paired_adaptive_block_size(
+    block_size = adaptive_block_size(
         metric, series1, series2,
         sizemin=sizemin, sizemax=sizemax, sizestep=sizestep, numpoints=numpoints
     )
