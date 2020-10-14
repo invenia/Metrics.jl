@@ -184,9 +184,23 @@ function compute_distance(cdf1, cdf2, locations)
 end
 
 """
+    default_sizemin(f)
+
+Default value of minimum block size for metric `f`. Uses the minimum possible value of 4 for
+all metrics, except the ones that involve expected shortfall or expected windfall, as the
+minimum for those (if computed at 5%) must be 40.
+"""
+default_sizemin(f) = 4
+default_sizemin(f::typeof(ew_over_es)) = 40
+default_sizemin(f::typeof(mean_over_es)) = 40
+default_sizemin(f::typeof(median_over_es)) = 40
+default_sizemin(f::typeof(expected_shortfall)) = 40
+default_sizemin(f::typeof(expected_windfall)) = 40
+
+"""
     adaptive_block_size(
         metric::Function, series;
-        sizemin=ceil(Int, 0.1 * length(series)),
+        sizemin=default_sizemin(metric),
         sizemax=ceil(Int, 0.8 * length(series)),
         sizestep=2,
         circular=false,
@@ -207,7 +221,7 @@ If `circular`, blocks wrap around the end of the `series`.
 """
 function adaptive_block_size(
     metric::Function, series;
-    sizemin=ceil(Int, 0.1 * length(series)),
+    sizemin=default_sizemin(metric),
     sizemax=ceil(Int, 0.8 * length(series)),
     sizestep=2,
     circular=false,
@@ -255,7 +269,7 @@ end
 """
     adaptive_block_size(
         metric::Function, series1, series2;
-        sizemin=ceil(Int, 0.1 * length(series1)),
+        sizemin=default_sizemin(metric),
         sizemax=ceil(Int, 0.8 * length(series2)),
         sizestep=2,
         circular=false,
@@ -269,7 +283,7 @@ the Art in Probability and Statistics (2001), pp. 286-309".
 """
 function adaptive_block_size(
     metric::Function, series1, series2;
-    sizemin=ceil(Int, 0.1 * length(series1)),
+    sizemin=default_sizemin(metric),
     sizemax=ceil(Int, 0.8 * length(series2)),
     sizestep=2,
     circular=false,
@@ -308,6 +322,14 @@ function adaptive_block_size(
     # Focuses on the central region of the support, because that should be modelled better
     center = median(mean.(diff_series))
     width = median(std.(diff_series))
+    if width == 0
+        @warn """
+            Failed to estimate block size. The metric value is identical for every block.
+            Returning smallest possible block size.
+        """
+        @info "Standard deviation of metrics over blocks: $(std.(metric_series))."
+        return sizemin
+    end
     locations = (center - width):(2 * width) / numpoints:(center + width)
 
     Δs = compute_distance.(ecdfs, half_ecdfs, Ref(locations))
@@ -320,7 +342,7 @@ end
         metric::Function, series;
         α=0.05,
         β=nothing,
-        sizemin=ceil(Int, 0.1 * length(series)),
+        sizemin=default_sizemin(metric),
         sizemax=ceil(Int, 0.8 * length(series)),
         sizestep=1,
         blocksvol=2,
@@ -347,7 +369,7 @@ function estimate_block_size(
     metric::Function, series;
     α=0.05,
     β=nothing,
-    sizemin=ceil(Int, 0.1 * length(series)),
+    sizemin=default_sizemin(metric),
     sizemax=ceil(Int, 0.8 * length(series)),
     sizestep=1,
     blocksvol=2,
@@ -397,7 +419,7 @@ default_β(f::typeof(expected_windfall)) = 0.5
         metric::Function, series;
         α=0.05,
         β=default_β(metric),
-        sizemin=ceil(Int, 0.1 * length(series)),
+        sizemin=default_sizemin(metric),
         sizemax=ceil(Int, 0.8 * length(series)),
         sizestep=1,
         numpoints=50,
@@ -426,7 +448,7 @@ function subsample_ci(
     metric::Function, series;
     α=0.05,
     β=default_β(metric),
-    sizemin=ceil(Int, 0.1 * length(series)),
+    sizemin=default_sizemin(metric),
     sizemax=ceil(Int, 0.8 * length(series)),
     sizestep=1,
     numpoints=50,
@@ -558,7 +580,7 @@ end
         β=default_β(metric),
         studentise=false,
         circular=false,
-        sizemin=ceil(Int, 0.1 * length(series1)),
+        sizemin=default_sizemin(metric),
         sizemax=ceil(Int, 0.8 * length(series1)),
         sizestep=1,
         numpoints=50,
@@ -581,7 +603,7 @@ function subsample_difference_ci(
     β=default_β(metric),
     studentise=false,
     circular=false,
-    sizemin=ceil(Int, 0.1 * length(series1)),
+    sizemin=default_sizemin(metric),
     sizemax=ceil(Int, 0.8 * length(series1)),
     sizestep=1,
     numpoints=50,
