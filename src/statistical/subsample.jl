@@ -412,6 +412,7 @@ default_β(f::typeof(mean_over_es)) = 0.5
 default_β(f::typeof(median_over_es)) = 0.5
 default_β(f::typeof(expected_shortfall)) = 0.5
 default_β(f::typeof(expected_windfall)) = 0.5
+default_β(f::typeof(ew_over_es)) = 0.5
 
 
 """
