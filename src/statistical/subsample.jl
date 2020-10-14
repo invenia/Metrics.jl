@@ -416,10 +416,6 @@ If `β=nothing`, the rate is estimated via [`estimate_convergence_rate`](@ref).
 !!! note
     Since `α` is the _level_ of the test, we expect the true value to lie in `1-α` of the CIs.
 
-!!! note
-    The default value of `size_max` was chosen for sampling 1 year of backrun data.
-    If you are sampling 2 years you may want to change this setting.
-
 !!! warning "Default β"
     If the `β` keyword is not provided it defaults to `default_β(metric)`.
     For anonymous function [`default_β`](@ref) will always be `nothing`.
@@ -452,7 +448,7 @@ end
 """
     subsample_ci(
         metric::Function, series, block_size;
-        α=0.05, β=default_β(metric), studentise=true, circular=false, kwargs...
+        α=0.05, β=default_β(metric), studentise=false, circular=false, kwargs...
     )
 
 Compute confidence interval for `metric` over a `series` at a level `α` using a `block_size`
@@ -470,7 +466,7 @@ Returns the confidence interval as `Closed` `Interval`.
 """
 function subsample_ci(
     metric::Function, series, block_size;
-    α=0.05, β=default_β(metric), studentise=true, circular=false, kwargs...
+    α=0.05, β=default_β(metric), studentise=false, circular=false, kwargs...
 )
     # apply metric to subsampled series
     blocks = block_subsample(series, block_size; circular=circular)
@@ -496,6 +492,31 @@ function subsample_ci(
     return Interval(lower_corrected, upper_corrected)
 end
 
+"""
+    subsample_difference_ci(
+        metric::Function, series1, series2, block_size;
+        α=0.05, β=default_β(metric), studentise=false, circular=false, kwargs...
+    )
+
+Compute confidence interval for the difference in `metric` over a `series1` and a `series2`
+at a level `α` and convergence rate `b^β`. If `β=nothing`, the rate is estimated via
+[`estimate_convergence_rate`](@ref) which accepts the `kwargs`.
+
+If `studentise`, the roots are studentised using the unbiased sample standard deviation. See
+chapters 2 and 11 of "Politis, Dimitris N., Joseph P. Romano, and
+Michael Wolf. Subsampling. Springer Science & Business Media, 1999." for the theory. For
+heavy tailed data, it is recommended to use this option.
+
+If `circular`, the subsampled blocks wrap around the end of `series`.
+
+Returns the confidence interval as `Closed` `Interval`.
+
+!!! warning "Default β"
+    If the `β` keyword is not provided it defaults to `default_β(metric)`.
+    For anonymous function [`default_β`](@ref) will always be `nothing`.
+    It is important to be aware of this when passing an anonymous function,
+    for example when using `do`-block syntax to define the metric.
+"""
 function subsample_difference_ci(
     metric::Function, series1, series2, block_size;
     α=0.05, β=default_β(metric), studentise=false, circular=false, kwargs...
@@ -530,6 +551,30 @@ function subsample_difference_ci(
     return Interval(lower_corrected, upper_corrected)
 end
 
+"""
+    subsample_difference_ci(
+        metric::Function, series1, series2;
+        α=0.05,
+        β=default_β(metric),
+        studentise=false,
+        circular=false,
+        sizemin=ceil(Int, 0.1 * length(series1)),
+        sizemax=ceil(Int, 0.8 * length(series1)),
+        sizestep=1,
+        numpoints=50,
+        kwargs...
+    )
+
+Compute confidence interval for the difference in `metric` over a `series1` and a `series2`
+at a level `α` and convergence rate `b^β` by estimating the block size via
+[`adaptive_block_size`](@ref).
+
+The `sizemin`, `sizemax`, `sizestep`, and `numpoints` keyword arguments are passed to
+[`adaptive_block_size`](@ref).
+The remaining `kwargs` are passed to [`estimate_convergence_rate`](@ref) (if `β` is
+`nothing`) and [`subsample_difference_ci`](@ref).
+If `β=nothing`, the rate is estimated via [`estimate_convergence_rate`](@ref).
+"""
 function subsample_difference_ci(
     metric::Function, series1, series2;
     α=0.05,
@@ -544,7 +589,7 @@ function subsample_difference_ci(
 )
     block_size = adaptive_block_size(
         metric, series1, series2,
-        sizemin=sizemin, sizemax=sizemax, sizestep=sizestep, numpoints=numpoints
+        sizemin=sizemin, sizemax=sizemax, sizestep=sizestep, numpoints=numpoints,
     )
     return subsample_difference_ci(
         metric, series1, series2, block_size;
