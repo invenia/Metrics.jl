@@ -292,49 +292,18 @@ function adaptive_block_size(
     length(series1) != length(series2) && throw(DimensionMismatch(
         "Both series must have the same length. Got $(length(series1)) and $(length(series2))."
     ))
-    sizemin = isodd(sizemin) ? sizemin + 1 : sizemin
-    sizemax = isodd(sizemax) ? sizemax + 1 : sizemax
-    sizestep = isodd(sizestep) ? sizestep + 1 : sizestep
-
-    block_sizes = collect(sizemin:sizestep:sizemax)
-    half_block_sizes = Int.(block_sizes ./ 2)
-
-    # Build blocks for each size
-    block_sets1 = block_subsample.(Ref(series1), block_sizes; circular=circular)
-    half_block_sets1 = block_subsample.(Ref(series1), half_block_sizes; circular=circular)
-    block_sets2 = block_subsample.(Ref(series2), block_sizes; circular=circular)
-    half_block_sets2 = block_subsample.(Ref(series2), half_block_sizes; circular=circular)
-
-    # Build metrics series
-    metric_series1 = map(x -> metric.(x), block_sets1)
-    half_metric_series1 = map(x -> metric.(x), half_block_sets1)
-    metric_series2 = map(x -> metric.(x), block_sets2)
-    half_metric_series2 = map(x -> metric.(x), half_block_sets2)
-    diff_series = metric_series1 .- metric_series2
-    half_diff_series = half_metric_series1 .- half_metric_series2
-
-    # Compute empirical CDFs
-    ecdfs = ecdf.(diff_series)
-    half_ecdfs = ecdf.(half_diff_series)
-
-    # Define locations to compute distance between CDFs
-    # Makes it such that all CDFs are evaluated at the same points
-    # Focuses on the central region of the support, because that should be modelled better
-    center = median(mean.(diff_series))
-    width = median(std.(diff_series))
-    if width == 0
-        @warn """
-            Failed to estimate block size. The metric value is identical for every block.
-            Returning smallest possible block size.
-        """
-        @info "Standard deviation of metrics over blocks: $(std.(diff_series))."
-        return sizemin
-    end
-    locations = (center - width):(2 * width) / numpoints:(center + width)
-
-    Δs = compute_distance.(ecdfs, half_ecdfs, Ref(locations))
-
-    return block_sizes[findmin(Δs)[2]]
+    # Pair observations
+    paired_series = collect(zip(series1, series2))
+    # Define metric from R² to R
+    diff_metric = x -> metric(getfield.(x, 1)) - metric(getfield.(x, 2))
+    return adaptive_block_size(
+        diff_metric::Function, paired_series;
+        sizemin=sizemin,
+        sizemax=sizemax,
+        sizestep=sizestep,
+        circular=circular,
+        numpoints=numpoints,
+    )
 end
 
 """
@@ -424,6 +393,8 @@ default_β(f::typeof(ew_over_es)) = 0.5
         sizemax=ceil(Int, 0.8 * length(series)),
         sizestep=1,
         numpoints=50,
+        studentise=false,
+        circular=false,
         kwargs...
     )
 
@@ -435,6 +406,13 @@ The `sizemin`, `sizemax`, `sizestep`, and `numpoints` keyword arguments are pass
 The remaining `kwargs` are passed to [`estimate_convergence_rate`](@ref) (if `β` is
 `nothing`) and [`subsample_ci`](@ref).
 If `β=nothing`, the rate is estimated via [`estimate_convergence_rate`](@ref).
+
+If `studentise`, the roots are studentised using the unbiased sample standard deviation. See
+chapters 2 and 11 of "Politis, Dimitris N., Joseph P. Romano, and
+Michael Wolf. Subsampling. Springer Science & Business Media, 1999." for the theory. For
+heavy tailed data, it is recommended to use this option.
+
+If `circular`, the subsampled blocks wrap around the end of `series`.
 
 !!! note
     Since `α` is the _level_ of the test, we expect the true value to lie in `1-α` of the CIs.
@@ -453,6 +431,8 @@ function subsample_ci(
     sizemax=ceil(Int, 0.8 * length(series)),
     sizestep=1,
     numpoints=50,
+    studentise=false,
+    circular=false,
     kwargs...
 )
     β = isnothing(β) ? estimate_convergence_rate(metric, series; kwargs...) : β
@@ -465,7 +445,10 @@ function subsample_ci(
         numpoints=numpoints
     )
 
-    return subsample_ci(metric, series, block_size; α=α, β=β, kwargs...)
+    return subsample_ci(
+        metric, series, block_size;
+        α=α, β=β, studentise=studentise, circular=circular, kwargs...
+    )
 end
 
 """
@@ -494,14 +477,24 @@ function subsample_ci(
     # apply metric to subsampled series
     blocks = block_subsample(series, block_size; circular=circular)
     metric_series = metric.(blocks)
+
+    # Internal function to compute a measure of spread for studentisation
+    function spread(series)
+        if series isa Vector{<:Tuple} # Will happen when we are subsampling differences
+            return sqrt(var(getindex.(series, 1)) + var(getindex.(series, 2)))
+        else
+            return std(series)
+        end
+    end
+
     # By default, Statistics uses the unbiased version of `var`.
-    σ_b = studentise ? std.(blocks) : ones(length(blocks))
+    σ_b = studentise ? spread.(blocks) : ones(length(blocks))
     # estimate convergence rates
     β = isnothing(β) ? estimate_convergence_rate(metric, series; kwargs...) : β
     n = length(series)
     τ_b = block_size ^ β
     τ_n = n ^ β
-    σ_n = studentise ? std(series) : 1.0
+    σ_n = studentise ? spread(series) : 1.0
     # compute sample metric
     sample_metric = metric(series)
     # center and scale metrics
@@ -547,31 +540,14 @@ function subsample_difference_ci(
     length(series1) != length(series2) && throw(DimensionMismatch(
         "Both series must have the same length. Got $(length(series1)) and $(length(series2))."
     ))
-    # apply metric to subsampled series and get the differences
-    blocks1 = block_subsample(series1, block_size; circular=circular)
-    metric_series1 = metric.(blocks1)
-    blocks2 = block_subsample(series2, block_size; circular=circular)
-    metric_series2 = metric.(blocks2)
-    diff_series = metric_series1 .- metric_series2
-    # By default, Statistics uses the unbiased version of `var`. TODO: this makes no sense, think about it later
-    σ_b = studentise ? std.(blocks1) : ones(length(blocks1))
-    # estimate convergence rates. TODO: this makes no sense, think about it later
-    β = isnothing(β) ? estimate_convergence_rate(metric, series; kwargs...) : β
-    n = length(series1)
-    τ_b = block_size ^ β
-    τ_n = n ^ β
-    σ_n = studentise ? std(series1) : 1.0 # TODO: this makes no sense, think about it later
-    # compute sample difference
-    sample_diff = metric(series1) .- metric(series2)
-    # center and scale metrics
-    diff_series = (diff_series .- sample_diff) * τ_b ./ σ_b
-    # compute lower and upper bounds
-    lower = quantile(diff_series, α / 2)
-    upper = quantile(diff_series, 1 - (α / 2))
-    # apply location and scale estimates
-    lower_corrected = sample_diff - upper / τ_n * σ_n
-    upper_corrected = sample_diff - lower / τ_n * σ_n
-    return Interval(lower_corrected, upper_corrected)
+    # Pair observations
+    paired_series = collect(zip(series1, series2))
+    # Define metric from R² to R
+    diff_metric = x -> metric(getfield.(x, 1)) - metric(getfield.(x, 2))
+    return subsample_ci(
+        diff_metric, paired_series, block_size;
+        α=α, β=β, studentise=studentise, circular=circular, kwargs...
+    )
 end
 
 """
@@ -610,12 +586,16 @@ function subsample_difference_ci(
     numpoints=50,
     kwargs...
 )
-    block_size = adaptive_block_size(
-        metric, series1, series2,
-        sizemin=sizemin, sizemax=sizemax, sizestep=sizestep, numpoints=numpoints,
-    )
-    return subsample_difference_ci(
-        metric, series1, series2, block_size;
-        α=α, β=β, studentise=studentise, circular=circular, kwargs...
+    length(series1) != length(series2) && throw(DimensionMismatch(
+        "Both series must have the same length. Got $(length(series1)) and $(length(series2))."
+    ))
+    # Pair observations
+    paired_series = collect(zip(series1, series2))
+    # Define metric from R² to R
+    diff_metric = x -> metric(getfield.(x, 1)) - metric(getfield.(x, 2))
+    return subsample_ci(
+        diff_metric, paired_series;
+        α=α, β=β, studentise=studentise, circular=circular, sizemin=sizemin,
+        sizemax=sizemax, sizestep=sizestep, numpoints=numpoints, kwargs...
     )
 end
