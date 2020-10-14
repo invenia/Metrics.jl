@@ -119,7 +119,7 @@
         end
 
         @testset "basic with block size" begin
-            bs = Metrics.estimate_block_size(mean, series; old_block_args...)
+            bs = Metrics.adaptive_block_size(mean, series; old_block_args...)
 
             # check that 3 arg form gives same result 2 arg form
             result_w_bs = subsample_ci(mean, series, bs; old_block_args...)
@@ -140,12 +140,12 @@
 
         @testset "passing kwargs" begin
 
-            block_kwargs = (sizemin=20, sizemax=100, sizestep=1, blocksvol=3)
+            block_kwargs = (sizemin=20, sizemax=100, sizestep=2, numpoints=50)
             conv_kwargs = (quantmin=0.2, quantstep=0.01, quantmax=0.7, expmax=0.4, expstep=0.1, expmin=0.10)
 
             @testset "estimate block size" begin
                 ci_result = subsample_ci(mean, series; β=0.123, block_kwargs...)
-                bs_result = Metrics.estimate_block_size(mean, series; β=0.123, block_kwargs...)
+                bs_result = Metrics.adaptive_block_size(mean, series; block_kwargs...)
                 @test ci_result == subsample_ci(mean, series, bs_result; β=0.123)
             end
 
@@ -157,7 +157,7 @@
 
             @testset "estimate block size and convergence rate" begin
                 ci_result = subsample_ci(mean, series; β=nothing, block_kwargs..., conv_kwargs...)
-                bs_result = Metrics.estimate_block_size(mean, series; block_kwargs...)
+                bs_result = Metrics.adaptive_block_size(mean, series; block_kwargs...)
                 beta = Metrics.estimate_convergence_rate(mean, series; conv_kwargs...)
                 @test ci_result == subsample_ci(mean, series, bs_result; β=beta)
             end
