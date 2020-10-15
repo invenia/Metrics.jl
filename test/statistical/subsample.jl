@@ -128,7 +128,7 @@
 
             result = map(
                 x -> subsample_difference_ci(mean, x[1], x[2]; sizemin=4, sizemax=80),
-                [(randn(10000), randn(10000)) for _ in 1:10],
+                [(randn(1000), randn(1000)) for _ in 1:50],
             )
 
             lower = mean(first, result)
@@ -239,7 +239,7 @@
             end
 
             @testset "default β" begin
-                series = rand(10_000)
+                series = rand(400)
 
                 for metric in [
                     mean,
@@ -252,12 +252,12 @@
                 ]
                     # Choosing a large sizemin so that ES and EW have sufficient samples to be computed.
                     # Choosing a small range of sizes to save time.
-                    ci_result = subsample_ci(metric, series, sizemin=1000, sizemax=1010)
+                    ci_result = subsample_ci(metric, series, sizemin=40, sizemax=100)
                     @test ci_result == subsample_ci(
-                        metric, series, β=0.5, sizemin=1000, sizemax=1010
+                        metric, series, β=0.5, sizemin=40, sizemax=100
                     )
-                    ci_result = subsample_ci(metric, series, 1000)
-                    @test ci_result == subsample_ci(metric, series, 1000, β=0.5)
+                    ci_result = subsample_ci(metric, series, 100)
+                    @test ci_result == subsample_ci(metric, series, 100, β=0.5)
                 end
             end
 
