@@ -220,7 +220,7 @@ function adaptive_block_size(
     sizestep = isodd(sizestep) ? sizestep + 1 : sizestep
 
     block_sizes = collect(sizemin:sizestep:sizemax)
-    half_block_sizes = Int.(block_sizes ./ 2)
+    half_block_sizes = convert.(Integer, block_sizes ./ 2)
 
     # Build blocks for each size
     block_sets = block_subsample.(Ref(series), block_sizes)
