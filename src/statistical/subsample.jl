@@ -284,7 +284,8 @@ function adaptive_block_size(
     # Define metric from R² to R
     diff_metric = x -> metric(getfield.(x, 1)) - metric(getfield.(x, 2))
     return adaptive_block_size(
-        diff_metric::Function, paired_series;
+        diff_metric, 
+        paired_series;
         sizemin=sizemin,
         sizemax=sizemax,
         sizestep=sizestep,
