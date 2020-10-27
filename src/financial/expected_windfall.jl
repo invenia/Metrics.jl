@@ -95,7 +95,7 @@ function expected_windfall(
 end
 
 """
-    expected_windfall_over_expected_shortfall(returns::AbstractVector; kwargs...) -> Number
+    expected_windfall_over_expected_shortfall(returns; kwargs...) -> Number
 
 Calculate the `expected_windfall(returns) / expected_shortfall(returns)` metric.
 
