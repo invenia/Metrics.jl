@@ -170,7 +170,7 @@ Computes the unormalised squared L2 distance between two functions at a discrete
 `locations`.
 """
 function compute_distance(cdf1, cdf2, locations)
-    return sum(x -> x^2, (cdf1.(locations) .- cdf2.(locations)))
+    return sum(abs2, (cdf1.(locations) .- cdf2.(locations)))
 end
 
 """
