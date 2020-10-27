@@ -255,7 +255,9 @@ end
 
 """
     adaptive_block_size(
-        metric::Function, series1, series2;
+        metric::Function, 
+        series1, 
+        series2;
         sizemin=default_sizemin(metric),
         sizemax=ceil(Int, 0.5 * length(series2)),
         sizestep=2,
