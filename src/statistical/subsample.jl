@@ -201,7 +201,7 @@ default_sizemin(f::typeof(expected_windfall)) = 40
     adaptive_block_size(
         metric::Function, series;
         sizemin=default_sizemin(metric),
-        sizemax=ceil(Int, 0.8 * length(series)),
+        sizemax=ceil(Int, 0.5 * length(series)),
         sizestep=2,
         circular=false,
         numpoints=50,
@@ -222,7 +222,7 @@ If `circular`, blocks wrap around the end of the `series`.
 function adaptive_block_size(
     metric::Function, series;
     sizemin=default_sizemin(metric),
-    sizemax=ceil(Int, 0.8 * length(series)),
+    sizemax=ceil(Int, 0.5 * length(series)),
     sizestep=2,
     circular=false,
     numpoints=50,
@@ -270,7 +270,7 @@ end
     adaptive_block_size(
         metric::Function, series1, series2;
         sizemin=default_sizemin(metric),
-        sizemax=ceil(Int, 0.8 * length(series2)),
+        sizemax=ceil(Int, 0.5 * length(series2)),
         sizestep=2,
         circular=false,
         numpoints=50,
@@ -284,7 +284,7 @@ the Art in Probability and Statistics (2001), pp. 286-309".
 function adaptive_block_size(
     metric::Function, series1, series2;
     sizemin=default_sizemin(metric),
-    sizemax=ceil(Int, 0.8 * length(series2)),
+    sizemax=ceil(Int, 0.5 * length(series2)),
     sizestep=2,
     circular=false,
     numpoints=50,
@@ -312,7 +312,7 @@ end
         α=0.05,
         β=nothing,
         sizemin=default_sizemin(metric),
-        sizemax=ceil(Int, 0.8 * length(series)),
+        sizemax=ceil(Int, 0.5 * length(series)),
         sizestep=1,
         blocksvol=2,
     )
@@ -339,7 +339,7 @@ function estimate_block_size(
     α=0.05,
     β=nothing,
     sizemin=default_sizemin(metric),
-    sizemax=ceil(Int, 0.8 * length(series)),
+    sizemax=ceil(Int, 0.5 * length(series)),
     sizestep=1,
     blocksvol=2,
 )
@@ -390,7 +390,7 @@ default_β(f::typeof(ew_over_es)) = 0.5
         α=0.05,
         β=default_β(metric),
         sizemin=default_sizemin(metric),
-        sizemax=ceil(Int, 0.8 * length(series)),
+        sizemax=ceil(Int, 0.5 * length(series)),
         sizestep=1,
         numpoints=50,
         studentise=false,
@@ -428,7 +428,7 @@ function subsample_ci(
     α=0.05,
     β=default_β(metric),
     sizemin=default_sizemin(metric),
-    sizemax=ceil(Int, 0.8 * length(series)),
+    sizemax=ceil(Int, 0.5 * length(series)),
     sizestep=1,
     numpoints=50,
     studentise=false,
