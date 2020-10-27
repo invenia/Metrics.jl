@@ -1,11 +1,9 @@
 """
-    block_subsample(series, block_size; circular=false)
+    block_subsample(series, block_size)
 
 Subsample `series` with running (overlapping) blocks of length `b`.
-
-If `circular`, blocks wrap around the end of the `series`.
 """
-function block_subsample(series, block_size; circular=false)
+function block_subsample(series, block_size)
 
     if block_size > length(series)
         throw(DomainError(
@@ -14,15 +12,7 @@ function block_subsample(series, block_size; circular=false)
         ))
     end
     n_blocks = length(series) - block_size + 1
-    regular = [series[i:(block_size + i - 1)] for i in 1:n_blocks]
-    if !circular
-        return regular
-    else
-        wrapping = [
-            vcat(series[(end - block_size + i):end], series[1:i - 1]) for i in 2:block_size
-        ]
-        return vcat(regular, wrapping)
-    end
+    return [series[i:(block_size + i - 1)] for i in 1:n_blocks]
 end
 
 """
@@ -203,7 +193,6 @@ default_sizemin(f::typeof(expected_windfall)) = 40
         sizemin=default_sizemin(metric),
         sizemax=ceil(Int, 0.5 * length(series)),
         sizestep=2,
-        circular=false,
         numpoints=50,
     )
 
@@ -215,8 +204,6 @@ Lecture Notes-Monograph Series Vol. 36, State of the Art in Probability and Stat
 Optimal size is searched over the range `sizemin:sizestep:sizemax`. If any of those
 quantities is an odd number, the next integer is taken.
 
-If `circular`, blocks wrap around the end of the `series`.
-
 `numpoints` controls the number of points over which the empirical CDFs are compared.
 """
 function adaptive_block_size(
@@ -224,7 +211,6 @@ function adaptive_block_size(
     sizemin=default_sizemin(metric),
     sizemax=ceil(Int, 0.5 * length(series)),
     sizestep=2,
-    circular=false,
     numpoints=50,
 )
     sizemin = isodd(sizemin) ? sizemin + 1 : sizemin
@@ -235,8 +221,8 @@ function adaptive_block_size(
     half_block_sizes = Int.(block_sizes ./ 2)
 
     # Build blocks for each size
-    block_sets = block_subsample.(Ref(series), block_sizes; circular=circular)
-    half_block_sets = block_subsample.(Ref(series), half_block_sizes; circular=circular)
+    block_sets = block_subsample.(Ref(series), block_sizes)
+    half_block_sets = block_subsample.(Ref(series), half_block_sizes)
 
     # Build metrics series
     metric_series = map(x -> metric.(x), block_sets)
@@ -272,7 +258,6 @@ end
         sizemin=default_sizemin(metric),
         sizemax=ceil(Int, 0.5 * length(series2)),
         sizestep=2,
-        circular=false,
         numpoints=50,
     )
 
@@ -286,7 +271,6 @@ function adaptive_block_size(
     sizemin=default_sizemin(metric),
     sizemax=ceil(Int, 0.5 * length(series2)),
     sizestep=2,
-    circular=false,
     numpoints=50,
 )
     length(series1) != length(series2) && throw(DimensionMismatch(
@@ -301,7 +285,6 @@ function adaptive_block_size(
         sizemin=sizemin,
         sizemax=sizemax,
         sizestep=sizestep,
-        circular=circular,
         numpoints=numpoints,
     )
 end
@@ -393,8 +376,6 @@ default_β(f::typeof(ew_over_es)) = 0.5
         sizemax=ceil(Int, 0.5 * length(series)),
         sizestep=1,
         numpoints=50,
-        studentise=false,
-        circular=false,
         kwargs...
     )
 
@@ -406,13 +387,6 @@ The `sizemin`, `sizemax`, `sizestep`, and `numpoints` keyword arguments are pass
 The remaining `kwargs` are passed to [`estimate_convergence_rate`](@ref) (if `β` is
 `nothing`) and [`subsample_ci`](@ref).
 If `β=nothing`, the rate is estimated via [`estimate_convergence_rate`](@ref).
-
-If `studentise`, the roots are studentised using the unbiased sample standard deviation. See
-chapters 2 and 11 of "Politis, Dimitris N., Joseph P. Romano, and
-Michael Wolf. Subsampling. Springer Science & Business Media, 1999." for the theory. For
-heavy tailed data, it is recommended to use this option.
-
-If `circular`, the subsampled blocks wrap around the end of `series`.
 
 !!! note
     Since `α` is the _level_ of the test, we expect the true value to lie in `1-α` of the CIs.
@@ -431,8 +405,6 @@ function subsample_ci(
     sizemax=ceil(Int, 0.5 * length(series)),
     sizestep=1,
     numpoints=50,
-    studentise=false,
-    circular=false,
     kwargs...
 )
     β = isnothing(β) ? estimate_convergence_rate(metric, series; kwargs...) : β
@@ -447,35 +419,28 @@ function subsample_ci(
 
     return subsample_ci(
         metric, series, block_size;
-        α=α, β=β, studentise=studentise, circular=circular, kwargs...
+        α=α, β=β, kwargs...
     )
 end
 
 """
     subsample_ci(
         metric::Function, series, block_size;
-        α=0.05, β=default_β(metric), studentise=false, circular=false, kwargs...
+        α=0.05, β=default_β(metric), kwargs...
     )
 
 Compute confidence interval for `metric` over a `series` at a level `α` using a `block_size`
 and convergence rate `b^β`. If `β=nothing`, the rate is estimated via
 [`estimate_convergence_rate`](@ref) which accepts the `kwargs`.
 
-If `studentise`, the roots are studentised using the unbiased sample standard deviation. See
-chapters 2 and 11 of "Politis, Dimitris N., Joseph P. Romano, and
-Michael Wolf. Subsampling. Springer Science & Business Media, 1999." for the theory. For
-heavy tailed data, it is recommended to use this option.
-
-If `circular`, the subsampled blocks wrap around the end of `series`.
-
 Returns the confidence interval as `Closed` `Interval`.
 """
 function subsample_ci(
     metric::Function, series, block_size;
-    α=0.05, β=default_β(metric), studentise=false, circular=false, kwargs...
+    α=0.05, β=default_β(metric), kwargs...
 )
     # apply metric to subsampled series
-    blocks = block_subsample(series, block_size; circular=circular)
+    blocks = block_subsample(series, block_size)
     metric_series = metric.(blocks)
 
     # Internal function to compute a measure of spread for studentisation
@@ -487,24 +452,21 @@ function subsample_ci(
         end
     end
 
-    # By default, Statistics uses the unbiased version of `var`.
-    σ_b = studentise ? spread.(blocks) : ones(length(blocks))
     # estimate convergence rates
     β = isnothing(β) ? estimate_convergence_rate(metric, series; kwargs...) : β
     n = length(series)
     τ_b = block_size ^ β
     τ_n = n ^ β
-    σ_n = studentise ? spread(series) : 1.0
     # compute sample metric
     sample_metric = metric(series)
     # center and scale metrics
-    metric_series = (metric_series .- sample_metric) * τ_b ./ σ_b
+    metric_series = (metric_series .- sample_metric) * τ_b
     # compute lower and upper bounds
     lower = quantile(metric_series, α / 2)
     upper = quantile(metric_series, 1 - (α / 2))
     # apply location and scale estimates
-    lower_corrected = sample_metric - upper / τ_n * σ_n
-    upper_corrected = sample_metric - lower / τ_n * σ_n
+    lower_corrected = sample_metric - upper / τ_n
+    upper_corrected = sample_metric - lower / τ_n
     return Interval(lower_corrected, upper_corrected)
 end
 
