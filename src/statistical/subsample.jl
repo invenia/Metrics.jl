@@ -397,7 +397,7 @@ If `β=nothing`, the rate is estimated via [`estimate_convergence_rate`](@ref).
 
 !!! warning "Default β"
     If the `β` keyword is not provided it defaults to `default_β(metric)`.
-    For anonymous function [`default_β`](@ref) will always be `nothing`.
+    For anonymous functions, the [`default_β`](@ref) will always return `nothing`.
     It is important to be aware of this when passing an anonymous function,
     for example when using `do`-block syntax to define the metric.
 """
