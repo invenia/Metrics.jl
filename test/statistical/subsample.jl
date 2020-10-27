@@ -108,6 +108,12 @@
         @test_throws DomainError Metrics.adaptive_block_size(mean, series[:, 1], sizemin=998, sizemax=1001)
 
         @test_throws DimensionMismatch Metrics.adaptive_block_size(mean, randn(5), randn(4))
+
+        f1(x) = x
+        f2(x) = 2x 
+        loc = rand(5)
+        @test Metrics.l2_distance(f1, f1, loc) == 0
+        @test Metrics.l2_distance(f1, f2, loc) == sum(abs2, loc)
     end
 
     @testset "subsample_ci" begin
