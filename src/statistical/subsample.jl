@@ -189,7 +189,8 @@ default_sizemin(f::typeof(expected_windfall)) = 40
 
 """
     adaptive_block_size(
-        metric::Function, series;
+        metric::Function, 
+        series;
         sizemin=default_sizemin(metric),
         sizemax=ceil(Int, 0.5 * length(series)),
         sizestep=2,
