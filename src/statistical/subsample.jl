@@ -164,14 +164,14 @@ function _compute_log_log_slope(x, y::Vector{<:Vector})
 end
 
 """
-    compute_distance(cdf1, cdf2, locations)
+    l2_distance(cdf1, cdf2, locations)
 
 Computes the unormalised squared L2 distance between two functions at a discrete set of
 `locations`.
 """
-function compute_distance(cdf1, cdf2, locations)
+function l2_distance(cdf1, cdf2, locations)
     return sum(abs2, (cdf1.(locations) .- cdf2.(locations)))
-end
+end 
 
 """
     default_sizemin(f)
@@ -247,9 +247,13 @@ function adaptive_block_size(
         @info "Standard deviation of metrics over blocks: $(std.(metric_series))."
         return sizemin
     end
-    locations = (center - width):(2.0 * width) / numpoints:(center + width)
+    # Define locations
+    loc_start = center - width
+    loc_step = 2.0 * width / numpoints
+    loc_end = center + width
+    locations = loc_start:loc_step:loc_end
 
-    Δs = compute_distance.(ecdfs, half_ecdfs, Ref(locations))
+    Δs = l2_distance.(ecdfs, half_ecdfs, Ref(locations))
 
     return block_sizes[findmin(Δs)[2]]
 end
@@ -277,13 +281,15 @@ function adaptive_block_size(
     sizestep=2,
     numpoints=50,
 )
-    length(series1) != length(series2) && throw(DimensionMismatch(
-        "Both series must have the same length. Got $(length(series1)) and $(length(series2))."
-    ))
+    if length(series1) != length(series2)
+        throw(DimensionMismatch(
+            "Both series must have the same length. Got $(length(series1)) and $(length(series2))."
+        ))
+    end 
     # Pair observations
     paired_series = collect(zip(series1, series2))
     # Define metric from R² to R
-    diff_metric = x -> metric(getfield.(x, 1)) - metric(getfield.(x, 2))
+    diff_metric = x -> metric(first.(x)) - metric(last.(x))
     return adaptive_block_size(
         diff_metric, 
         paired_series;
@@ -447,15 +453,6 @@ function subsample_ci(
     # apply metric to subsampled series
     blocks = block_subsample(series, block_size)
     metric_series = metric.(blocks)
-
-    # Internal function to compute a measure of spread for studentisation
-    function spread(series)
-        if series isa Vector{<:Tuple} # Will happen when we are subsampling differences
-            return sqrt(var(getindex.(series, 1)) + var(getindex.(series, 2)))
-        else
-            return std(series)
-        end
-    end
 
     # estimate convergence rates
     β = isnothing(β) ? estimate_convergence_rate(metric, series; kwargs...) : β
