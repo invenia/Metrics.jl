@@ -208,7 +208,8 @@ quantities is an odd number, the next integer is taken.
 `numpoints` controls the number of points over which the empirical CDFs are compared.
 """
 function adaptive_block_size(
-    metric::Function, series;
+    metric::Function, 
+    series;
     sizemin=default_sizemin(metric),
     sizemax=ceil(Int, 0.5 * length(series)),
     sizestep=2,
