@@ -74,6 +74,5 @@ export
     bky_test,
     dm_mean_test,
     dm_median_test,
-    subsample_ci,
-    subsample_difference_ci
+    subsample_ci
 end # module
