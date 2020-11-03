@@ -94,15 +94,6 @@
     # large one in these tests.
     old_block_args = (sizemin=50, sizemax=300)
 
-    @testset "estimate_block_size" begin
-
-        # 2*blocksvol+1 = 252 > length(cis) = 251 (as determined by block_sizes)
-        @test_throws DomainError Metrics.estimate_block_size(mean, series; blocksvol=126, old_block_args...)
-
-        # 1001 > length(series[:, 1]) = 1000
-        @test_throws DomainError Metrics.estimate_block_size(mean, series[:, 1], sizemax=1001)
-    end
-
     @testset "adaptive_block_size" begin
         # 1001 > length(series[:, 1]) = 1000
         @test_throws DomainError Metrics.adaptive_block_size(mean, series[:, 1], sizemin=998, sizemax=1001)

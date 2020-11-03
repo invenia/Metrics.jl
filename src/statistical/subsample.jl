@@ -301,66 +301,6 @@ function adaptive_block_size(
 end
 
 """
-    estimate_block_size(
-        metric::Function, series;
-        α=0.05,
-        β=nothing,
-        sizemin=default_sizemin(metric),
-        sizemax=ceil(Int, 0.5 * length(series)),
-        sizestep=1,
-        blocksvol=2,
-    )
-
-Estimate optimal block size for computing confidence intervals at a level `α` for `metric`
-over a `series` by minimising their volatility. Optimal size is searched over the range
-`sizemin:sizestep:sizemax` and volatility is computed using `blocksvol` values above and
-below a given block size. Confidence intervals are computed assuming a convergence rate of
-`b^β`. If `β=nothing`, the rate is estimated via [`estimate_convergence_rate`](@ref).
-
-For details on this procedure, see chapter 9 of "Politis, Dimitris N., Joseph P. Romano, and
-Michael Wolf. Subsampling. Springer Science & Business Media, 1999."
-
-Returns the optimal block size, the (possibly estimated) `β` and the confidence interval
-at level `α` with the optimal block size.
-
-* NOTE: The estimation method implemented here is obsolete and shown to be less efficient
-(see https://docs.google.com/document/d/1R6eIpZakzAJZHnO8JcxrCfcBbFdYjWfuEk29rS8nVYk/edit#heading=h.8495mh10rdjq).
-Unless you know exactly what you are doing, [`adaptive_block_size`](@ref) should be used
-instead.
-"""
-function estimate_block_size(
-    metric::Function, series;
-    α=0.05,
-    β=nothing,
-    sizemin=default_sizemin(metric),
-    sizemax=ceil(Int, 0.5 * length(series)),
-    sizestep=1,
-    blocksvol=2,
-)
-    β = isnothing(β) ? estimate_convergence_rate(metric, series) : β
-    block_sizes = collect(sizemin:sizestep:sizemax)
-
-    # compute CIs for each block size
-    cis = subsample_ci.(Ref(metric), Ref(series), block_sizes; α=α, β=β)
-
-    # obtain lower and upper bounds
-    lows = first.(cis)
-    ups = last.(cis)
-
-    # determine block ranges to be used for computing the std of the CI bounds
-    block_ranges = Metrics.block_subsample(1:length(cis), 2 * blocksvol + 1)
-
-    # compute volatility indexes over the block_ranges
-    vols = [std(lows[bs]) + std(ups[bs]) for bs in block_ranges]
-
-    # Find the index of minimum volatility
-    vmin, imin = findmin(vols)
-
-    # Indent imin by blocksvol to give back the index in the cis array
-    return block_sizes[imin + blocksvol]
-end
-
-"""
     default_β(f)
 
 Default value of exponent of the convergence rate for metric `f`. If unknown, returns
