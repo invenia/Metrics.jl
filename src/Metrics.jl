@@ -35,8 +35,6 @@ include("statistical/subsample.jl")
 include("evaluate.jl")
 include("summary.jl")
 
-include("deprecated.jl")
-
 export
     evaluate,
     # regression
