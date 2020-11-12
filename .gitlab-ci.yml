@@ -2,3 +2,5 @@
 include:
   - project: invenia/gitlab-ci-helper
     file: /templates/julia.yml
+variables:
+  platform: "x86_64" 

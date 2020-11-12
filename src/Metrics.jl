@@ -35,8 +35,6 @@ include("statistical/subsample.jl")
 include("evaluate.jl")
 include("summary.jl")
 
-include("deprecated.jl")
-
 export
     evaluate,
     # regression
@@ -67,6 +65,7 @@ export
     mean_over_es,
     median_return,
     expected_shortfall, es, expected_windfall, ew,
+    ew_over_es, expected_windfall_over_expected_shortfall,
     financial_summary,
     price_impact,
     # statistical

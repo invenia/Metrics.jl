@@ -116,4 +116,26 @@
         @test_throws MethodError expected_windfall(volumes, samples, bad_args...)
         @test_throws MethodError expected_windfall(volumes, delta_dist, bad_args...)
     end
+
+    @testset "ew_over_es" begin
+        returns = randn(100)
+
+        @test ew_over_es(returns) ≈ expected_windfall(returns) / expected_shortfall(returns)
+
+        volumes = rand(100)
+
+        @test ew_over_es(returns, per_mwh=true, volumes=volumes) ≈
+            expected_windfall(returns, per_mwh=true, volumes=volumes) /
+            expected_shortfall(returns, per_mwh=true, volumes=volumes)
+
+        # Check that it is invariant under scaling
+        @test ew_over_es(returns, per_mwh=true, volumes=volumes) ≈
+            ew_over_es(2 .* returns, per_mwh=true, volumes=2 .* volumes)
+        @test ew_over_es(returns, per_mwh=true, volumes=volumes) ≈
+            ew_over_es(2 .* returns, per_mwh=true, volumes=volumes)
+
+        # Check error
+        @test_throws ArgumentError ew_over_es(returns, per_mwh=true)
+        @test_throws DimensionMismatch ew_over_es(returns, per_mwh=true, volumes=rand(5))
+    end
 end

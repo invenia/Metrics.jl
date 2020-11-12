@@ -94,14 +94,20 @@
     # large one in these tests.
     old_block_args = (sizemin=50, sizemax=300)
 
-    @testset "estimate_block_size" begin
-
-        # 2*blocksvol+1 = 252 > length(cis) = 251 (as determined by block_sizes)
-        @test_throws DomainError Metrics.estimate_block_size(mean, series; blocksvol=126, old_block_args...)
-
+    @testset "adaptive_block_size" begin
         # 1001 > length(series[:, 1]) = 1000
-        @test_throws DomainError Metrics.estimate_block_size(mean, series[:, 1], sizemax=1001)
+        @test_throws DomainError Metrics.adaptive_block_size(mean, series[:, 1], sizemin=998, sizemax=1001)
+
+        @test_throws DimensionMismatch Metrics.adaptive_block_size(mean, randn(5), randn(4))
     end
+
+    @testset "Function distance" begin 
+        f1(x) = x
+        f2(x) = 2x 
+        loc = collect(-1:4)
+        @test Metrics.l2_distance(f1, f1, loc) == 0
+        @test Metrics.l2_distance(f1, f2, loc) == 1 + 1 + 4 + 9 + 16 
+    end 
 
     @testset "subsample_ci" begin
 
@@ -115,11 +121,10 @@
             @test -0.1 < lower < 0.0
             @test 0.0 < upper < 0.1
             @test lower < mean(series) < upper
-
         end
 
         @testset "basic with block size" begin
-            bs = Metrics.estimate_block_size(mean, series; old_block_args...)
+            bs = Metrics.adaptive_block_size(mean, series; old_block_args...)
 
             # check that 3 arg form gives same result 2 arg form
             result_w_bs = subsample_ci(mean, series, bs; old_block_args...)
@@ -140,12 +145,12 @@
 
         @testset "passing kwargs" begin
 
-            block_kwargs = (sizemin=20, sizemax=100, sizestep=1, blocksvol=3)
+            block_kwargs = (sizemin=20, sizemax=100, sizestep=2, numpoints=50)
             conv_kwargs = (quantmin=0.2, quantstep=0.01, quantmax=0.7, expmax=0.4, expstep=0.1, expmin=0.10)
 
             @testset "estimate block size" begin
                 ci_result = subsample_ci(mean, series; β=0.123, block_kwargs...)
-                bs_result = Metrics.estimate_block_size(mean, series; β=0.123, block_kwargs...)
+                bs_result = Metrics.adaptive_block_size(mean, series; block_kwargs...)
                 @test ci_result == subsample_ci(mean, series, bs_result; β=0.123)
             end
 
@@ -157,13 +162,13 @@
 
             @testset "estimate block size and convergence rate" begin
                 ci_result = subsample_ci(mean, series; β=nothing, block_kwargs..., conv_kwargs...)
-                bs_result = Metrics.estimate_block_size(mean, series; block_kwargs...)
+                bs_result = Metrics.adaptive_block_size(mean, series; block_kwargs...)
                 beta = Metrics.estimate_convergence_rate(mean, series; conv_kwargs...)
                 @test ci_result == subsample_ci(mean, series, bs_result; β=beta)
             end
 
             @testset "default β" begin
-                series = rand(10_000)
+                series = rand(400)
 
                 for metric in [
                     mean,
@@ -172,15 +177,41 @@
                     median_over_es,
                     expected_shortfall,
                     expected_windfall,
+                    ew_over_es,
                 ]
                     # Choosing a large sizemin so that ES and EW have sufficient samples to be computed.
                     # Choosing a small range of sizes to save time.
-                    ci_result = subsample_ci(metric, series, sizemin=1000, sizemax=1010)
+                    ci_result = subsample_ci(metric, series, sizemin=40, sizemax=100)
                     @test ci_result == subsample_ci(
-                        metric, series, β=0.5, sizemin=1000, sizemax=1010
+                        metric, series, β=0.5, sizemin=40, sizemax=100
                     )
-                    ci_result = subsample_ci(metric, series, 1000)
-                    @test ci_result == subsample_ci(metric, series, 1000, β=0.5)
+                    ci_result = subsample_ci(metric, series, 100)
+                    @test ci_result == subsample_ci(metric, series, 100, β=0.5)
+                end
+            end
+
+            @testset "default sizemin" begin
+                sseries1 = rand(200)
+                sseries2 = rand(200)
+
+                for metric in [
+                    mean_over_es,
+                    median_over_es,
+                    expected_shortfall,
+                    expected_windfall,
+                    ew_over_es,
+                ]
+                    ci_result = subsample_ci(metric, sseries1, sizemin=40, sizemax=100)
+                    @test ci_result == subsample_ci(metric, sseries1, sizemax=100)
+                end
+
+                for metric in [
+                    mean,
+                    median,
+                    x -> mean(x) + median(x), # just a random lambda
+                ]
+                    ci_result = subsample_ci(metric, sseries1, sizemin=4, sizemax=100)
+                    @test ci_result == subsample_ci(metric, sseries1, sizemax=100)
                 end
             end
 

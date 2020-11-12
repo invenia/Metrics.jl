@@ -1,5 +1,5 @@
 """
-    block_subsample(series, b)
+    block_subsample(series, block_size)
 
 Subsample `series` with running (overlapping) blocks of length `b`.
 """
@@ -11,7 +11,6 @@ function block_subsample(series, block_size)
             "block_size cannot exceed the series length $(length(series))."
         ))
     end
-
     n_blocks = length(series) - block_size + 1
     return [series[i:(block_size + i - 1)] for i in 1:n_blocks]
 end
@@ -165,58 +164,140 @@ function _compute_log_log_slope(x, y::Vector{<:Vector})
 end
 
 """
-    estimate_block_size(
-        metric::Function, series;
-        α=0.05,
-        β=nothing,
-        sizemin=ceil(Int, 0.1 * length(series)),
-        sizemax=ceil(Int, 0.8 * length(series)),
-        sizestep=1,
-        blocksvol=2,
+    l2_distance(cdf1, cdf2, locations)
+
+Computes the unormalised squared L2 distance between two functions at a discrete set of
+`locations`.
+"""
+function l2_distance(cdf1, cdf2, locations)
+    return sum(abs2, (cdf1.(locations) .- cdf2.(locations)))
+end 
+
+"""
+    default_sizemin(f)
+
+Default value of minimum block size for metric `f`. Uses the minimum possible value of 4 for
+all metrics, except the ones that involve expected shortfall or expected windfall, as the
+minimum for those (if computed at 5%) must be 40.
+"""
+default_sizemin(f) = 4
+default_sizemin(f::typeof(ew_over_es)) = 40
+default_sizemin(f::typeof(mean_over_es)) = 40
+default_sizemin(f::typeof(median_over_es)) = 40
+default_sizemin(f::typeof(expected_shortfall)) = 40
+default_sizemin(f::typeof(expected_windfall)) = 40
+
+"""
+    adaptive_block_size(
+        metric::Function, 
+        series;
+        sizemin=default_sizemin(metric),
+        sizemax=ceil(Int, 0.5 * length(series)),
+        sizestep=2,
+        numpoints=50,
     )
 
-Estimate optimal block size for computing confidence intervals at a level `α` for `metric`
-over a `series` by minimising their volatility. Optimal size is searched over the range
-`sizemin:sizestep:sizemax` and volatility is computed using `blocksvol` values above and
-below a given block size. Confidence intervals are computed assuming a convergence rate of
-`b^β`. If `β=nothing`, the rate is estimated via [`estimate_convergence_rate`](@ref).
+Estimate the optimal block size for computing the subsampled confidence interval of `metric`
+over `series` using the adaptive method proposed in "Friedrich Götze and Alfredas Račkauskas
+Lecture Notes-Monograph Series Vol. 36, State of the Art in Probability and Statistics
+(2001), pp. 286-309".
 
-For details on this procedure, see chapter 9 of "Politis, Dimitris N., Joseph P. Romano, and
-Michael Wolf. Subsampling. Springer Science & Business Media, 1999."
+Optimal size is searched over the range `sizemin:sizestep:sizemax`. If any of those
+quantities is an odd number, the next integer is taken.
 
-Returns the optimal block size, the (possibly estimated) `β` and the confidence interval
-at level `α` with the optimal block size.
+`numpoints` controls the number of points over which the empirical CDFs are compared.
 """
-function estimate_block_size(
-    metric::Function, series;
-    α=0.05,
-    β=nothing,
-    sizemin=ceil(Int, 0.1 * length(series)),
-    sizemax=ceil(Int, 0.8 * length(series)),
-    sizestep=1,
-    blocksvol=2,
+function adaptive_block_size(
+    metric::Function, 
+    series;
+    sizemin=default_sizemin(metric),
+    sizemax=ceil(Int, 0.5 * length(series)),
+    sizestep=2,
+    numpoints=50,
 )
-    β = isnothing(β) ? estimate_convergence_rate(metric, series) : β
+    sizemin = isodd(sizemin) ? sizemin + 1 : sizemin
+    sizemax = isodd(sizemax) ? sizemax + 1 : sizemax
+    sizestep = isodd(sizestep) ? sizestep + 1 : sizestep
+
     block_sizes = collect(sizemin:sizestep:sizemax)
+    half_block_sizes = convert.(Integer, block_sizes ./ 2)
 
-    # compute CIs for each block size
-    cis = subsample_ci.(Ref(metric), Ref(series), block_sizes; α=α, β=β)
+    # Build blocks for each size
+    block_sets = block_subsample.(Ref(series), block_sizes)
+    half_block_sets = block_subsample.(Ref(series), half_block_sizes)
 
-    # obtain lower and upper bounds
-    lows = first.(cis)
-    ups = last.(cis)
+    # Build metrics series
+    metric_series = map(x -> metric.(x), block_sets)
+    half_metric_series = map(x -> metric.(x), half_block_sets)
 
-    # determine block ranges to be used for computing the std of the CI bounds
-    block_ranges = Metrics.block_subsample(1:length(cis), 2 * blocksvol + 1)
+    # Compute empirical CDFs
+    ecdfs = ecdf.(metric_series)
+    half_ecdfs = ecdf.(half_metric_series)
 
-    # compute volatility indexes over the block_ranges
-    vols = [std(lows[bs]) + std(ups[bs]) for bs in block_ranges]
+    # Define locations to compute distance between CDFs
+    # Makes it such that all CDFs are evaluated at the same points
+    # Focuses on the central region of the support, because that should be modelled better
+    center = median(mean.(metric_series))
+    width = median(std.(metric_series))
+    if width == 0
+        @warn """
+            Failed to estimate block size. The metric value is identical for every block.
+            Returning smallest possible block size.
+        """
+        @debug "Standard deviation of metrics over blocks: $(std.(metric_series))."
+        return sizemin
+    end
+    # Define locations
+    loc_start = center - width
+    loc_step = 2.0 * width / numpoints
+    loc_end = center + width
+    locations = loc_start:loc_step:loc_end
 
-    # Find the index of minimum volatility
-    vmin, imin = findmin(vols)
+    Δs = l2_distance.(ecdfs, half_ecdfs, Ref(locations))
 
-    # Indent imin by blocksvol to give back the index in the cis array
-    return block_sizes[imin + blocksvol]
+    return block_sizes[findmin(Δs)[2]]
+end
+
+"""
+    adaptive_block_size(
+        metric::Function, 
+        series1, 
+        series2;
+        sizemin=default_sizemin(metric),
+        sizemax=ceil(Int, 0.5 * length(series2)),
+        sizestep=2,
+        numpoints=50,
+    )
+
+Estimate the optimal block size for computing the subsampled confidence interval of the
+difference in `metric` over `series1` and `series2` using the adaptive method proposed in
+"Friedrich Götze and Alfredas Račkauskas Lecture Notes-Monograph Series Vol. 36, State of
+the Art in Probability and Statistics (2001), pp. 286-309".
+"""
+function adaptive_block_size(
+    metric::Function, series1, series2;
+    sizemin=default_sizemin(metric),
+    sizemax=ceil(Int, 0.5 * length(series2)),
+    sizestep=2,
+    numpoints=50,
+)
+    if length(series1) != length(series2)
+        throw(DimensionMismatch(
+            "Both series must have the same length. Got $(length(series1)) and $(length(series2))."
+        ))
+    end 
+    # Pair observations
+    paired_series = collect(zip(series1, series2))
+    # Define metric from R² to R
+    diff_metric = x -> metric(first.(x)) - metric(last.(x))
+    return adaptive_block_size(
+        diff_metric, 
+        paired_series;
+        sizemin=sizemin,
+        sizemax=sizemax,
+        sizestep=sizestep,
+        numpoints=numpoints,
+    )
 end
 
 """
@@ -234,6 +315,7 @@ default_β(f::typeof(mean_over_es)) = 0.5
 default_β(f::typeof(median_over_es)) = 0.5
 default_β(f::typeof(expected_shortfall)) = 0.5
 default_β(f::typeof(expected_windfall)) = 0.5
+default_β(f::typeof(ew_over_es)) = 0.5
 
 
 """
@@ -241,18 +323,18 @@ default_β(f::typeof(expected_windfall)) = 0.5
         metric::Function, series;
         α=0.05,
         β=default_β(metric),
-        sizemin=ceil(Int, 0.1 * length(series)),
-        sizemax=ceil(Int, 0.8 * length(series)),
+        sizemin=default_sizemin(metric),
+        sizemax=ceil(Int, 0.5 * length(series)),
         sizestep=1,
-        blocksvol=2,
+        numpoints=50,
         kwargs...
     )
 
 Compute confidence interval for `metric` over a `series` at a level `α` and convergence rate
-`b^β` by estimating the block size via [`estimate_block_size`](@ref).
+`b^β` by estimating the block size via [`adaptive_block_size`](@ref).
 
-The `sizemin`, `sizemax`, `sizestep`, and `blocksvol` keyword arguments are passed to
-[`estimate_block_size`](@ref).
+The `sizemin`, `sizemax`, `sizestep`, and `numpoints` keyword arguments are passed to
+[`adaptive_block_size`](@ref).
 The remaining `kwargs` are passed to [`estimate_convergence_rate`](@ref) (if `β` is
 `nothing`) and [`subsample_ci`](@ref).
 If `β=nothing`, the rate is estimated via [`estimate_convergence_rate`](@ref).
@@ -260,13 +342,9 @@ If `β=nothing`, the rate is estimated via [`estimate_convergence_rate`](@ref).
 !!! note
     Since `α` is the _level_ of the test, we expect the true value to lie in `1-α` of the CIs.
 
-!!! note
-    The default value of `size_max` was chosen for sampling 1 year of backrun data.
-    If you are sampling 2 years you may want to change this setting.
-
 !!! warning "Default β"
     If the `β` keyword is not provided it defaults to `default_β(metric)`.
-    For anonymous function [`default_β`](@ref) will always be `nothing`. 
+    For anonymous functions, the [`default_β`](@ref) will always return `nothing`.
     It is important to be aware of this when passing an anonymous function,
     for example when using `do`-block syntax to define the metric.
 """
@@ -274,25 +352,26 @@ function subsample_ci(
     metric::Function, series;
     α=0.05,
     β=default_β(metric),
-    sizemin=ceil(Int, 0.1 * length(series)),
-    sizemax=ceil(Int, 0.8 * length(series)),
+    sizemin=default_sizemin(metric),
+    sizemax=ceil(Int, 0.5 * length(series)),
     sizestep=1,
-    blocksvol=2,
+    numpoints=50,
     kwargs...
 )
     β = isnothing(β) ? estimate_convergence_rate(metric, series; kwargs...) : β
-    block_size = estimate_block_size(
+    block_size = adaptive_block_size(
         metric,
         series;
-        α=α,
-        β=β,
         sizemin=sizemin,
         sizemax=sizemax,
         sizestep=sizestep,
-        blocksvol=blocksvol
+        numpoints=numpoints
     )
 
-    return subsample_ci(metric, series, block_size; α=α, β=β, kwargs...)
+    return subsample_ci(
+        metric, series, block_size;
+        α=α, β=β, kwargs...
+    )
 end
 
 """
@@ -312,7 +391,9 @@ function subsample_ci(
     α=0.05, β=default_β(metric), kwargs...
 )
     # apply metric to subsampled series
-    metric_series = metric.(block_subsample(series, block_size))
+    blocks = block_subsample(series, block_size)
+    metric_series = metric.(blocks)
+
     # estimate convergence rates
     β = isnothing(β) ? estimate_convergence_rate(metric, series; kwargs...) : β
     n = length(series)
@@ -330,3 +411,4 @@ function subsample_ci(
     upper_corrected = sample_metric - lower / τ_n
     return Interval(lower_corrected, upper_corrected)
 end
+
