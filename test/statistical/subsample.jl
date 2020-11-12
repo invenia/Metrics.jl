@@ -11,6 +11,9 @@
         result = Metrics.block_subsample(block_series, 3)
         @test result == [[1, 2, 3], [2, 3, 4], [3, 4, 5]]
 
+        result = Metrics.block_subsample(block_series, 3, circular=true)
+        @test result == [[1, 2, 3], [2, 3, 4], [3, 4, 5], [4, 5, 1], [5, 1, 2]]
+
         @test_throws DomainError Metrics.block_subsample(block_series, 6)
     end
 
@@ -129,6 +132,14 @@
             # check that 3 arg form gives same result 2 arg form
             result_w_bs = subsample_ci(mean, series, bs; old_block_args...)
             @test subsample_ci(mean, series; β=0.5, old_block_args...) == result_w_bs
+
+            # test that studentisation affects the result
+            @test subsample_ci(mean, series; studentise=true, β=0.5, old_block_args...) !=
+                subsample_ci(mean, series; studentise=false, β=0.5, old_block_args...)
+
+            # test that circular affects the result
+            @test subsample_ci(mean, series; circular=true, β=0.5, old_block_args...) !=
+                subsample_ci(mean, series; circular=false, β=0.5, old_block_args...)
         end
 
         @testset "increasing alpha level contracts ci bounds" begin
