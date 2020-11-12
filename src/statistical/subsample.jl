@@ -199,7 +199,8 @@ default_sizemin(f::typeof(expected_windfall)) = 40
 
 """
     adaptive_block_size(
-        metric::Function, series;
+        metric::Function, 
+        series;
         sizemin=default_sizemin(metric),
         sizemax=ceil(Int, 0.5 * length(series)),
         sizestep=2,
@@ -371,7 +372,7 @@ If `circular`, the subsampled blocks wrap around the end of `series`.
 
 !!! warning "Default β"
     If the `β` keyword is not provided it defaults to `default_β(metric)`.
-    For anonymous function [`default_β`](@ref) will always be `nothing`.
+    For anonymous functions, the [`default_β`](@ref) will always return `nothing`.
     It is important to be aware of this when passing an anonymous function,
     for example when using `do`-block syntax to define the metric.
 """
