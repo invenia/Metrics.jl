@@ -244,7 +244,7 @@ function adaptive_block_size(
             Failed to estimate block size. The metric value is identical for every block.
             Returning smallest possible block size.
         """
-        @info "Standard deviation of metrics over blocks: $(std.(metric_series))."
+        @debug "Standard deviation of metrics over blocks: $(std.(metric_series))."
         return sizemin
     end
     # Define locations
