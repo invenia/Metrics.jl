@@ -377,7 +377,8 @@ If `circular`, the subsampled blocks wrap around the end of `series`.
     for example when using `do`-block syntax to define the metric.
 """
 function subsample_ci(
-    metric::Function, series;
+    metric::Function,
+    series;
     α=0.05,
     β=default_β(metric),
     sizemin=default_sizemin(metric),
