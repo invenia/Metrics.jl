@@ -339,7 +339,8 @@ default_β(f::typeof(ew_over_es)) = 0.5
 
 """
     subsample_ci(
-        metric::Function, series;
+        metric::Function,
+        series;
         α=0.05,
         β=default_β(metric),
         sizemin=default_sizemin(metric),
