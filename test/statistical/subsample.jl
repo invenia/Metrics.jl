@@ -11,8 +11,19 @@
         result = Metrics.block_subsample(block_series, 3)
         @test result == [[1, 2, 3], [2, 3, 4], [3, 4, 5]]
 
+        result = Metrics.block_subsample(block_series, length(block_series))
+        @test length(result) == 1
+
         result = Metrics.block_subsample(block_series, 3, circular=true)
         @test result == [[1, 2, 3], [2, 3, 4], [3, 4, 5], [4, 5, 1], [5, 1, 2]]
+
+        result = Metrics.block_subsample(block_series, length(block_series), circular=true)
+        @test length(result) == length(block_series)
+
+        result = Metrics.block_subsample(block_series, 1)
+        result_c = Metrics.block_subsample(block_series, 1, circular=true)
+        @test length(result) == length(block_series)
+        @test result == result_c
 
         @test_throws DomainError Metrics.block_subsample(block_series, 6)
     end
