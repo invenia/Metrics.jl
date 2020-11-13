@@ -448,7 +448,7 @@ function subsample_ci(
     # compute sample metric
     sample_metric = metric(series)
     # center and scale metrics
-    metric_series = (metric_series .- sample_metric) * τ_b ./ σ_b
+    metric_series = (metric_series .- sample_metric) .* τ_b ./ σ_b
     # compute lower and upper bounds
     lower = quantile(metric_series, α / 2)
     upper = quantile(metric_series, 1 - (α / 2))
