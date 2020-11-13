@@ -368,6 +368,8 @@ heavy tailed data, it is recommended to use this option.
 
 If `circular`, the subsampled blocks wrap around the end of `series`.
 
+Returns the confidence interval as `Closed` `Interval`.
+
 !!! note
     Since `α` is the _level_ of the test, we expect the true value to lie in `1-α` of the CIs.
 
@@ -408,26 +410,27 @@ end
 
 """
     subsample_ci(
-        metric::Function, series, block_size;
-        α=0.05, β=default_β(metric), studentise=false, circular=false, kwargs...
+        metric::Function, 
+        series, 
+        block_size;
+        α=0.05, 
+        β=default_β(metric), 
+        studentise=false, 
+        circular=false, 
+        kwargs...
     )
 
-Compute confidence interval for `metric` over a `series` at a level `α` using a `block_size`
-and convergence rate `b^β`. If `β=nothing`, the rate is estimated via
-[`estimate_convergence_rate`](@ref) which accepts the `kwargs`.
-
-If `studentise`, the roots are studentised using the unbiased sample standard deviation. See
-chapters 2 and 11 of "Politis, Dimitris N., Joseph P. Romano, and
-Michael Wolf. Subsampling. Springer Science & Business Media, 1999." for the theory. For
-heavy tailed data, it is recommended to use this option.
-
-If `circular`, the subsampled blocks wrap around the end of `series`.
-
-Returns the confidence interval as `Closed` `Interval`.
+Compute confidence interval using a given `block_size`.
 """
 function subsample_ci(
-    metric::Function, series, block_size;
-    α=0.05, β=default_β(metric), studentise=false, circular=false, kwargs...
+    metric::Function, 
+    series, 
+    block_size;
+    α=0.05, 
+    β=default_β(metric), 
+    studentise=false, 
+    circular=false, 
+    kwargs...
 )
     # apply metric to subsampled series
     blocks = block_subsample(series, block_size; circular=circular)
