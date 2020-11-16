@@ -461,3 +461,102 @@ function subsample_ci(
     return Interval(lower_corrected, upper_corrected)
 end
 
+"""
+    subsample_difference_ci(
+        metric::Function, 
+        series1, 
+        series2, 
+        block_size;
+        α=0.05, 
+        β=default_β(metric), 
+        studentise=false, 
+        circular=false, 
+        kwargs...
+    )
+
+Compute confidence interval for the difference in `metric` over a `series1` and a `series2`
+at a level `α` and convergence rate `b^β`. If `β=nothing`, the rate is estimated via
+[`estimate_convergence_rate`](@ref) which accepts the `kwargs`.
+
+If `studentise`, the roots are studentised using the unbiased sample standard deviation. See
+chapters 2 and 11 of "Politis, Dimitris N., Joseph P. Romano, and
+Michael Wolf. Subsampling. Springer Science & Business Media, 1999." for the theory. For
+heavy tailed data, it is recommended to use this option.
+
+If `circular`, the subsampled blocks wrap around the end of `series`.
+
+Returns the confidence interval as `Closed` `Interval`.
+
+!!! warning "Default β"
+If the `β` keyword is not provided it defaults to `default_β(metric)`.
+For anonymous function [`default_β`](@ref) will always be `nothing`.
+It is important to be aware of this when passing an anonymous function,
+for example when using `do`-block syntax to define the metric.
+"""
+function subsample_difference_ci(
+    metric::Function, 
+    series1, 
+    series2, 
+    block_size;
+    α=0.05, 
+    β=default_β(metric), 
+    studentise=false, 
+    circular=false, 
+    kwargs...
+)
+    length(series1) != length(series2) && throw(DimensionMismatch(
+        "Both series must have the same length. Got $(length(series1)) and $(length(series2))."
+    ))
+    # Pair observations
+    paired_series = collect(zip(series1, series2))
+    # Define metric from R² to R
+    diff_metric = x -> metric(getfield.(x, 1)) - metric(getfield.(x, 2))
+    return subsample_ci(
+        diff_metric, paired_series, block_size;
+        α=α, β=β, studentise=studentise, circular=circular, kwargs...
+    )
+end
+
+"""
+    subsample_difference_ci(
+        metric::Function, series1, series2;
+        α=0.05,
+        β=default_β(metric),
+        studentise=false,
+        circular=false,
+        sizemin=default_sizemin(metric),
+        sizemax=ceil(Int, 0.8 * length(series1)),
+        sizestep=1,
+        numpoints=50,
+        kwargs...
+    )
+
+Compute confidence interval for the difference in `metric` over a `series1` and a `series2`
+at a level `α` and convergence rate `b^β` by estimating the block size via
+[`adaptive_block_size`](@ref).
+"""
+function subsample_difference_ci(
+    metric::Function, series1, series2;
+    α=0.05,
+    β=default_β(metric),
+    studentise=false,
+    circular=false,
+    sizemin=default_sizemin(metric),
+    sizemax=ceil(Int, 0.8 * length(series1)),
+    sizestep=1,
+    numpoints=50,
+    kwargs...
+)
+    length(series1) != length(series2) && throw(DimensionMismatch(
+        "Both series must have the same length. Got $(length(series1)) and $(length(series2))."
+    ))
+    # Pair observations
+    paired_series = collect(zip(series1, series2))
+    # Define metric from R² to R
+    diff_metric = x -> metric(getfield.(x, 1)) - metric(getfield.(x, 2))
+    return subsample_ci(
+        diff_metric, paired_series;
+        α=α, β=β, studentise=studentise, circular=circular, sizemin=sizemin,
+        sizemax=sizemax, sizestep=sizestep, numpoints=numpoints, kwargs...
+    )
+end
