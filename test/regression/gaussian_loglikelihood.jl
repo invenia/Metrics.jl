@@ -1,4 +1,4 @@
-@testset "gaussian_loglikelihood.jl" begin
+@testset "loglikelihood.jl" begin
 
     @testset "marginal_gaussian_loglikelihood" begin
 

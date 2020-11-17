@@ -28,7 +28,7 @@ seed!(1)
     include("utils.jl")
     # regression
     include("regression/asymmetric.jl")
-    include("regression/gaussian_loglikelihood.jl")
+    include("regression/loglikelihood.jl")
     include("regression/picp.jl")
     include("regression/potential_payoff.jl")
     include("regression/simple.jl")
