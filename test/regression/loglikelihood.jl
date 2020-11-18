@@ -160,18 +160,33 @@
 
         @testset "multivariate" begin
             pred_location = ones(3)
-            pred_scale = [2.25 0.1 0.0; 0.1 2.25 0.0; 0.0 0.0 2.25]
+            pred_scale = [2.25 0.1 0.0; 0.1 1.25 0.0; 0.0 0.0 3.25]
             y_true = [0.1, 0.2, 0.3]
+            obs = Symbol.("t_", 1:3)
+            y_true_idx = AxisArray(y_true, Axis{:obs}(obs))
             @testset "Normal distribution" begin
                 y_pred = MvNormal(pred_location, pred_scale)
-                @test Metrics.loglikelihood(y_true, y_pred) ==
-                    Distributions.loglikelihood(y_pred, y_true)
+                expected = Distributions.loglikelihood(y_pred, y_true)
+                @test Metrics.loglikelihood(y_true, y_pred) == expected
+                # - Using IndexedDistributions with AxisArrays
+                y_pred_idx = IndexedDistribution(y_pred, obs)
+                @test Metrics.loglikelihood(y_true_idx, y_pred_idx) == expected
+                # if the observation dimensions don't match the order, should use the axis
+                # to match the order and give a correct resuilt
+                new_obs_order = shuffle(1:3)
+                y_true_idx2 = AxisArray(y_true[new_obs_order], Axis{:obs}(obs[new_obs_order]))
+                @test Metrics.loglikelihood(y_true_idx2, y_pred_idx) == expected
             end
-            # @testset "T distribution" begin
-            #     y_pred = Distributions.GenericMvTDist(3.0, pred_location, pred_scale)
-            #     @test Metrics.loglikelihood(y_true, y_pred) ==
-            #         Distributions.loglikelihood(y_pred, y_true)
-            # end
+            @testset "T distribution" begin
+                y_pred = Distributions.GenericMvTDist(3.0, pred_location, PDMat(pred_scale))
+                expected = Distributions.loglikelihood(y_pred, y_true)
+                @test Metrics.loglikelihood(y_true, y_pred) == expected
+                # - Using IndexedDistributions with AxisArrays
+                y_pred_idx = IndexedDistribution(y_pred, obs)
+                @test Metrics.loglikelihood(y_true_idx, y_pred_idx) == expected
+                # TODO: extend `_match` to deal with `GenericMvTDist` properly. So suffled
+                # case can be tested
+            end
         end
     end
 end

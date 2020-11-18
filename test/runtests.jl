@@ -8,6 +8,7 @@ using Metrics
 using Metrics: price_impact
 using ObservationDims
 using NamedDims
+using PDMats
 using PDMatsExtras
 using Random
 using Random: seed!
