@@ -9,7 +9,7 @@ using LinearAlgebra: cholesky, det, dot, I, norm, tr
 using NamedDims
 using NaNMath
 using ObservationDims
-using PSDMats
+using PDMatsExtras
 using SpecialFunctions
 using StatsBase
 using StatsUtils: sqrtcov
