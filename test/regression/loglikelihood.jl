@@ -132,4 +132,46 @@
             end
         end
     end
+
+    @testset "loglikelihood" begin
+        test_data = [
+            # multivariate
+            (
+                dist_dim = "multivariate",
+                pred_location = ones(3),
+                pred_scale = [2.25 0.1 0.0; 0.1 2.25 0.0; 0.0 0.0 2.25],
+            ),
+        ]
+        @testset "univariate" begin
+            pred_location = 0.1
+            pred_scale = 2
+            y_true = 0.2
+            @testset "Normal distribution" begin
+                y_pred = Normal(pred_location, pred_scale)
+                @test Metrics.loglikelihood(y_true, y_pred) ==
+                    Distributions.loglikelihood(y_pred, y_true)
+            end
+            @testset "T distribution" begin
+                y_pred = TDist(3.0)
+                @test Metrics.loglikelihood(y_true, y_pred) ==
+                    Distributions.loglikelihood(y_pred, y_true)
+            end
+        end
+
+        @testset "multivariate" begin
+            pred_location = ones(3)
+            pred_scale = [2.25 0.1 0.0; 0.1 2.25 0.0; 0.0 0.0 2.25]
+            y_true = [0.1, 0.2, 0.3]
+            @testset "Normal distribution" begin
+                y_pred = MvNormal(pred_location, pred_scale)
+                @test Metrics.loglikelihood(y_true, y_pred) ==
+                    Distributions.loglikelihood(y_pred, y_true)
+            end
+            # @testset "T distribution" begin
+            #     y_pred = Distributions.GenericMvTDist(3.0, pred_location, pred_scale)
+            #     @test Metrics.loglikelihood(y_true, y_pred) ==
+            #         Distributions.loglikelihood(y_pred, y_true)
+            # end
+        end
+    end
 end

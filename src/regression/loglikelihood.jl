@@ -12,14 +12,14 @@ the probability of the points.
 function marginal_gaussian_loglikelihood(y_true, y_pred::Sampleable{Univariate})
     y_true, y_pred = _match(y_true, y_pred)
     normalized_dist = Normal(mean(y_pred), std(y_pred))
-    return loglikelihood(normalized_dist, y_true)
+    return Distributions.loglikelihood(normalized_dist, y_true)
 end
 
 function marginal_gaussian_loglikelihood(y_true, y_pred::Sampleable{Multivariate})
     y_true, y_pred = _match(y_true, y_pred)
     # `std` is not defined on `MvNormal` so we use `sqrt.(var(...))`
     normalized_dist = MvNormal(parent(mean(y_pred)), sqrt.(parent(var(y_pred))))
-    return loglikelihood(normalized_dist, y_true)
+    return Distributions.loglikelihood(normalized_dist, y_true)
 end
 
 function marginal_gaussian_loglikelihood(y_pred::Sampleable, y_true)
@@ -45,13 +45,29 @@ end
 function joint_gaussian_loglikelihood(y_true, y_pred::Sampleable{Multivariate})
     y_true, y_pred = _match(y_true, y_pred)
     normalized_dist = MvNormal(parent(mean(y_pred)), parent(cov(y_pred)))
-    return loglikelihood(normalized_dist, y_true)
+    return Distributions.loglikelihood(normalized_dist, y_true)
 end
 
-joint_gaussian_loglikelihood(y_true, y_pred::MvNormal) = loglikelihood(y_pred, y_true)
+joint_gaussian_loglikelihood(y_true, y_pred::MvNormal) = Distributions.loglikelihood(y_pred, y_true)
 
 function joint_gaussian_loglikelihood(y_pred::Sampleable, y_true)
     return joint_gaussian_loglikelihood(y_true, y_pred)
 end
 
 ObservationDims.obs_arrangement(::typeof(joint_gaussian_loglikelihood)) = MatrixColsOfObs()
+
+"""
+    loglikelihood(y_true y_pred::Sampleable{Univariate}) -> Float64
+    loglikelihood(y_true::AbstractVector{<:Real}, y_pred::Sampleable{Multivariate}) -> Float64
+
+Compute the loglikelihood of the data `y_true` under the predicted distribution `y_pred`.
+Normally `y_true` is only ONE sample.
+Use `Distributions.loglikelihood` under the hood with argument order swap to align with the
+API in Metrics.jl
+"""
+function loglikelihood(y_true, y_pred::Sampleable)
+    y_true, y_pred = _match(y_true, y_pred)
+    return Distributions.loglikelihood(y_pred, y_true)
+end
+
+ObservationDims.obs_arrangement(::typeof(loglikelihood)) = MatrixColsOfObs()

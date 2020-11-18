@@ -49,6 +49,7 @@ export
     mean_absolute_scaled_error, mase,
     marginal_gaussian_loglikelihood,
     joint_gaussian_loglikelihood,
+    loglikelihood,
     potential_payoff,
     prediction_interval_coverage_probability, picp,
     window_prediction_interval_coverage_probability, wpicp,
