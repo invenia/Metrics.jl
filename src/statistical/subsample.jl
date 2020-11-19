@@ -537,7 +537,9 @@ at a level `α` and convergence rate `b^β` by estimating the block size via
 [`adaptive_block_size`](@ref).
 """
 function subsample_difference_ci(
-    metric::Function, series1, series2;
+    metric::Function,
+    series1,
+    series2;
     α=0.05,
     β=default_β(metric),
     studentize=false,

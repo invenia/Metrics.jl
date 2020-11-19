@@ -126,7 +126,6 @@
     @testset "subsample_ci and subsample_difference_ci" begin
 
         @testset "basic" begin
-
             result = subsample_ci.(mean, eachcol(series); old_block_args...)
 
             lower = mean(first, result)
@@ -146,7 +145,6 @@
 
             @test -0.1 < lower < 0.0
             @test 0.0 < upper < 0.1
-
         end
 
         @testset "basic with block size" begin
@@ -167,8 +165,13 @@
             bs = Metrics.adaptive_block_size(mean, series[:, 1], series[:, 2]; old_block_args...)
 
             # check that 3 arg form gives same result 2 arg form
-            result_w_bs = subsample_difference_ci(mean, series[:, 1], series[:, 2], bs; old_block_args...)
-            @test subsample_difference_ci(mean, series[:, 1], series[:, 2]; β=0.5, old_block_args...) == result_w_bs
+            result_w_bs = subsample_difference_ci(
+                mean, series[:, 1], series[:, 2], bs; old_block_args...
+            )
+            result_no_bs = subsample_difference_ci(
+                mean, series[:, 1], series[:, 2]; β=0.5, old_block_args...
+            )
+            @test result_no_bs == result_w_bs
 
             # test that studentisation affects the result
             @test subsample_difference_ci(mean, series[:, 1], series[:, 2]; studentize=true, β=0.5, old_block_args...) !=
@@ -182,7 +185,8 @@
         @testset "linearity of differences in mean" begin
             diff_ci = subsample_difference_ci(mean, series[:, 1], series[:, 2]; β=0.5, old_block_args...)
             ci_diff = subsample_ci(mean, series[:, 1] .- series[:, 2]; β=0.5, old_block_args...)
-            @test (first(diff_ci) ≈ first(ci_diff)) && (last(diff_ci) ≈ last(ci_diff))
+            @test (first(diff_ci) ≈ first(ci_diff))
+            @test (last(diff_ci) ≈ last(ci_diff))
         end
 
         @testset "increasing alpha level contracts ci bounds" begin
@@ -315,7 +319,4 @@
         end
 
     end
-
-
-
 end
