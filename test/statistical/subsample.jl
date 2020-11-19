@@ -190,6 +190,15 @@
             @test (last(diff_ci) ≈ last(ci_diff))
         end
 
+        @testset "antisymmetry of differences" begin
+            for metric in [mean, median, es, mean_over_es, ew, ew_over_es]
+                diff_1 = subsample_difference_ci(metric, series_a, series_b; β=0.5, old_block_args...)
+                diff_2 = subsample_difference_ci(metric, series_b, series_a; β=0.5, old_block_args...)
+                @test (first(diff_1) ≈ -last(diff_2))
+                @test (last(diff_1) ≈ -first(diff_2))
+            end 
+        end
+
         @testset "increasing alpha level contracts ci bounds" begin
 
             # this is expected behaviour since alpha is the level of the test we expect the
