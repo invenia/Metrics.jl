@@ -392,6 +392,9 @@ function subsample_ci(
     circular=false,
     kwargs...
 )
+    if !isempty(kwargs) && !isnothing(β)
+        @warn "β=$β provided, kwargs $(kwargs...) will be ignored."
+    end 
     β = isnothing(β) ? estimate_convergence_rate(metric, series; kwargs...) : β
     block_size = adaptive_block_size(
         metric,
@@ -404,7 +407,7 @@ function subsample_ci(
 
     return subsample_ci(
         metric, series, block_size;
-        α=α, β=β, studentize=studentize, circular=circular, kwargs...
+        α=α, β=β, studentize=studentize, circular=circular,
     )
 end
 
@@ -431,7 +434,11 @@ function subsample_ci(
     studentize=false, 
     circular=false, 
     kwargs...
-)
+    )
+    if !isempty(kwargs) && !isnothing(β)
+        @warn "β=$β provided, kwargs $(kwargs...) will be ignored."
+    end 
+
     # apply metric to subsampled series
     blocks = block_subsample(series, block_size; circular=circular)
     metric_series = metric.(blocks)

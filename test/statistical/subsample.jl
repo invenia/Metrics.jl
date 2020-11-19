@@ -151,7 +151,7 @@
             bs = Metrics.adaptive_block_size(mean, series; old_block_args...)
 
             # check that 3 arg form gives same result 2 arg form
-            result_w_bs = subsample_ci(mean, series, bs; old_block_args...)
+            result_w_bs = subsample_ci(mean, series, bs)
             @test subsample_ci(mean, series; β=0.5, old_block_args...) == result_w_bs
 
             # test that studentisation affects the result
@@ -165,9 +165,7 @@
             bs = Metrics.adaptive_block_size(mean, series[:, 1], series[:, 2]; old_block_args...)
 
             # check that 3 arg form gives same result 2 arg form
-            result_w_bs = subsample_difference_ci(
-                mean, series[:, 1], series[:, 2], bs; old_block_args...
-            )
+            result_w_bs = subsample_difference_ci(mean, series[:, 1], series[:, 2], bs)
             result_no_bs = subsample_difference_ci(
                 mean, series[:, 1], series[:, 2]; β=0.5, old_block_args...
             )
@@ -231,6 +229,28 @@
                 diff_mean = x -> mean(getfield.(x, 1)) - mean(getfield.(x, 2))
                 beta = Metrics.estimate_convergence_rate(diff_mean, paired_series; conv_kwargs...)
                 @test ci_result == subsample_difference_ci(mean, series[:, 1], series[:, 2]; β=beta, old_block_args...)
+
+                # Warnings
+                warning = r"extra_kwarg"
+                @test_logs (:warn, warning) subsample_difference_ci(
+                    mean, series[:, 1], series[:, 2]; # Without block_size
+                    β=beta, extra_kwarg=20, old_block_args...
+                )
+
+                @test_logs (:warn, warning) subsample_difference_ci(
+                    mean, series[:, 1], series[:, 2], 12; # With block_size
+                    β=beta, extra_kwarg=20, old_block_args...
+                )
+
+                @test_logs (:warn, warning) subsample_ci(
+                    mean, series; # Without block_size 
+                    β=beta, extra_kwarg=20, old_block_args...
+                )
+
+                @test_logs (:warn, warning) subsample_ci(
+                    mean, series, 12; # With block_size 
+                    β=beta, extra_kwarg=20, old_block_args...
+                )
             end
 
             @testset "estimate block size and convergence rate" begin
