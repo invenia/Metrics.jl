@@ -482,8 +482,9 @@ end
     )
 
 Compute confidence interval for the difference in `metric` over a `series1` and a `series2`
-at a level `α` and convergence rate `b^β`. If `β=nothing`, the rate is estimated via
-[`estimate_convergence_rate`](@ref) which accepts the `estimate_convergence_rate_kwargs`.
+at a level `α` and convergence rate `b^β`, using block size `block_size`. If `β=nothing`, 
+the rate is estimated via [`estimate_convergence_rate`](@ref) which accepts the 
+`estimate_convergence_rate_kwargs`.
 
 If `studentize`, the roots are studentized using the unbiased sample standard deviation. See
 chapters 2 and 11 of "Politis, Dimitris N., Joseph P. Romano, and
