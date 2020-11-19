@@ -4,6 +4,9 @@
 
     # synthetic series for testing
     series = randn(1000, 10)
+    series_a = series[:, 1]
+    series_b = series[:, 2]
+
 
     @testset "block_subsample" begin
         block_series = collect(1:5)
@@ -109,8 +112,8 @@
     old_block_args = (sizemin=50, sizemax=300)
 
     @testset "adaptive_block_size" begin
-        # 1001 > length(series[:, 1]) = 1000
-        @test_throws DomainError Metrics.adaptive_block_size(mean, series[:, 1], sizemin=998, sizemax=1001)
+        # 1001 > length(series_a) = 1000
+        @test_throws DomainError Metrics.adaptive_block_size(mean, series_a, sizemin=998, sizemax=1001)
 
         @test_throws DimensionMismatch Metrics.adaptive_block_size(mean, randn(5), randn(4))
     end
@@ -162,27 +165,27 @@
             @test subsample_ci(mean, series; circular=true, β=0.5, old_block_args...) !=
                 subsample_ci(mean, series; circular=false, β=0.5, old_block_args...)
 
-            bs = Metrics.adaptive_block_size(mean, series[:, 1], series[:, 2]; old_block_args...)
+            bs = Metrics.adaptive_block_size(mean, series_a, series_b; old_block_args...)
 
             # check that 3 arg form gives same result 2 arg form
-            result_w_bs = subsample_difference_ci(mean, series[:, 1], series[:, 2], bs)
+            result_w_bs = subsample_difference_ci(mean, series_a, series_b, bs)
             result_no_bs = subsample_difference_ci(
-                mean, series[:, 1], series[:, 2]; β=0.5, old_block_args...
+                mean, series_a, series_b; β=0.5, old_block_args...
             )
             @test result_no_bs == result_w_bs
 
             # test that studentisation affects the result
-            @test subsample_difference_ci(mean, series[:, 1], series[:, 2]; studentize=true, β=0.5, old_block_args...) !=
-                subsample_difference_ci(mean, series[:, 1], series[:, 2]; studentize=false, β=0.5, old_block_args...)
+            @test subsample_difference_ci(mean, series_a, series_b; studentize=true, β=0.5, old_block_args...) !=
+                subsample_difference_ci(mean, series_a, series_b; studentize=false, β=0.5, old_block_args...)
 
             # test that circular affects the result
-            @test subsample_difference_ci(mean, series[:, 1], series[:, 2]; circular=true, β=0.5, old_block_args...) !=
-                subsample_difference_ci(mean, series[:, 1], series[:, 2]; circular=false, β=0.5, old_block_args...)
+            @test subsample_difference_ci(mean, series_a, series_b; circular=true, β=0.5, old_block_args...) !=
+                subsample_difference_ci(mean, series_a, series_b; circular=false, β=0.5, old_block_args...)
         end
 
         @testset "linearity of differences in mean" begin
-            diff_ci = subsample_difference_ci(mean, series[:, 1], series[:, 2]; β=0.5, old_block_args...)
-            ci_diff = subsample_ci(mean, series[:, 1] .- series[:, 2]; β=0.5, old_block_args...)
+            diff_ci = subsample_difference_ci(mean, series_a, series_b; β=0.5, old_block_args...)
+            ci_diff = subsample_ci(mean, series_a .- series_b; β=0.5, old_block_args...)
             @test (first(diff_ci) ≈ first(ci_diff))
             @test (last(diff_ci) ≈ last(ci_diff))
         end
@@ -209,9 +212,9 @@
                 bs_result = Metrics.adaptive_block_size(mean, series; block_kwargs...)
                 @test ci_result == subsample_ci(mean, series, bs_result; β=0.123)
 
-                ci_result = subsample_difference_ci(mean, series[:, 1], series[:, 2]; β=0.123, block_kwargs...)
-                bs_result = Metrics.adaptive_block_size(mean, series[:, 1], series[:, 2]; block_kwargs...)
-                @test ci_result == subsample_difference_ci(mean, series[:, 1], series[:, 2], bs_result; β=0.123)
+                ci_result = subsample_difference_ci(mean, series_a, series_b; β=0.123, block_kwargs...)
+                bs_result = Metrics.adaptive_block_size(mean, series_a, series_b; block_kwargs...)
+                @test ci_result == subsample_difference_ci(mean, series_a, series_b, bs_result; β=0.123)
             end
 
             @testset "estimate convergence rate" begin
@@ -220,25 +223,25 @@
                 @test ci_result == subsample_ci(mean, series; β=beta, old_block_args...)
 
                 ci_result = subsample_difference_ci(
-                    mean, series[:, 1], series[:, 2];
+                    mean, series_a, series_b;
                     β=nothing, old_block_args..., conv_kwargs...
                 )
                 # Pair observations
-                paired_series = collect(zip(series[:, 1], series[:, 2]))
+                paired_series = collect(zip(series_a, series_b))
                 # Define metric from R² to R
                 diff_mean = x -> mean(getfield.(x, 1)) - mean(getfield.(x, 2))
                 beta = Metrics.estimate_convergence_rate(diff_mean, paired_series; conv_kwargs...)
-                @test ci_result == subsample_difference_ci(mean, series[:, 1], series[:, 2]; β=beta, old_block_args...)
+                @test ci_result == subsample_difference_ci(mean, series_a, series_b; β=beta, old_block_args...)
 
                 # Warnings
                 warning = r"extra_kwarg"
                 @test_logs (:warn, warning) subsample_difference_ci(
-                    mean, series[:, 1], series[:, 2]; # Without block_size
+                    mean, series_a, series_b; # Without block_size
                     β=beta, extra_kwarg=20, old_block_args...
                 )
 
                 @test_logs (:warn, warning) subsample_difference_ci(
-                    mean, series[:, 1], series[:, 2], 12; # With block_size
+                    mean, series_a, series_b, 12; # With block_size
                     β=beta, extra_kwarg=20, old_block_args...
                 )
 
@@ -253,23 +256,42 @@
                 )
             end
 
-            @testset "estimate block size and convergence rate" begin
+            @testset "estimate block size" begin
                 ci_result = subsample_ci(mean, series; β=nothing, block_kwargs..., conv_kwargs...)
                 bs_result = Metrics.adaptive_block_size(mean, series; block_kwargs...)
-                beta = Metrics.estimate_convergence_rate(mean, series; conv_kwargs...)
-                @test ci_result == subsample_ci(mean, series, bs_result; β=beta)
+                @test ci_result == subsample_ci(mean, series, bs_result; β=nothing, conv_kwargs...)
 
                 ci_result = subsample_difference_ci(
-                    mean, series[:, 1], series[:, 2];
+                    mean, series_a, series_b;
                     β=nothing, block_kwargs..., conv_kwargs...
                 )
-                bs_result = Metrics.adaptive_block_size(mean, series[:, 1], series[:, 2]; block_kwargs...)
+                bs_result = Metrics.adaptive_block_size(mean, series_a, series_b; block_kwargs...)
                 # Pair observations
-                paired_series = collect(zip(series[:, 1], series[:, 2]))
+                paired_series = collect(zip(series_a, series_b))
+                # Define metric from R² to R
+                diff_mean = x -> mean(getfield.(x, 1)) - mean(getfield.(x, 2))
+                @test ci_result == subsample_difference_ci(
+                    mean, series_a, series_b, bs_result; β=nothing, conv_kwargs...
+                )
+            end
+
+            @testset "estimate convergence rate" begin
+                ci_result = subsample_ci(mean, series; β=nothing, block_kwargs..., conv_kwargs...)
+                beta = Metrics.estimate_convergence_rate(mean, series; conv_kwargs...)
+                @test ci_result == subsample_ci(mean, series; β=beta, block_kwargs...)
+
+                ci_result = subsample_difference_ci(
+                    mean, series_a, series_b;
+                    β=nothing, block_kwargs..., conv_kwargs...
+                )
+                # Pair observations
+                paired_series = collect(zip(series_a, series_b))
                 # Define metric from R² to R
                 diff_mean = x -> mean(getfield.(x, 1)) - mean(getfield.(x, 2))
                 beta = Metrics.estimate_convergence_rate(diff_mean, paired_series; conv_kwargs...)
-                @test ci_result == subsample_difference_ci(mean, series[:, 1], series[:, 2], bs_result; β=beta)
+                @test ci_result == subsample_difference_ci(
+                    mean, series_a, series_b; β=beta, block_kwargs...
+                )
             end
 
             @testset "default β" begin
