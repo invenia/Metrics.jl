@@ -106,6 +106,7 @@ function _match(a::AxisArray, b::AxisArray)
     if (axisnames(a) == axisnames(b)) && (axisvalues(a) == axisvalues(b))
         return a, b
     # check that axis orientation is the same
+    @show axisnames(a), axisnames(b)
     elseif axisnames(a) != axisnames(b)
         throw(ArgumentError(
             "AxisArray orientations do not match: "*

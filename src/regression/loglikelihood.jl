@@ -70,4 +70,4 @@ function loglikelihood(y_true, y_pred::Sampleable)
     return Distributions.loglikelihood(y_pred, y_true)
 end
 
-ObservationDims.obs_arrangement(::typeof(loglikelihood)) = MatrixColsOfObs()
+ObservationDims.obs_arrangement(::typeof(loglikelihood)) = SingleObs()

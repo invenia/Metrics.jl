@@ -78,6 +78,13 @@
         end
     end
 
+    """mean_squared_error_on_mean"""
+    function test_metric_properties(metric::typeof(mean_squared_error_on_mean), args...)
+        is_strictly_positive(metric, args...)
+        is_zero_if_ypred_equals_ytrue(metric, args...)
+    end
+
+
     """mean_absolute_error"""
     function test_metric_properties(metric::typeof(mean_absolute_error), args...)
         is_strictly_positive(metric, args...)
@@ -340,6 +347,7 @@
     @testset "collection of obs" begin
         metrics = (
             mean_squared_error,
+            mean_squared_error_on_mean,
             root_mean_squared_error,
             normalised_root_mean_squared_error,
             standardized_mean_squared_error,
@@ -365,6 +373,18 @@
                     "scalar" => 74 / 3 + 2.2^2,
                     "vector" => (290 / 3 + (2 + 2.2 + 3)) / 3,
                     "matrix" => (357 / 3 + 167.75) / 6,
+                ),
+                "point" => Dict(
+                    "scalar" => 74 / 3,
+                    "vector" => 290 / 9,
+                    "matrix" => 357 / 18,
+                )
+            ),
+            typeof(mean_squared_error_on_mean) => Dict(
+                "dist" => Dict(
+                    "scalar" => 74 / 3,
+                    "vector" => (290 / 3) / 3,
+                    "matrix" => (357 / 3) / 6,
                 ),
                 "point" => Dict(
                     "scalar" => 74 / 3,
@@ -487,6 +507,11 @@
                         @test evaluate(m, y_true, y_pred_index) ≈ expected[typeof(m)]["dist"][type]
                     end
                     @testset "IndexedDistribution with AxisArray" begin
+                        @show m
+                        # println("y_true")
+                        # @show y_true_axis
+                        # println("y_pred")
+                        # @show y_pred_index
                         @test m(y_true_axis, y_pred_index) ≈ expected[typeof(m)]["dist"][type]
                         @test evaluate(m, y_true_axis, y_pred_index) ≈ expected[typeof(m)]["dist"][type]
                     end

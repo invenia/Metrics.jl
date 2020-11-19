@@ -75,6 +75,43 @@ ObservationDims.obs_arrangement(::typeof(mean_squared_error)) = SingleObs()
 const mse = mean_squared_error
 
 """
+    mean_squared_error_on_mean(y_true, y_pred) -> Float64
+
+Camculate the mean squared error between a set of  observations `y_true` and the mean of a
+set of predictions `y_pred`. Following the same convention of `mean_squared_error`, the
+result in normalised over both the dimensions and the observations.
+"""
+function mean_squared_error_on_mean(y_true::AbstractArray, y_pred::AbstractArray)
+    @_dimcheck size(y_true) == size(y_pred)
+    y_true, y_pred = _match(y_true, y_pred)
+    return mean(mean_squared_error_on_mean.(y_true, y_pred))
+end
+
+"""
+    mean_squared_error_on_mean(y_true, y_pred) -> Float64
+
+Camculate the mean squared error between a single observation `y_true` and the mean of a
+single prediction `y_pred`. Following the same convention of `mean_squared_error`, the
+result in normalised over the dimension.
+"""
+mean_squared_error_on_mean(y_true, y_pred::Sampleable) = mse(y_true, mean(y_pred))
+function mean_squared_error_on_mean(y_true::AxisArray, y_pred::IndexedDistribution)
+
+    # ensure that the axisnames for AxisArray `y_pred_mean` is the same as `y_true`
+    names = axisnames(y_true)
+    inds = axisvalues(mean(y_pred))
+    y_pred_mean = AxisArray(
+        mean(y_pred),
+        ntuple(i->Axis{names[i]}(inds[i]), length(names))
+    )
+    return mse(y_true, y_pred_mean)
+end
+mean_squared_error_on_mean(y_true, y_pred::Number) = mse(y_true, y_pred)
+
+ObservationDims.obs_arrangement(::typeof(mean_squared_error_on_mean)) = SingleObs()
+const msem = mean_squared_error_on_mean
+
+"""
     root_mean_squared_error(y_true, y_pred) -> Float64
 
 Compute the root of the mean square error between a set of observation `y_true` and
