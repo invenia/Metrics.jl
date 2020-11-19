@@ -471,12 +471,12 @@ end
         β=default_β(metric), 
         studentize=false, 
         circular=false, 
-        kwargs...
+        estimate_convergence_rate_kwargs...
     )
 
 Compute confidence interval for the difference in `metric` over a `series1` and a `series2`
 at a level `α` and convergence rate `b^β`. If `β=nothing`, the rate is estimated via
-[`estimate_convergence_rate`](@ref) which accepts the `kwargs`.
+[`estimate_convergence_rate`](@ref) which accepts the `estimate_convergence_rate_kwargs`.
 
 If `studentize`, the roots are studentized using the unbiased sample standard deviation. See
 chapters 2 and 11 of "Politis, Dimitris N., Joseph P. Romano, and
@@ -502,7 +502,7 @@ function subsample_difference_ci(
     β=default_β(metric), 
     studentize=false, 
     circular=false, 
-    kwargs...
+    estimate_convergence_rate_kwargs...
 )
     length(series1) != length(series2) && throw(DimensionMismatch(
         "Both series must have the same length. Got $(length(series1)) and $(length(series2))."
@@ -510,10 +510,11 @@ function subsample_difference_ci(
     # Pair observations
     paired_series = collect(zip(series1, series2))
     # Define metric from R² to R
-    diff_metric = x -> metric(getfield.(x, 1)) - metric(getfield.(x, 2))
+    diff_metric = x -> metric(first.(x)) - metric(last.(x))
     return subsample_ci(
         diff_metric, paired_series, block_size;
-        α=α, β=β, studentize=studentize, circular=circular, kwargs...
+        α=α, β=β, studentize=studentize, circular=circular, 
+        estimate_convergence_rate_kwargs...
     )
 end
 
@@ -528,7 +529,7 @@ end
         sizemax=ceil(Int, 0.8 * length(series1)),
         sizestep=1,
         numpoints=50,
-        kwargs...
+        estimate_convergence_rate_kwargs...
     )
 
 Compute confidence interval for the difference in `metric` over a `series1` and a `series2`
@@ -545,7 +546,7 @@ function subsample_difference_ci(
     sizemax=ceil(Int, 0.8 * length(series1)),
     sizestep=1,
     numpoints=50,
-    kwargs...
+    estimate_convergence_rate_kwargs...
 )
     length(series1) != length(series2) && throw(DimensionMismatch(
         "Both series must have the same length. Got $(length(series1)) and $(length(series2))."
@@ -553,10 +554,11 @@ function subsample_difference_ci(
     # Pair observations
     paired_series = collect(zip(series1, series2))
     # Define metric from R² to R
-    diff_metric = x -> metric(getfield.(x, 1)) - metric(getfield.(x, 2))
+    diff_metric = x -> metric(first.(x)) - metric(last.(x))
     return subsample_ci(
         diff_metric, paired_series;
         α=α, β=β, studentize=studentize, circular=circular, sizemin=sizemin,
-        sizemax=sizemax, sizestep=sizestep, numpoints=numpoints, kwargs...
+        sizemax=sizemax, sizestep=sizestep, numpoints=numpoints, 
+        estimate_convergence_rate_kwargs...
     )
 end
