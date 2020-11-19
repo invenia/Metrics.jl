@@ -157,8 +157,8 @@
             @test subsample_ci(mean, series; β=0.5, old_block_args...) == result_w_bs
 
             # test that studentisation affects the result
-            @test subsample_ci(mean, series; studentise=true, β=0.5, old_block_args...) !=
-                subsample_ci(mean, series; studentise=false, β=0.5, old_block_args...)
+            @test subsample_ci(mean, series; studentize=true, β=0.5, old_block_args...) !=
+                subsample_ci(mean, series; studentize=false, β=0.5, old_block_args...)
 
             # test that circular affects the result
             @test subsample_ci(mean, series; circular=true, β=0.5, old_block_args...) !=
@@ -171,8 +171,8 @@
             @test subsample_difference_ci(mean, series[:, 1], series[:, 2]; β=0.5, old_block_args...) == result_w_bs
 
             # test that studentisation affects the result
-            @test subsample_difference_ci(mean, series[:, 1], series[:, 2]; studentise=true, β=0.5, old_block_args...) !=
-                subsample_difference_ci(mean, series[:, 1], series[:, 2]; studentise=false, β=0.5, old_block_args...)
+            @test subsample_difference_ci(mean, series[:, 1], series[:, 2]; studentize=true, β=0.5, old_block_args...) !=
+                subsample_difference_ci(mean, series[:, 1], series[:, 2]; studentize=false, β=0.5, old_block_args...)
 
             # test that circular affects the result
             @test subsample_difference_ci(mean, series[:, 1], series[:, 2]; circular=true, β=0.5, old_block_args...) !=

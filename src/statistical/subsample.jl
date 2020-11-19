@@ -347,7 +347,7 @@ default_β(f::typeof(ew_over_es)) = 0.5
         sizemax=ceil(Int, 0.5 * length(series)),
         sizestep=1,
         numpoints=50,
-        studentise=false,
+        studentize=false,
         circular=false,
         kwargs...
     )
@@ -361,7 +361,7 @@ The remaining `kwargs` are passed to [`estimate_convergence_rate`](@ref) (if `β
 `nothing`) and [`subsample_ci`](@ref).
 If `β=nothing`, the rate is estimated via [`estimate_convergence_rate`](@ref).
 
-If `studentise`, the roots are studentised using the unbiased sample standard deviation. See
+If `studentize`, the roots are studentized using the unbiased sample standard deviation. See
 chapters 2 and 11 of "Politis, Dimitris N., Joseph P. Romano, and
 Michael Wolf. Subsampling. Springer Science & Business Media, 1999." for the theory. For
 heavy tailed data, it is recommended to use this option.
@@ -388,7 +388,7 @@ function subsample_ci(
     sizemax=ceil(Int, 0.5 * length(series)),
     sizestep=1,
     numpoints=50,
-    studentise=false,
+    studentize=false,
     circular=false,
     kwargs...
 )
@@ -404,7 +404,7 @@ function subsample_ci(
 
     return subsample_ci(
         metric, series, block_size;
-        α=α, β=β, studentise=studentise, circular=circular, kwargs...
+        α=α, β=β, studentize=studentize, circular=circular, kwargs...
     )
 end
 
@@ -415,7 +415,7 @@ end
         block_size;
         α=0.05, 
         β=default_β(metric), 
-        studentise=false, 
+        studentize=false, 
         circular=false, 
         kwargs...
     )
@@ -428,7 +428,7 @@ function subsample_ci(
     block_size;
     α=0.05, 
     β=default_β(metric), 
-    studentise=false, 
+    studentize=false, 
     circular=false, 
     kwargs...
 )
@@ -441,13 +441,13 @@ function subsample_ci(
     spread(series::Vector{<:Tuple}) = sqrt(var(first.(series)) + var(last.(series)))
 
     # By default, Statistics uses the unbiased version of `var`.
-    σ_b = studentise ? spread.(blocks) : ones(length(blocks))
+    σ_b = studentize ? spread.(blocks) : ones(length(blocks))
     # estimate convergence rates
     β = isnothing(β) ? estimate_convergence_rate(metric, series; kwargs...) : β
     n = length(series)
     τ_b = block_size ^ β
     τ_n = n ^ β
-    σ_n = studentise ? spread(series) : 1.0
+    σ_n = studentize ? spread(series) : 1.0
     # compute sample metric
     sample_metric = metric(series)
     # center and scale metrics
@@ -469,7 +469,7 @@ end
         block_size;
         α=0.05, 
         β=default_β(metric), 
-        studentise=false, 
+        studentize=false, 
         circular=false, 
         kwargs...
     )
@@ -478,7 +478,7 @@ Compute confidence interval for the difference in `metric` over a `series1` and 
 at a level `α` and convergence rate `b^β`. If `β=nothing`, the rate is estimated via
 [`estimate_convergence_rate`](@ref) which accepts the `kwargs`.
 
-If `studentise`, the roots are studentised using the unbiased sample standard deviation. See
+If `studentize`, the roots are studentized using the unbiased sample standard deviation. See
 chapters 2 and 11 of "Politis, Dimitris N., Joseph P. Romano, and
 Michael Wolf. Subsampling. Springer Science & Business Media, 1999." for the theory. For
 heavy tailed data, it is recommended to use this option.
@@ -500,7 +500,7 @@ function subsample_difference_ci(
     block_size;
     α=0.05, 
     β=default_β(metric), 
-    studentise=false, 
+    studentize=false, 
     circular=false, 
     kwargs...
 )
@@ -513,7 +513,7 @@ function subsample_difference_ci(
     diff_metric = x -> metric(getfield.(x, 1)) - metric(getfield.(x, 2))
     return subsample_ci(
         diff_metric, paired_series, block_size;
-        α=α, β=β, studentise=studentise, circular=circular, kwargs...
+        α=α, β=β, studentize=studentize, circular=circular, kwargs...
     )
 end
 
@@ -522,7 +522,7 @@ end
         metric::Function, series1, series2;
         α=0.05,
         β=default_β(metric),
-        studentise=false,
+        studentize=false,
         circular=false,
         sizemin=default_sizemin(metric),
         sizemax=ceil(Int, 0.8 * length(series1)),
@@ -539,7 +539,7 @@ function subsample_difference_ci(
     metric::Function, series1, series2;
     α=0.05,
     β=default_β(metric),
-    studentise=false,
+    studentize=false,
     circular=false,
     sizemin=default_sizemin(metric),
     sizemax=ceil(Int, 0.8 * length(series1)),
@@ -556,7 +556,7 @@ function subsample_difference_ci(
     diff_metric = x -> metric(getfield.(x, 1)) - metric(getfield.(x, 2))
     return subsample_ci(
         diff_metric, paired_series;
-        α=α, β=β, studentise=studentise, circular=circular, sizemin=sizemin,
+        α=α, β=β, studentize=studentize, circular=circular, sizemin=sizemin,
         sizemax=sizemax, sizestep=sizestep, numpoints=numpoints, kwargs...
     )
 end
