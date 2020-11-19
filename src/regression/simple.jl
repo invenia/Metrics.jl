@@ -94,9 +94,9 @@ Camculate the mean squared error between a single observation `y_true` and the m
 single prediction `y_pred`. Following the same convention of `mean_squared_error`, the
 result in normalised over the dimension.
 """
-mean_squared_error_on_mean(y_true, y_pred::Sampleable) = mse(y_true, mean(y_pred))
+mean_squared_error_on_mean(y_true::Union{AbstractArray, Number}, y_pred::Sampleable) =
+    mse(y_true, mean(y_pred))
 function mean_squared_error_on_mean(y_true::AxisArray, y_pred::IndexedDistribution)
-
     # ensure that the axisnames for AxisArray `y_pred_mean` is the same as `y_true`
     names = axisnames(y_true)
     inds = axisvalues(mean(y_pred))

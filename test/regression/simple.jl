@@ -82,6 +82,8 @@
     function test_metric_properties(metric::typeof(mean_squared_error_on_mean), args...)
         is_strictly_positive(metric, args...)
         is_zero_if_ypred_equals_ytrue(metric, args...)
+        error_increases_as_bias_increases(metric, args...)
+        errors_correctly(metric, args...)
     end
 
 
@@ -507,11 +509,6 @@
                         @test evaluate(m, y_true, y_pred_index) ≈ expected[typeof(m)]["dist"][type]
                     end
                     @testset "IndexedDistribution with AxisArray" begin
-                        @show m
-                        # println("y_true")
-                        # @show y_true_axis
-                        # println("y_pred")
-                        # @show y_pred_index
                         @test m(y_true_axis, y_pred_index) ≈ expected[typeof(m)]["dist"][type]
                         @test evaluate(m, y_true_axis, y_pred_index) ≈ expected[typeof(m)]["dist"][type]
                     end
