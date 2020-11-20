@@ -94,7 +94,8 @@ Camculate the mean squared error between a single observation `y_true` and the m
 single prediction `y_pred`. Following the same convention of `mean_squared_error`, the
 result in normalised over the dimension.
 
-In effect this converts a distribution estimate for `y_pred` into a point estimate before calculating the `mse`.
+In effect this converts a distribution estimate for `y_pred` into a point estimate before
+calculating the `mse`.
 """
 mean_squared_error_to_mean(y_true::Union{AbstractArray, Number}, y_pred::Sampleable) =
     mse(y_true, mean(y_pred))

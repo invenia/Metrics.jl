@@ -68,9 +68,12 @@ API in Metrics.jl
 
 !!! note This is a seperate function from Distributions.loglikelyhood
 
-    As this follows the Metrics API which puts `y_true` first, this is a seperate function from `Distributions.loglikelyhood`.
-    This means if you are using both `Distributions` and `Metrics` you will need to specify whether your want `Distributions.loglikelyhood` or `Metrics.loglikelyhood`.
-    You can do this once for a package by defining `const loglikelyhood = Metrics.loglikelyhood` at the start.
+    As this follows the Metrics API which puts `y_true` first, this is a seperate function
+    from `Distributions.loglikelyhood`. This means if you are using both `Distributions` 
+    and `Metrics` you will need to specify whether your want `Distributions.loglikelyhood`
+    or `Metrics.loglikelyhood`.
+    You can do this once for a package by defining
+    `const loglikelyhood = Metrics.loglikelyhood` at the start.
 
     Changing the argument order to [align with that is currently under discussion](https://gitlab.invenia.ca/invenia/Metrics.jl/-/issues/82).
 """
