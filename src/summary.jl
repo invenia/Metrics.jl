@@ -1,15 +1,18 @@
 const REGRESSION_METRICS = (mse, rmse, nrmse, smse, mae, potential_payoff)
 
 """
-    regression_summary(y_true, y_pred, args...)
+    regression_summary(y_true, y_pred, args...; regression_metrics=REGRESSION_METRICS)
 
-Calculate a summary of; @ref[`mean_squared_error`], @ref[`root_mean_squared_error`],
+Calculate a summary of regression metrics.
+Default list of metrics: @ref[`mean_squared_error`], @ref[`root_mean_squared_error`],
 @ref[`normalised_root_mean_squared_error`], @ref[`standardized_mean_squared_error`],
 @ref[`expected_absolute_error`], @ref[`mean_absolute_error`].
 
 Returns a `NamedTuple` of metric names and results.
 """
-regression_summary(args...) = (; (nameof(f) => f(args...) for f in REGRESSION_METRICS)...)
+function regression_summary(args...; regression_metrics=REGRESSION_METRICS)
+    return (; (nameof(f) => f(args...) for f in regression_metrics)...)
+end
 ObservationDims.obs_arrangement(::typeof(regression_summary)) = SingleObs()
 
 

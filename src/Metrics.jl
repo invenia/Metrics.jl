@@ -17,7 +17,7 @@ using StatsUtils: sqrtcov
 include("utils.jl")
 # regression
 include("regression/asymmetric.jl")
-include("regression/gaussian_loglikelihood.jl")
+include("regression/loglikelihood.jl")
 include("regression/picp.jl")
 include("regression/potential_payoff.jl")
 include("regression/simple.jl")
@@ -41,6 +41,7 @@ export
     asymmetric_absolute_error,
     expected_squared_error, se,
     mean_squared_error, mse,
+    mean_squared_error_to_mean, mse2m,
     root_mean_squared_error, rmse,
     normalised_root_mean_squared_error, nrmse,
     standardized_mean_squared_error, smse,
@@ -49,6 +50,7 @@ export
     mean_absolute_scaled_error, mase,
     marginal_gaussian_loglikelihood,
     joint_gaussian_loglikelihood,
+    loglikelihood,
     potential_payoff,
     prediction_interval_coverage_probability, picp,
     window_prediction_interval_coverage_probability, wpicp,

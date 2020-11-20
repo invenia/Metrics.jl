@@ -17,7 +17,7 @@ Pages = ["evaluate.jl"]
 Modules = [Metrics]
 Pages = [
     "regression/simple.jl",
-    "regression/gaussian_loglikelihood.jl",
+    "regression/loglikelihood.jl",
     "regression/picp.jl",
     "regression/potential_payoff.jl",
 ]
