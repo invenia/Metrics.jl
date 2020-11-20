@@ -109,7 +109,7 @@ end
 mean_squared_error_on_mean(y_true, y_pred::Number) = mse(y_true, y_pred)
 
 ObservationDims.obs_arrangement(::typeof(mean_squared_error_on_mean)) = SingleObs()
-const msem = mean_squared_error_on_mean
+const mse2m = mean_squared_error_to_mean
 
 """
     root_mean_squared_error(y_true, y_pred) -> Float64
