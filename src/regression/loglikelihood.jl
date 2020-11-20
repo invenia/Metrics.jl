@@ -64,6 +64,15 @@ Compute the loglikelihood of the data `y_true` under the predicted distribution 
 Normally `y_true` is only ONE sample.
 Use `Distributions.loglikelihood` under the hood with argument order swap to align with the
 API in Metrics.jl
+
+
+!!! note This is a seperate function from Distributions.loglikelyhood
+
+    As this follows the Metrics API which puts `y_true` first, this is a seperate function from `Distributions.loglikelyhood`.
+    This means if you are using both `Distributions` and `Metrics` you will need to specify whether your want `Distributions.loglikelyhood` or `Metrics.loglikelyhood`.
+    You can do this once for a package by defining `const loglikelyhood = Metrics.loglikelyhood` at the start.
+
+    Changing the argument order to [align with that is currently under discussion](https://gitlab.invenia.ca/invenia/Metrics.jl/-/issues/82).
 """
 function loglikelihood(y_true, y_pred::Sampleable)
     y_true, y_pred = _match(y_true, y_pred)
