@@ -75,16 +75,16 @@ ObservationDims.obs_arrangement(::typeof(mean_squared_error)) = SingleObs()
 const mse = mean_squared_error
 
 """
-    mean_squared_error_on_mean(y_true, y_pred) -> Float64
+    mean_squared_error_to_mean(y_true, y_pred) -> Float64
 
 Camculate the mean squared error between a set of  observations `y_true` and the mean of a
 set of predictions `y_pred`. Following the same convention of `mean_squared_error`, the
 result in normalised over both the dimensions and the observations.
 """
-function mean_squared_error_on_mean(y_true::AbstractArray, y_pred::AbstractArray)
+function mean_squared_error_to_mean(y_true::AbstractArray, y_pred::AbstractArray)
     @_dimcheck size(y_true) == size(y_pred)
     y_true, y_pred = _match(y_true, y_pred)
-    return mean(mean_squared_error_on_mean.(y_true, y_pred))
+    return mean(mean_squared_error_to_mean.(y_true, y_pred))
 end
 
 """
@@ -96,9 +96,9 @@ result in normalised over the dimension.
 
 In effect this converts a distribution estimate for `y_pred` into a point estimate before calculating the `mse`.
 """
-mean_squared_error_on_mean(y_true::Union{AbstractArray, Number}, y_pred::Sampleable) =
+mean_squared_error_to_mean(y_true::Union{AbstractArray, Number}, y_pred::Sampleable) =
     mse(y_true, mean(y_pred))
-function mean_squared_error_on_mean(y_true::AxisArray, y_pred::IndexedDistribution)
+function mean_squared_error_to_mean(y_true::AxisArray, y_pred::IndexedDistribution)
     # ensure that the axisnames for AxisArray `y_pred_mean` is the same as `y_true`
     names = axisnames(y_true)
     inds = axisvalues(mean(y_pred))
@@ -108,9 +108,9 @@ function mean_squared_error_on_mean(y_true::AxisArray, y_pred::IndexedDistributi
     )
     return mse(y_true, y_pred_mean)
 end
-mean_squared_error_on_mean(y_true, y_pred::Number) = mse(y_true, y_pred)
+mean_squared_error_to_mean(y_true, y_pred::Number) = mse(y_true, y_pred)
 
-ObservationDims.obs_arrangement(::typeof(mean_squared_error_on_mean)) = SingleObs()
+ObservationDims.obs_arrangement(::typeof(mean_squared_error_to_mean)) = SingleObs()
 const mse2m = mean_squared_error_to_mean
 
 """

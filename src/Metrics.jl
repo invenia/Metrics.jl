@@ -41,7 +41,7 @@ export
     asymmetric_absolute_error,
     expected_squared_error, se,
     mean_squared_error, mse,
-    mean_squared_error_on_mean, msem,
+    mean_squared_error_to_mean, mse2m,
     root_mean_squared_error, rmse,
     normalised_root_mean_squared_error, nrmse,
     standardized_mean_squared_error, smse,
