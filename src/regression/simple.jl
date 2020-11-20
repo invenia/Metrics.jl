@@ -88,7 +88,7 @@ function mean_squared_error_on_mean(y_true::AbstractArray, y_pred::AbstractArray
 end
 
 """
-    mean_squared_error_on_mean(y_true, y_pred) -> Float64
+    mean_squared_error_to_mean(y_true, y_pred) -> Float64
 
 Camculate the mean squared error between a single observation `y_true` and the mean of a
 single prediction `y_pred`. Following the same convention of `mean_squared_error`, the
