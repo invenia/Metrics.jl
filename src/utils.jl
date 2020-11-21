@@ -82,20 +82,29 @@ function _match(a::AxisArray, d::IndexedDistribution{F, S, <:AbstractMvNormal}) 
     end
 
     if axisvalues(a)[index_dim] == index(d)
+        # if the orders match already, return the inputs as they were
         return a, d
     else
+        # if the orders don't match, align the `AxisArray` to match the order in the
+        # `IndexedDistribution` and don't change the `IndexedDistribution`. (This is because
+        # altering the  index order of a distribution is hard to maintain the exact type of
+        # of the underlying distribution and the specific PDMats)
+
         # re-organise the AxisArray
-        pa = sortperm.(axisvalues(a))
-        sorted_a = a[pa...]
+        new_a_data = copy(a.data)
+        old_axes = AxisArrays.axes(a)
+        new_axes = (
+            old_axes[1:index_dim-1]...,
+            Axis{axisnames(a)[index_dim]}(names),
+            old_axes[index_dim+1:end]...,
+        )
+        old_idxs, new_idxs = AxisArrays.indexmappings(old_axes, new_axes)
+        new_a_data[new_idxs...] = a.data[old_idxs...]
+        sorted_a = AxisArray(new_a_data, new_axes)
 
-        # re-organise the IndexedDistribution
-        pd = sortperm(names)
-        μ, Σ = mean(dist), cov(dist)  # params() returns a PDMat which can't be re-sorted
-        sorted_d = IndexedDistribution(MvNormal(vec(μ[pd, :]), Σ[pd, pd]), names[pd])
+        @assert axisvalues(sorted_a)[index_dim] == index(d)
 
-        @assert axisvalues(sorted_a)[index_dim] == index(sorted_d)
-
-        return sorted_a, sorted_d
+        return sorted_a, d
     end
 end
 

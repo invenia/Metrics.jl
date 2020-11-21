@@ -77,12 +77,13 @@ using Metrics: @_dimcheck, _match
         @testset "AxisArray and IndexedDistribution" begin
             new_array, new_dist = _match(axis_array, index_dist)
             @test new_array != axis_array
-            @test new_dist != index_dist
+            @test new_dist == index_dist
 
-            # check indices are now sorted and values are in new order
-            @test index(new_dist) == axisvalues(new_array)[1] == ["a", "b", "c"]
-            @test mean(parent(new_dist)) == [3, 1, 2]
-            @test parent(new_array) == [2, 3, 1]
+            # check the axisvalues are sorted to match the distribution index, while
+            # the order of the distribution index remains the same
+            @test index(new_dist) == axisvalues(new_array)[1] == index(index_dist)
+            @test mean(parent(new_dist)) == [2, 1, 3]
+            @test parent(new_array) == [1, 3, 2]
         end
 
         @testset "AxisArray and AxisArray" begin
