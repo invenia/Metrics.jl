@@ -47,9 +47,10 @@ Arguments:
   output of a forecaster
 
 Returns:
-  - `Tuple{a::AxisArray, b::AxisArray}`: A tuple of the same input data but with axes aligned.
+  - `Tuple{a::AxisArray, b::AxisArray}`: A tuple of the same input data but with axes aligned
+  and ordered.
   - `Tuple{a::AxisArray, d::IndexedDistribution}`: A tuple of the same input data with their
-  axes and indices aligned.
+  axes and indices aligned. The order is the same as the index in the input IndexedDistribution
 
 Throws:
   - `ArgumentError`: If the AxisArrays do not have the same orientation
@@ -66,7 +67,7 @@ julia> Metrics._match(a, b)
 ([2, 1, 3], [3, 2, 1])
 ```
 """
-function _match(a::AxisArray, d::IndexedDistribution{F, S, <:AbstractMvNormal}) where {F, S}
+function _match(a::AxisArray, d::IndexedDistribution)
     # marginal_gaussian_loglikelihood, etc. can accept multiple observations at a time
     # The stricter condition: size(a) == size(d) should be picked up by any metric that
     # requires it
