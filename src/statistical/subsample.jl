@@ -347,7 +347,7 @@ default_β(f::typeof(ew_over_es)) = 0.5
         sizemax=ceil(Int, 0.5 * length(series)),
         sizestep=1,
         numpoints=50,
-        studentise=false,
+        studentize=false,
         circular=false,
         kwargs...
     )
@@ -361,7 +361,7 @@ The remaining `kwargs` are passed to [`estimate_convergence_rate`](@ref) (if `β
 `nothing`) and [`subsample_ci`](@ref).
 If `β=nothing`, the rate is estimated via [`estimate_convergence_rate`](@ref).
 
-If `studentise`, the roots are studentised using the unbiased sample standard deviation. See
+If `studentize`, the roots are studentized using the unbiased sample standard deviation. See
 chapters 2 and 11 of "Politis, Dimitris N., Joseph P. Romano, and
 Michael Wolf. Subsampling. Springer Science & Business Media, 1999." for the theory. For
 heavy tailed data, it is recommended to use this option.
@@ -388,10 +388,13 @@ function subsample_ci(
     sizemax=ceil(Int, 0.5 * length(series)),
     sizestep=1,
     numpoints=50,
-    studentise=false,
+    studentize=false,
     circular=false,
     kwargs...
 )
+    if !isempty(kwargs) && !isnothing(β)
+        @warn "β=$β provided, kwargs $(kwargs...) will be ignored."
+    end 
     β = isnothing(β) ? estimate_convergence_rate(metric, series; kwargs...) : β
     block_size = adaptive_block_size(
         metric,
@@ -404,7 +407,7 @@ function subsample_ci(
 
     return subsample_ci(
         metric, series, block_size;
-        α=α, β=β, studentise=studentise, circular=circular, kwargs...
+        α=α, β=β, studentize=studentize, circular=circular,
     )
 end
 
@@ -415,7 +418,7 @@ end
         block_size;
         α=0.05, 
         β=default_β(metric), 
-        studentise=false, 
+        studentize=false, 
         circular=false, 
         kwargs...
     )
@@ -428,10 +431,14 @@ function subsample_ci(
     block_size;
     α=0.05, 
     β=default_β(metric), 
-    studentise=false, 
+    studentize=false, 
     circular=false, 
     kwargs...
-)
+    )
+    if !isempty(kwargs) && !isnothing(β)
+        @warn "β=$β provided, kwargs $(kwargs...) will be ignored."
+    end 
+
     # apply metric to subsampled series
     blocks = block_subsample(series, block_size; circular=circular)
     metric_series = metric.(blocks)
@@ -441,13 +448,13 @@ function subsample_ci(
     spread(series::Vector{<:Tuple}) = sqrt(var(first.(series)) + var(last.(series)))
 
     # By default, Statistics uses the unbiased version of `var`.
-    σ_b = studentise ? spread.(blocks) : ones(length(blocks))
+    σ_b = studentize ? spread.(blocks) : ones(length(blocks))
     # estimate convergence rates
     β = isnothing(β) ? estimate_convergence_rate(metric, series; kwargs...) : β
     n = length(series)
     τ_b = block_size ^ β
     τ_n = n ^ β
-    σ_n = studentise ? spread(series) : 1.0
+    σ_n = studentize ? spread(series) : 1.0
     # compute sample metric
     sample_metric = metric(series)
     # center and scale metrics
@@ -461,3 +468,107 @@ function subsample_ci(
     return Interval(lower_corrected, upper_corrected)
 end
 
+"""
+    subsample_difference_ci(
+        metric::Function, 
+        series1, 
+        series2, 
+        block_size;
+        α=0.05, 
+        β=default_β(metric), 
+        studentize=false, 
+        circular=false, 
+        estimate_convergence_rate_kwargs...
+    )
+
+Compute confidence interval for the difference in `metric` over a `series1` and a `series2`
+at a level `α` and convergence rate `b^β`, using block size `block_size`. If `β=nothing`, 
+the rate is estimated via [`estimate_convergence_rate`](@ref) which accepts the 
+`estimate_convergence_rate_kwargs`. The other kwargs are passed to [`subsample_ci`](@ref).
+
+If `studentize`, the roots are studentized using the unbiased sample standard deviation. See
+chapters 2 and 11 of "Politis, Dimitris N., Joseph P. Romano, and
+Michael Wolf. Subsampling. Springer Science & Business Media, 1999." for the theory. For
+heavy tailed data, it is recommended to use this option.
+
+If `circular`, the subsampled blocks wrap around the end of `series`.
+
+Returns the confidence interval as `Closed` `Interval`.
+
+!!! warning "Default β"
+If the `β` keyword is not provided it defaults to `default_β(metric)`.
+For anonymous function [`default_β`](@ref) will always be `nothing`.
+It is important to be aware of this when passing an anonymous function,
+for example when using `do`-block syntax to define the metric.
+"""
+function subsample_difference_ci(
+    metric::Function, 
+    series1, 
+    series2, 
+    block_size;
+    α=0.05, 
+    β=default_β(metric), 
+    studentize=false, 
+    circular=false, 
+    estimate_convergence_rate_kwargs...
+)
+    length(series1) != length(series2) && throw(DimensionMismatch(
+        "Both series must have the same length. Got $(length(series1)) and $(length(series2))."
+    ))
+    # Pair observations
+    paired_series = collect(zip(series1, series2))
+    # Define metric from R² to R
+    diff_metric = x -> metric(first.(x)) - metric(last.(x))
+    return subsample_ci(
+        diff_metric, paired_series, block_size;
+        α=α, β=β, studentize=studentize, circular=circular, 
+        estimate_convergence_rate_kwargs...
+    )
+end
+
+"""
+    subsample_difference_ci(
+        metric::Function, series1, series2;
+        α=0.05,
+        β=default_β(metric),
+        studentize=false,
+        circular=false,
+        sizemin=default_sizemin(metric),
+        sizemax=ceil(Int, 0.8 * length(series1)),
+        sizestep=1,
+        numpoints=50,
+        estimate_convergence_rate_kwargs...
+    )
+
+Compute confidence interval for the difference in `metric` over a `series1` and a `series2`
+at a level `α` and convergence rate `b^β` by estimating the block size via
+[`adaptive_block_size`](@ref).
+"""
+function subsample_difference_ci(
+    metric::Function,
+    series1,
+    series2;
+    α=0.05,
+    β=default_β(metric),
+    studentize=false,
+    circular=false,
+    sizemin=default_sizemin(metric),
+    sizemax=ceil(Int, 0.8 * length(series1)),
+    sizestep=1,
+    numpoints=50,
+    estimate_convergence_rate_kwargs...
+)
+    length(series1) != length(series2) && throw(DimensionMismatch(
+        "Both series must have the same length. Got $(length(series1)) and $(length(series2))."
+    ))
+    # Pair observations
+    paired_series = collect(zip(series1, series2))
+    # Define metric from R² to R
+    diff_metric = x -> metric(first.(x)) - metric(last.(x))
+    return subsample_ci(
+        diff_metric, paired_series;
+        α=α, β=β, studentize=studentize, circular=circular, sizemin=sizemin,
+        sizemax=sizemax, sizestep=sizestep, numpoints=numpoints, 
+        estimate_convergence_rate_kwargs...
+    )
+end
