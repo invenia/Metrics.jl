@@ -101,11 +101,11 @@ function _match(a::AxisArray, d::IndexedDistribution)
         )
         old_idxs, new_idxs = AxisArrays.indexmappings(old_axes, new_axes)
         new_a_data[new_idxs...] = a.data[old_idxs...]
-        sorted_a = AxisArray(new_a_data, new_axes)
+        matched_a = AxisArray(new_a_data, new_axes)
 
-        @assert axisvalues(sorted_a)[index_dim] == index(d)
+        @assert axisvalues(matched_a)[index_dim] == index(d)
 
-        return sorted_a, d
+        return matched_a, d
     end
 end
 
