@@ -106,7 +106,7 @@
         end
 
         @testset "EIS use case" begin
-            # Normaly, `y_true` is a `Vector{<:Real}`, `y_pred` is a multivariate distribution.
+            # Normally, `y_true` is a `Vector{<:Real}`, `y_pred` is a multivariate distribution.
             # Typical distribution type includes `MvNormal` and `GenericMvTDist`.
 
             # Choose the `regression_metrics` list in the following way as they are the main
