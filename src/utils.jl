@@ -103,8 +103,6 @@ function _match(a::AxisArray, d::IndexedDistribution)
         new_a_data[new_idxs...] = a.data[old_idxs...]
         matched_a = AxisArray(new_a_data, new_axes)
 
-        @assert axisvalues(matched_a)[index_dim] == index(d)
-
         return matched_a, d
     end
 end
