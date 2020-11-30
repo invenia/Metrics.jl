@@ -47,9 +47,10 @@ Arguments:
   output of a forecaster
 
 Returns:
-  - `Tuple{a::AxisArray, b::AxisArray}`: A tuple of the same input data but with axes aligned.
+  - `Tuple{a::AxisArray, b::AxisArray}`: A tuple of the same input data but with axes aligned
+  and ordered.
   - `Tuple{a::AxisArray, d::IndexedDistribution}`: A tuple of the same input data with their
-  axes and indices aligned.
+  axes and indices aligned. The order is the same as the index in the input IndexedDistribution
 
 Throws:
   - `ArgumentError`: If the AxisArrays do not have the same orientation
@@ -66,7 +67,7 @@ julia> Metrics._match(a, b)
 ([2, 1, 3], [3, 2, 1])
 ```
 """
-function _match(a::AxisArray, d::IndexedDistribution{F, S, <:AbstractMvNormal}) where {F, S}
+function _match(a::AxisArray, d::IndexedDistribution)
     # marginal_gaussian_loglikelihood, etc. can accept multiple observations at a time
     # The stricter condition: size(a) == size(d) should be picked up by any metric that
     # requires it
@@ -82,20 +83,27 @@ function _match(a::AxisArray, d::IndexedDistribution{F, S, <:AbstractMvNormal}) 
     end
 
     if axisvalues(a)[index_dim] == index(d)
+        # if the orders match already, return the inputs as they were
         return a, d
     else
+        # if the orders don't match, align the `AxisArray` to match the order in the
+        # `IndexedDistribution` and don't change the `IndexedDistribution`. (This is because
+        # altering the  index order of a distribution is hard to maintain the exact type of
+        # of the underlying distribution and the specific PDMats)
+
         # re-organise the AxisArray
-        pa = sortperm.(axisvalues(a))
-        sorted_a = a[pa...]
+        new_a_data = copy(a.data)
+        old_axes = AxisArrays.axes(a)
+        new_axes = (
+            old_axes[1:index_dim-1]...,
+            Axis{axisnames(a)[index_dim]}(names),
+            old_axes[index_dim+1:end]...,
+        )
+        old_idxs, new_idxs = AxisArrays.indexmappings(old_axes, new_axes)
+        new_a_data[new_idxs...] = a.data[old_idxs...]
+        matched_a = AxisArray(new_a_data, new_axes)
 
-        # re-organise the IndexedDistribution
-        pd = sortperm(names)
-        μ, Σ = mean(dist), cov(dist)  # params() returns a PDMat which can't be re-sorted
-        sorted_d = IndexedDistribution(MvNormal(vec(μ[pd, :]), Σ[pd, pd]), names[pd])
-
-        @assert axisvalues(sorted_a)[index_dim] == index(sorted_d)
-
-        return sorted_a, sorted_d
+        return matched_a, d
     end
 end
 

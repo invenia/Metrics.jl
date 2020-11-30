@@ -104,6 +104,39 @@
             @test !isempty(summary)
             @test summary isa expected_type
         end
+
+        @testset "EIS use case" begin
+            # Normally, `y_true` is a `Vector{<:Real}`, `y_pred` is a multivariate distribution.
+            # Typical distribution type includes `MvNormal` and `GenericMvTDist`.
+
+            # Choose the `regression_metrics` list in the following way as they are the main
+            # metrics we checked on regression performance.
+            regression_metrics = [Metrics.loglikelihood, mse2m]
+            # y_pred
+            pred_location = ones(3)
+            pred_scale = [2.25 0.1 0.0; 0.1 1.25 0.0; 0.0 0.0 3.25]
+            y_pred_list = [
+                (dtype="MvN", y_pred=MvNormal(pred_location, pred_scale)),
+                (dtype="MvT", y_pred=Distributions.GenericMvTDist(3.0, pred_location, PDMat(pred_scale)))
+            ]
+            # y_true
+            y_true = [6, 3, 5]
+            obs = Symbol.("t_", 1:3)
+            y_true_idx = AxisArray(y_true, Axis{:obs}(obs))
+            @testset "distribution type: $(i.dtype)" for i in y_pred_list
+                summary = regression_summary(y_true, i.y_pred)
+                @test !isempty(summary)
+                # AxisArray with IndexedDistribution
+                y_pred_idx = IndexedDistribution(i.y_pred, obs)
+                summary_withidx = regression_summary(y_true_idx, y_pred_idx)
+                @test summary_withidx == summary
+                # suffle the index
+                new_obs_order = shuffle(1:3)
+                y_true_idx2 = AxisArray(y_true[new_obs_order], Axis{:obs}(obs[new_obs_order]))
+                summary_withdiffidx = regression_summary(y_true_idx2, y_pred_idx)
+                @test summary_withdiffidx == summary
+            end
+        end
     end
     @testset "Financial Summaries" begin
         @testset "volumes::AbstractVector, deltas::Union{MvNormal, AbstractMatrix}" begin

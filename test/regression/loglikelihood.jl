@@ -184,8 +184,11 @@
                 # - Using IndexedDistributions with AxisArrays
                 y_pred_idx = IndexedDistribution(y_pred, obs)
                 @test Metrics.loglikelihood(y_true_idx, y_pred_idx) == expected
-                # TODO: extend `_match` to deal with `GenericMvTDist` properly. So suffled
-                # case can be tested
+                # if the observation dimensions don't match the order, should use the axis
+                # to match the order and give a correct resuilt
+                new_obs_order = shuffle(1:3)
+                y_true_idx2 = AxisArray(y_true[new_obs_order], Axis{:obs}(obs[new_obs_order]))
+                @test Metrics.loglikelihood(y_true_idx2, y_pred_idx) == expected
             end
         end
     end
