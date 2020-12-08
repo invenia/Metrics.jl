@@ -55,7 +55,9 @@ function prediction_interval_coverage_probability(α::Float64, dist::AbstractMvN
     centroid = mean(dist)
     proj = inv(cov(dist))
     return mean(y_trues) do y
-        offset = y .- centroid
+        # TODO: remove 'parent' when https://github.com/JuliaArrays/AxisArrays.jl/issues/189
+        # is resolved
+        offset = parent(y .- centroid)
         d = offset' * proj * offset
         d <= bound
     end
