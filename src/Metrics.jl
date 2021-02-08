@@ -3,6 +3,7 @@ module Metrics
 using AxisArrays
 using DataFrames: disallowmissing
 using Distributions
+using Distributions: GenericMvTDist
 using IndexedDistributions
 using Intervals
 using LinearAlgebra: cholesky, det, dot, I, norm, tr
@@ -13,6 +14,13 @@ using PDMatsExtras
 using SpecialFunctions
 using StatsBase
 using StatsUtils: sqrtcov
+
+# NOTE: these are already defined twice (here and in PO.jl). Should they go somewhere, maybe IndexedDistributions?
+const MvNormalLike = Union{MvNormal, IndexedMvNormal}
+const MvTLike = Union{
+    GenericMvTDist,
+    IndexedDistribution{Multivariate, <:ValueSupport, <:GenericMvTDist, I}
+} where {I}
 
 include("utils.jl")
 # regression

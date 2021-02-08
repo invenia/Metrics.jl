@@ -90,6 +90,15 @@ function expected_shortfall(
     return exp_shortfall + pi
 end
 
+# NOTE: the TDist provided by Distributions.jl (https://github.com/JuliaStats/Distributions.jl/blob/997f2bbdc7d40982ec0a90e9aba7d0124b78bb52/src/univariate/continuous/tdist.jl)
+#   doesn't have non-standard location and scale parameter, and hence define our own type.
+struct GenericTDist{T<:Real} <: ContinuousUnivariateDistribution
+    ν::T
+    μ::T
+    σ::T
+    GenericTDist{T}(ν::T, µ::T, σ::T) where {T<:Real} = new{T}(ν, µ, σ)
+end
+
 """
     expected_shortfall(returns::Normal; risk_level::Real=0.05) -> Number
 
@@ -101,6 +110,15 @@ function expected_shortfall(returns::Normal; risk_level::Real=0.05)
     # See Section 6, https://drive.google.com/file/d/1SU03QYm-RRmyOKHR-Ap5OrZiqP1NiNr5/view
     # https://en.wikipedia.org/wiki/Expected_shortfall#Normal_distribution
     ϕ = pdf(Normal(), quantile(Normal(), risk_level))
+    return (ϕ / risk_level) * _scale(returns) - mean(returns)
+end
+
+function expected_shortfall(returns::GenericTDist; risk_level::Real=0.05)
+    # calculate the es for standard TDist
+    ν = returns.ν
+    α = risk_level
+    inv_Τ = quantile(TDist(ν), α)
+    ϕ = ((ν + inv_Τ^2) / (ν - 1)) * (pdf(TDist(ν), inv_Τ) / α)
     return (ϕ / risk_level) * _scale(returns) - mean(returns)
 end
 
@@ -119,13 +137,27 @@ given a portfolio of `volumes` and known `distribution` of price deltas.
 # Keyword Arguments
 - `kwargs::Real`: risk level associated with the lower quantile of the returns distribution
 """
-function expected_shortfall(volumes::AbstractVector, deltas::Sampleable{Multivariate}, args...; kwargs...)
+function expected_shortfall(volumes::AbstractVector, deltas::MvNormalLike, args...; kwargs...)
     @assert length(args) < 3
     mean_returns = expected_return(volumes, deltas, args...)
-    sigma_returns = volatility(volumes, deltas)
-    return_dist = Normal(mean_returns, sigma_returns)
+    scale_returns = norm(sqrtcov(_scale(deltas)) * volumes, 2)
+    return_dist = Normal(mean_returns, scale_returns)
     return expected_shortfall(return_dist; kwargs...)
 end
+
+function expected_shortfall(volumes::AbstractVector, deltas::MvTLike, args...; kwargs...)
+    @assert length(args) < 3
+    mean_returns = expected_return(volumes, deltas, args...)
+    scale_returns = norm(sqrtcov(_scale(deltas)) * volumes, 2)
+    return_dist = GenericTDist(dof(deltas), mean_returns, scale_returns)
+    return expected_shortfall(return_dist; kwargs...)
+end
+
+# NOTE: is it good to do the folloing extension?
+import Distributions: dof
+dof(d::IndexedDistribution) = dof(parent(d))
+dof(d::GenericTDist) = d.ν
+dof(d::GenericMvTDist) = d.df
 
 """
     median_over_expected_shortfall(returns::AbstractVector, args...; kwargs...) -> Number

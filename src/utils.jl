@@ -141,7 +141,6 @@ extract the covariance matrix in its original `AbstractPDMat` type
 """
 # TODO: should I force the output type to be `C`? If so, what whould be the output if `df < 2`?
 using PDMatsExtras.PDMats # I know I know - it won't be in the final version
-using Distributions: GenericMvTDist
 function _cov(dist::MvNormal{M,C}) where {M, C<:AbstractPDMat}
     return dist.Σ
 end
