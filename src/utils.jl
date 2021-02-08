@@ -159,6 +159,8 @@ function _scale(dist::Union{MvNormal, GenericMvTDist})
     return dist.Σ
 end
 
+_scale(dist::Normal) = dist.σ
+
 _scale(dist::IndexedDistribution) = _scale(parent(dist))
 
 # the following should probably go to `PDMatsExtras.jl`

@@ -101,7 +101,7 @@ function expected_shortfall(returns::Normal; risk_level::Real=0.05)
     # See Section 6, https://drive.google.com/file/d/1SU03QYm-RRmyOKHR-Ap5OrZiqP1NiNr5/view
     # https://en.wikipedia.org/wiki/Expected_shortfall#Normal_distribution
     ϕ = pdf(Normal(), quantile(Normal(), risk_level))
-    return (ϕ / risk_level) * std(returns) - mean(returns)
+    return (ϕ / risk_level) * _scale(returns) - mean(returns)
 end
 
 """
