@@ -135,3 +135,38 @@ function _match(a::AxisArray, b::AxisArray)
 end
 
 _match(a, d) =  a, d
+
+"""
+extract the covariance matrix in its original `AbstractPDMat` type
+"""
+# TODO: should I force the output type to be `C`? If so, what whould be the output if `df < 2`?
+using PDMatsExtras.PDMats # I know I know - it won't be in the final version
+using Distributions: GenericMvTDist
+function _cov(dist::MvNormal{M,C}) where {M, C<:AbstractPDMat}
+    return dist.Σ
+end
+
+function _cov(dist::GenericMvTDist)
+    return dist.df>2 ? (dist.df/(dist.df-2))*d.Σ : NaN*ones(d.dim, d.dim)
+end
+
+_cov(dist::IndexedDistribution) = _cov(parent(dist))
+
+"""
+extract the scale matrix in its original `AbstractPDMat` type
+"""
+function _scale(dist::Union{MvNormal, GenericMvTDist})
+    return dist.Σ
+end
+
+_scale(dist::IndexedDistribution) = _scale(parent(dist))
+
+# the following should probably go to `PDMatsExtras.jl`
+# NOTE: the parameterisation to scale up the Woodbury matrix is not unique
+#   `*` for PDMat, PSDMat and PDiagMat were already impplemented
+import Base: *
+*(a::WoodburyPDMat, c::T) where T<:Real = WoodburyPDMat(
+    a.A,
+    a.D * c,
+    a.S * c
+)
