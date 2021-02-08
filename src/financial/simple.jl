@@ -63,7 +63,6 @@ Calculate the expected standard deviation of returns ``(w'Σw)^{1/2}``.
 function volatility(volumes::AbstractVector, deltas::AbstractMatrix)
     returns = _calculate_returns(volumes, deltas)
     vol = std(returns; dims=:obs)
-    # TODO: price-impact ?
     return first(vol)  # vol is a 1-element NamedDimsArray hence first()
 end
 
