@@ -43,6 +43,7 @@ export
     mean_squared_error, mse,
     mean_squared_error_to_mean, mse2m,
     root_mean_squared_error, rmse,
+    root_mean_squared_error_to_mean, rmse2m,
     normalised_root_mean_squared_error, nrmse,
     standardized_mean_squared_error, smse,
     expected_absolute_error, ae,
