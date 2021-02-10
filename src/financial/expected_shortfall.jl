@@ -144,12 +144,6 @@ function expected_shortfall(volumes::AbstractVector, deltas::MvTLike, args...; k
     return expected_shortfall(return_dist; kwargs...)
 end
 
-# NOTE: is it good to do the folloing extension?
-import Distributions: dof
-dof(d::IndexedDistribution) = dof(parent(d))
-dof(d::GenericTDist) = d.ν
-dof(d::GenericMvTDist) = d.df
-
 """
     median_over_expected_shortfall(returns::AbstractVector, args...; kwargs...) -> Number
     median_over_expected_shortfall(

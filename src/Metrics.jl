@@ -22,6 +22,7 @@ const MvTLike = Union{
     IndexedDistribution{Multivariate, <:ValueSupport, <:GenericMvTDist, I}
 } where {I}
 
+include("piracy.jl")
 include("utils.jl")
 # regression
 include("regression/asymmetric.jl")
