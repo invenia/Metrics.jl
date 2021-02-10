@@ -161,13 +161,3 @@ end
 _scale(dist::Union{Normal, GenericTDist} ) = dist.σ
 
 _scale(dist::IndexedDistribution) = _scale(parent(dist))
-
-# the following should probably go to `PDMatsExtras.jl`
-# NOTE: the parameterisation to scale up the Woodbury matrix is not unique
-#   `*` for PDMat, PSDMat and PDiagMat were already impplemented
-import Base: *
-*(a::WoodburyPDMat, c::T) where T<:Real = WoodburyPDMat(
-    a.A,
-    a.D * c,
-    a.S * c
-)
