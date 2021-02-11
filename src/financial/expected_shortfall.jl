@@ -99,19 +99,25 @@ a certain `risk_level`.
 function expected_shortfall(returns::Normal; risk_level::Real=0.05)
     # See eq(4) in https://papers.ssrn.com/sol3/papers.cfm?abstract_id=3196046
     # ES(w) = (p(q_{1-α}(r)) / α) * (w'Σw)^{1/2} − w'μ
-    ϕ = pdf(Normal(), quantile(Normal(), risk_level))
-    return (ϕ / risk_level) * scale(returns) - mean(returns)
+    ϕ = pdf(Normal(), quantile(Normal(), risk_level)) / risk_level
+    return ϕ * scale(returns) - mean(returns)
 end
 
 function expected_shortfall(returns::GenericTDist; risk_level::Real=0.05)
     # See eq(5) in https://papers.ssrn.com/sol3/papers.cfm?abstract_id=3196046 (NOTE: don't use wiki)
     # calculate the es for standard TDist
+    if returns.df <= 1
+        throw(ArgumentError(
+            "analytic expected shortfall only exists for MvT distribution when its degree of freedom " *
+            "is > 1, but got $(returns.df)"
+        ))
+    end
     ν = returns.df
     α = risk_level
     inv_Τ = quantile(TDist(ν), α)
     ϕ = ((ν + inv_Τ^2) / (ν - 1)) * (pdf(TDist(ν), inv_Τ) / α)
     # adjust es for arbitrary univariate T distribution
-    return (ϕ / risk_level) * scale(returns) - mean(returns)
+    return ϕ * scale(returns) - mean(returns)
 end
 
 """

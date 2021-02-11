@@ -79,7 +79,7 @@
         seed!(1)
         # for constructing some PDMats
         B = (reshape(2:10, 3, 3) / 12) .^ 2
-        A = B' * B
+        A = B' * B + I
 
         D = Diagonal([1.,2,3])
         S = Diagonal([4.,5,6])
@@ -88,8 +88,10 @@
         volumes = [1, 2, -3]
         nonzero_pi = (supply_pi=fill(0.1, length(volumes)), demand_pi=fill(0.1, length(volumes)))
 
+        names = "node" .* string.(collect(1:length(volumes)))
+
         @testset "AbstractPDMat type $(typeof(pd))" for pd in [
-            PDiagMat(diag(D)), PDMat(Symmetric(A)), PSDMat(Symmetric(A)), W
+            PDiagMat(diag(D)), PDMat(Symmetric(A)), W
         ]
             @testset "distribution type $(typeof(dist))" for dist in [
                 MvNormal(ones(size(pd, 1)), pd),
@@ -104,41 +106,40 @@
                     evaluate(expected_shortfall, volumes, dist; risk_level=0.01),
                     evaluate(expected_shortfall, volumes, dist, nonzero_pi...; risk_level=0.01),
                 )
+
+                # SES should converge to AES after sufficient samples
+                aes = expected_shortfall(volumes, dist)
+                # this requires a large number of samples due to poor convergence in the
+                # covariance matrix
+                ses = expected_shortfall(volumes, rand(dist, 1_000_000))
+                @test isapprox(aes, ses, atol=1e-1)
             end
 
             # special case when dof is large for T distribution
-            # @testset "risk level: $α" for α in []
-
-
+            @testset "risk level: $α" for α in collect(0.2: 0.3: 0.8)
+                mvn = MvNormal(ones(size(pd, 1)), pd)
+                mvt = GenericMvTDist(1_000_000, ones(size(pd, 1)), pd)
+                @test expected_shortfall(volumes, mvn; risk_level=α) ≈
+                    expected_shortfall(volumes, mvt; risk_level=α) atol=1e-3
+            end
         end
 
-        volumes = [1, -2, 3, -4, 5, -6, 7, -8, 9, -10]
-        nonzero_pi = (supply_pi=fill(0.1, 10), demand_pi=fill(0.1, 10))
-
-        dense_dist = generate_mvnormal(10)
-        names = "node" .* string.(collect(1:10))
-        dense_id = IndexedDistribution(dense_dist, names)
-
-        @testset "with $type" for (type, dist) in (
-            ("Distribution", dense_dist),
-            ("IndexedDistribution", dense_id)
-        )
-            # basic usage
-            expected = 26.995589121396023
-            @test expected_shortfall(volumes, dist; risk_level=0.5) ≈ expected
-
-            expected = 73.06492436615295
-            @test expected_shortfall(volumes, dist; risk_level=0.01) ≈ expected
-            @test evaluate(expected_shortfall, volumes, dist; risk_level=0.01) ≈ expected
-
-
-
-            # SES should converge to AES after sufficient samples
-            ses_1 = expected_shortfall(volumes, dist)
-            # this requires a large number of samples due to poor convergence in the
-            # covariance matrix
-            aes_6 = expected_shortfall(volumes, rand(dist, 1_000_000))
-            @test isapprox(ses_1, aes_6, atol=1e-1)
+        @testset "fixed basic performance" begin
+            pd = PDMat(Symmetric(A))
+            @testset "MvNormal" begin
+                dist = MvNormal(ones(size(pd, 1)), pd)
+                idist = IndexedDistribution(dist, names)
+                expected = 4.896918621367946
+                @test expected_shortfall(volumes, dist; risk_level=0.3) ≈ expected
+                @test expected_shortfall(volumes, idist; risk_level=0.3) ≈ expected
+            end
+            @testset "MvT" begin
+                dist = GenericMvTDist(3.0, ones(size(pd, 1)), pd)
+                idist = IndexedDistribution(dist, names)
+                expected = 6.971343619802216
+                @test expected_shortfall(volumes, dist; risk_level=0.3) ≈ expected
+                @test expected_shortfall(volumes, idist; risk_level=0.3) ≈ expected
+            end
         end
     end
 
