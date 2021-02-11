@@ -15,13 +15,6 @@ using SpecialFunctions
 using StatsBase
 using StatsUtils: sqrtcov
 
-# NOTE: these are already defined twice (here and in PO.jl). Should they go somewhere, maybe IndexedDistributions?
-const MvNormalLike = Union{MvNormal, IndexedMvNormal}
-const MvTLike = Union{
-    GenericMvTDist,
-    IndexedDistribution{Multivariate, <:ValueSupport, <:GenericMvTDist, I}
-} where {I}
-
 include("piracy.jl")
 include("utils.jl")
 # regression

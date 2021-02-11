@@ -101,7 +101,7 @@ function expected_shortfall(returns::Normal; risk_level::Real=0.05)
     # See Section 6, https://drive.google.com/file/d/1SU03QYm-RRmyOKHR-Ap5OrZiqP1NiNr5/view
     # https://en.wikipedia.org/wiki/Expected_shortfall#Normal_distribution
     ϕ = pdf(Normal(), quantile(Normal(), risk_level))
-    return (ϕ / risk_level) * _scale(returns) - mean(returns)
+    return (ϕ / risk_level) * StatsUtils.scale(returns) - mean(returns)
 end
 
 function expected_shortfall(returns::GenericTDist; risk_level::Real=0.05)
@@ -110,7 +110,7 @@ function expected_shortfall(returns::GenericTDist; risk_level::Real=0.05)
     α = risk_level
     inv_Τ = quantile(TDist(ν), α)
     ϕ = ((ν + inv_Τ^2) / (ν - 1)) * (pdf(TDist(ν), inv_Τ) / α)
-    return (ϕ / risk_level) * _scale(returns) - mean(returns)
+    return (ϕ / risk_level) * StatsUtils.scale(returns) - mean(returns)
 end
 
 """
@@ -131,7 +131,7 @@ given a portfolio of `volumes` and known `distribution` of price deltas.
 function expected_shortfall(volumes::AbstractVector, deltas::MvNormalLike, args...; kwargs...)
     @assert length(args) < 3
     mean_returns = expected_return(volumes, deltas, args...)
-    scale_returns = norm(sqrtcov(_scale(deltas)) * volumes, 2)
+    scale_returns = norm(sqrtcov(StatsUtils.scale(deltas)) * volumes, 2)
     return_dist = Normal(mean_returns, scale_returns)
     return expected_shortfall(return_dist; kwargs...)
 end
@@ -139,7 +139,7 @@ end
 function expected_shortfall(volumes::AbstractVector, deltas::MvTLike, args...; kwargs...)
     @assert length(args) < 3
     mean_returns = expected_return(volumes, deltas, args...)
-    scale_returns = norm(sqrtcov(_scale(deltas)) * volumes, 2)
+    scale_returns = norm(sqrtcov(StatsUtils.scale(deltas)) * volumes, 2)
     return_dist = GenericTDist(dof(deltas), mean_returns, scale_returns)
     return expected_shortfall(return_dist; kwargs...)
 end

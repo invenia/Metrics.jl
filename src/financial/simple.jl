@@ -72,7 +72,7 @@ function volatility(volumes::AbstractVector, deltas::Sampleable{Multivariate})
     # Taking the L2 norm of it, it becomes a scalar.
     # In short, although `sqrtcov(deltas)` is not unique, the `volatility`
     # function is calculating a unique scalar: `sqrt(volume' * cov(delta) * volume)`
-    return norm(sqrtcov(_cov(deltas)) * volumes, 2)
+    return norm(sqrtcov(StatsUtils.cov(deltas)) * volumes, 2)
 end
 volatility(returns) = std(returns)
 ObservationDims.obs_arrangement(::typeof(volatility)) = MatrixColsOfObs()

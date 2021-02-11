@@ -19,7 +19,6 @@ struct GenericTDist{T<:Real} <: ContinuousUnivariateDistribution
     GenericTDist{T}(df::T, µ::T, σ::T) where {T<:Real} = new{T}(df, µ, σ)
 end
 
-
 """
     dof
 
