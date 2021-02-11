@@ -3,6 +3,7 @@
     They are not used outside the `Metrics.jl` and should probably settle down
     in `Distributions.jl` properly in the long term.
 =#
+using StatsUtils
 import Distributions: dof
 
 """
@@ -27,3 +28,5 @@ extract the degree of freedom parameter from a distribution
 dof(d::IndexedDistribution) = dof(parent(d))
 dof(d::GenericTDist) = d.ν
 dof(d::GenericMvTDist) = d.df
+
+StatsUtils.scale(d::GenericTDist) = d.σ
