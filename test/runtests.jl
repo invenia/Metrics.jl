@@ -1,5 +1,6 @@
 using AxisArrays
 using Distributions
+using Distributions: GenericMvTDist
 using Documenter: doctest
 using FixedPointDecimals
 using IndexedDistributions

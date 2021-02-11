@@ -13,6 +13,7 @@ using ObservationDims
 using PDMatsExtras
 using SpecialFunctions
 using StatsBase
+using StatsUtils
 using StatsUtils: sqrtcov
 
 include("piracy.jl")

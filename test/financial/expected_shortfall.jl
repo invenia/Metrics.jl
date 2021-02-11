@@ -77,10 +77,45 @@
 
     @testset "analytic ES" begin
         seed!(1)
+        # for constructing some PDMats
+        B = (reshape(2:10, 3, 3) / 12) .^ 2
+        A = B' * B
+
+        D = Diagonal([1.,2,3])
+        S = Diagonal([4.,5,6])
+        W = WoodburyPDMat(B, D, S)
+
+        volumes = [1, 2, -3]
+        nonzero_pi = (supply_pi=fill(0.1, length(volumes)), demand_pi=fill(0.1, length(volumes)))
+
+        @testset "AbstractPDMat type $(typeof(pd))" for pd in [
+            PDiagMat(diag(D)), PDMat(Symmetric(A)), PSDMat(Symmetric(A)), W
+        ]
+            @testset "distribution type $(typeof(dist))" for dist in [
+                MvNormal(ones(size(pd, 1)), pd),
+                GenericMvTDist(2.2, ones(size(pd, 1)), pd),
+            ]
+                # with price impact ES should increase (due to sign)
+                @test isless(
+                    expected_shortfall(volumes, dist; risk_level=0.01),
+                    expected_shortfall(volumes, dist, nonzero_pi...; risk_level=0.01),
+                )
+                @test isless(
+                    evaluate(expected_shortfall, volumes, dist; risk_level=0.01),
+                    evaluate(expected_shortfall, volumes, dist, nonzero_pi...; risk_level=0.01),
+                )
+            end
+
+            # special case when dof is large for T distribution
+            # @testset "risk level: $α" for α in []
+
+
+        end
+
         volumes = [1, -2, 3, -4, 5, -6, 7, -8, 9, -10]
-        dense_dist = generate_mvnormal(10)
         nonzero_pi = (supply_pi=fill(0.1, 10), demand_pi=fill(0.1, 10))
 
+        dense_dist = generate_mvnormal(10)
         names = "node" .* string.(collect(1:10))
         dense_id = IndexedDistribution(dense_dist, names)
 
@@ -96,15 +131,7 @@
             @test expected_shortfall(volumes, dist; risk_level=0.01) ≈ expected
             @test evaluate(expected_shortfall, volumes, dist; risk_level=0.01) ≈ expected
 
-            # with price impact ES should increase (due to sign)
-            @test isless(
-                expected,
-                expected_shortfall(volumes, dist, nonzero_pi...; risk_level=0.01),
-            )
-            @test isless(
-                expected,
-                evaluate(expected_shortfall, volumes, dist, nonzero_pi...; risk_level=0.01),
-            )
+
 
             # SES should converge to AES after sufficient samples
             ses_1 = expected_shortfall(volumes, dist)
