@@ -83,7 +83,6 @@
 
         D = Diagonal([1.,2,3])
         S = Diagonal([4.,5,6])
-        W = WoodburyPDMat(B, D, S)
 
         volumes = [1, 2, -3]
         nonzero_pi = (supply_pi=fill(0.1, length(volumes)), demand_pi=fill(0.1, length(volumes)))
@@ -91,7 +90,7 @@
         names = "node" .* string.(collect(1:length(volumes)))
 
         @testset "AbstractPDMat type $(typeof(pd))" for pd in [
-            PDiagMat(diag(D)), PDMat(Symmetric(A)), W
+            PDiagMat(diag(D)), PDMat(Symmetric(A)), WoodburyPDMat(B, D, S)
         ]
             @testset "distribution type $(typeof(dist))" for dist in [
                 MvNormal(ones(size(pd, 1)), pd),
