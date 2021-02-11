@@ -32,5 +32,5 @@ extract the degree of freedom parameter from a distribution
 dof(d::IndexedDistribution) = dof(parent(d))
 dof(d::Union{GenericTDist, GenericMvTDist}) = d.df
 
-Distributions.mean(d::GenericTDist) = d.μ
+Distributions.mean(d::GenericTDist) = d.df>1 ? d.μ : NaN
 Distributions.scale(d::GenericTDist) = d.σ
