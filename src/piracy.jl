@@ -13,10 +13,10 @@ the TDist provided by Distributions.jl (https://github.com/JuliaStats/Distributi
 doesn't have non-standard location and scale parameter, and hence define our own type.
 """
 struct GenericTDist{T<:Real} <: ContinuousUnivariateDistribution
-    ν::T
+    df::T
     μ::T
     σ::T
-    GenericTDist{T}(ν::T, µ::T, σ::T) where {T<:Real} = new{T}(ν, µ, σ)
+    GenericTDist{T}(df::T, µ::T, σ::T) where {T<:Real} = new{T}(df, µ, σ)
 end
 
 
@@ -26,7 +26,6 @@ end
 extract the degree of freedom parameter from a distribution
 """
 dof(d::IndexedDistribution) = dof(parent(d))
-dof(d::GenericTDist) = d.ν
-dof(d::GenericMvTDist) = d.df
+dof(d::Union{GenericTDist, GenericMvTDist}) = d.df
 
 StatsUtils.scale(d::GenericTDist) = d.σ
