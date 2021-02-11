@@ -14,6 +14,7 @@ using PDMatsExtras
 using Random
 using Random: seed!
 using Statistics
+using StatsUtils
 using StatsUtils: sqrtcov
 using Test
 
