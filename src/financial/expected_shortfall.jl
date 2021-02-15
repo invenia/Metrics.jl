@@ -116,7 +116,7 @@ function expected_shortfall(returns::GenericTDist; risk_level::Real=0.05)
     α = risk_level
     inv_Τ = quantile(TDist(ν), α)
     ϕ = ((ν + inv_Τ^2) / (ν - 1)) * (pdf(TDist(ν), inv_Τ) / α)
-    # adjust es for arbitrary univariate T distribution
+    # This is the ES for the standardised univarite T-Distribution. Adjust for Generic T Distribution
     return ϕ * scale(returns) - mean(returns)
 end
 
