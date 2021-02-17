@@ -30,11 +30,6 @@ function GenericTDist(df::T, μ::T, σ::T; check_args=true) where {T <: Real}
     return GenericTDist{T}(df, μ, σ)
 end
 
-"""
-    dof
-
-extract the degree of freedom parameter from a distribution
-"""
 dof(d::IndexedDistribution) = dof(parent(d))
 dof(d::Union{GenericTDist, GenericMvTDist}) = d.df
 
