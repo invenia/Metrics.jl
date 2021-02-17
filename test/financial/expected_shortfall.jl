@@ -90,7 +90,9 @@
         names = "node" .* string.(collect(1:length(volumes)))
 
         @testset "AbstractPDMat type $(typeof(pd))" for pd in [
-            PDiagMat(diag(D)), PDMat(Symmetric(A)), WoodburyPDMat(B, D, S)
+            PDiagMat(diag(D)),
+            PDMat(Symmetric(A)),
+            WoodburyPDMat(B, D, S)
         ]
             @testset "distribution type $(typeof(dist))" for dist in [
                 MvNormal(ones(size(pd, 1)), pd),
@@ -125,6 +127,7 @@
 
         @testset "fixed basic performance" begin
             pd = PDMat(Symmetric(A))
+            # the `expected` values are for catching future regression
             @testset "MvNormal" begin
                 dist = MvNormal(ones(size(pd, 1)), pd)
                 idist = IndexedDistribution(dist, names)
