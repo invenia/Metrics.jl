@@ -7,7 +7,7 @@ using Distributions: @check_args
 import Distributions: dof
 
 """
-    GenericTDist
+    GenericTDist{T<:Real}(df::T, μ::T, σ::T)
 
 the TDist provided by Distributions.jl doesn't have non-standard location and scale
 parameter, and hence define our own type.
