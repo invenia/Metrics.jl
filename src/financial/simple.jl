@@ -67,10 +67,16 @@ function volatility(volumes::AbstractVector, deltas::AbstractMatrix)
 end
 
 function volatility(volumes::AbstractVector, deltas::Sampleable{Multivariate})
-    # Note, although `sqrtcov(deltas)` is in size `variable_length * node`,
-    # `sqrtcov(deltas) * volumes` is a vector of length `variable_length`.
+    # Note,
+    # (1) It might be confusing to see `...cov` twice. We first use `StatsUtils.cov` to
+    # extract the exact `AbstractPDMat` from the delta distribution, and then call `sqrtcov`
+    # to obtain an efficient sqrt calculation. `StatsUtils.cov` was added to deal with
+    # non-Gaussian distributions.
+    # More discussions, see https://gitlab.invenia.ca/invenia/StatsUtils.jl/-/issues/8
+    # (2) although `sqrtcov(StatsUtils.cov(deltas))` is in size `variable_length * node`,
+    # `sqrtcov(StatsUtils.cov(deltas)) * volumes` is a vector of length `variable_length`.
     # Taking the L2 norm of it, it becomes a scalar.
-    # In short, although `sqrtcov(deltas)` is not unique, the `volatility`
+    # In short, although `sqrtcov(StatsUtils.cov(deltas))` is not unique, the `volatility`
     # function is calculating a unique scalar: `sqrt(volume' * cov(delta) * volume)`
     return norm(sqrtcov(StatsUtils.cov(deltas)) * volumes, 2)
 end
