@@ -92,6 +92,10 @@
         @testset "AbstractPDMat type $(typeof(pd))" for pd in [
             PDiagMat(diag(D)),
             PDMat(Symmetric(A)),
+            # NOTE: # `PSDMat` experienced some sampling issue for now and the empirical results
+            #   don't match analytical calculation for now. Exclude `PSDMat` in the test
+            #   until this issue (https://github.com/invenia/PDMatsExtras.jl/issues/11) is resolved
+            # PSDMat(Symmetric(A)),
             WoodburyPDMat(B, D, S)
         ]
             @testset "distribution type $(typeof(dist))" for dist in [
@@ -112,6 +116,7 @@
                 aes = expected_shortfall(volumes, dist)
                 # this requires a large number of samples due to poor convergence in the
                 # covariance matrix
+                Random.seed!(1)
                 ses = expected_shortfall(volumes, rand(dist, 1_000_000))
                 @test isapprox(aes, ses, atol=1e-1)
             end
