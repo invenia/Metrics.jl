@@ -3,6 +3,7 @@ module Metrics
 using AxisArrays
 using DataFrames: disallowmissing
 using Distributions
+using Distributions: GenericMvTDist
 using IndexedDistributions
 using Intervals
 using LinearAlgebra: cholesky, det, dot, I, norm, tr
@@ -12,8 +13,10 @@ using ObservationDims
 using PDMatsExtras
 using SpecialFunctions
 using StatsBase
+using StatsUtils
 using StatsUtils: sqrtcov
 
+include("piracy.jl")
 include("utils.jl")
 # regression
 include("regression/asymmetric.jl")
@@ -43,6 +46,7 @@ export
     mean_squared_error, mse,
     mean_squared_error_to_mean, mse2m,
     root_mean_squared_error, rmse,
+    root_mean_squared_error_to_mean, rmse2m,
     normalised_root_mean_squared_error, nrmse,
     standardized_mean_squared_error, smse,
     expected_absolute_error, ae,

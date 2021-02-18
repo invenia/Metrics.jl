@@ -125,6 +125,16 @@ ObservationDims.obs_arrangement(::typeof(root_mean_squared_error)) = SingleObs()
 const rmse = root_mean_squared_error
 
 """
+    root_mean_squared_error_to_mean(y_true, y_pred) -> Float64
+
+Compute the root of the mean square error between a set of observation `y_true` and
+the mean of predictions `y_pred`.
+"""
+root_mean_squared_error_to_mean(y_true, y_pred) = √mean_squared_error_to_mean(y_true, y_pred)
+ObservationDims.obs_arrangement(::typeof(root_mean_squared_error_to_mean)) = SingleObs()
+const rmse2m = root_mean_squared_error_to_mean
+
+"""
     normalised_root_mean_squared_error(y_true, y_pred) -> Float64
     normalised_root_mean_squared_error(y_true, y_pred, α::Float64) -> Float64
 

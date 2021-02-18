@@ -111,6 +111,14 @@
         errors_correctly(metric, args...)
     end
 
+    """root_mean_squared_error_to_mean"""
+    function test_metric_properties(metric::typeof(root_mean_squared_error_to_mean), args...)
+        is_strictly_positive(metric, args...)
+        is_zero_if_ypred_equals_ytrue(metric, args...)
+        error_increases_as_bias_increases(metric, args...)
+        errors_correctly(metric, args...)
+    end
+
     """normalised_root_mean_squared_error"""
     function test_metric_properties(metric::typeof(normalised_root_mean_squared_error), args...)
         is_strictly_positive(metric, args...)
@@ -351,6 +359,7 @@
             mean_squared_error,
             mean_squared_error_to_mean,
             root_mean_squared_error,
+            root_mean_squared_error_to_mean,
             normalised_root_mean_squared_error,
             standardized_mean_squared_error,
             mean_absolute_error,
@@ -399,6 +408,18 @@
                     "scalar" => sqrt(74 / 3 + 2.2^2),
                     "vector" => sqrt((290 / 3 + (2 + 2.2 + 3)) / 3),
                     "matrix" => sqrt((357 / 3 + 167.75) / 6),
+                ),
+                "point" => Dict(
+                    "scalar" => sqrt(74 / 3),
+                    "vector" => sqrt(290 / 9),
+                    "matrix" => sqrt(357 / 18),
+                )
+            ),
+            typeof(root_mean_squared_error_to_mean) => Dict(
+                "dist" => Dict(
+                    "scalar" => sqrt(74 / 3),
+                    "vector" => sqrt((290 / 3) / 3),
+                    "matrix" => sqrt((357 / 3) / 6),
                 ),
                 "point" => Dict(
                     "scalar" => sqrt(74 / 3),

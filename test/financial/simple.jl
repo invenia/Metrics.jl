@@ -41,37 +41,44 @@ using Metrics: split_volume
         num_nodes = 20
         volumes = rand(Uniform(-50,50), num_nodes)
         mean_deltas = rand(num_nodes)
-        dense_dist = generate_mvnormal(mean_deltas, num_nodes)
+        _sqrt = rand(num_nodes, num_nodes+2)
+        scale_deltas = PDMat(Symmetric(_sqrt * _sqrt' + I))
+
         nonzero_pi = (supply_pi=fill(0.1, num_nodes), demand_pi=fill(0.1, num_nodes))
 
         node_names = "node" .* string.(collect(1:num_nodes))
-        dense_id = IndexedDistribution(dense_dist, node_names)
 
-        @testset "with $type" for (type, dist) in (
-            ("Distribution", dense_dist),
-            ("IndexedDistribution", dense_id)
-        )
-            expected = dot(volumes, mean_deltas)
-            @test expected_return(volumes, dist) ≈ expected
-            @test evaluate(expected_return, volumes, dist) ≈ expected
+        @testset "distribution type $(typeof(dense_dist))" for dense_dist in [
+            MvNormal(mean_deltas, scale_deltas),
+            GenericMvTDist(2.2, mean_deltas, scale_deltas)
+        ]
 
-            # with price impact
-            @test expected_return(volumes, dist, nonzero_pi...) < expected
-            @test evaluate(expected_return, volumes, dist, nonzero_pi...) < expected
-        end
-
-        @testset "with samples" begin
-            # using sample deltas
-            samples = rand(dense_dist, 10)
-            expected = dot(volumes, mean(samples, dims=2))
-            @test expected_return(volumes, samples) ≈ expected
-            @test evaluate(expected_return, volumes, samples; obsdim=2) ≈ expected
-
-            @test expected_return(volumes, samples, nonzero_pi...) < expected
-            @test isless(
-                evaluate(expected_return, volumes, samples, nonzero_pi...; obsdim=2),
-                expected,
+            @testset "with $type" for (type, dist) in (
+                ("Distribution", dense_dist),
+                ("IndexedDistribution", IndexedDistribution(dense_dist, node_names))
             )
+                expected = dot(volumes, mean_deltas)
+                @test expected_return(volumes, dist) ≈ expected
+                @test evaluate(expected_return, volumes, dist) ≈ expected
+
+                # with price impact
+                @test expected_return(volumes, dist, nonzero_pi...) < expected
+                @test evaluate(expected_return, volumes, dist, nonzero_pi...) < expected
+            end
+
+            @testset "with samples" begin
+                # using sample deltas
+                samples = rand(dense_dist, 10)
+                expected = dot(volumes, mean(samples, dims=2))
+                @test expected_return(volumes, samples) ≈ expected
+                @test evaluate(expected_return, volumes, samples; obsdim=2) ≈ expected
+
+                @test expected_return(volumes, samples, nonzero_pi...) < expected
+                @test isless(
+                    evaluate(expected_return, volumes, samples, nonzero_pi...; obsdim=2),
+                    expected,
+                )
+            end
         end
 
         @testset "AbstractVector" begin
@@ -88,7 +95,7 @@ using Metrics: split_volume
         @testset "Empty vector - MethodError" begin
             @test_throws MethodError expected_return([])
         end
-     end
+    end
 
     @testset "volatility" begin
         # using diagonal cov matrix
@@ -100,26 +107,41 @@ using Metrics: split_volume
         )
 
         # using dense cov matrix
-        volumes = rand(Uniform(-50,50), 10)
-        dense_dist = generate_mvnormal(10)
+        num_nodes = 10
+        volumes = rand(Uniform(-50,50), num_nodes)
+        mean_deltas = rand(num_nodes)
+        _sqrt = rand(num_nodes, num_nodes+2)
+        scale_deltas = PDMat(Symmetric(_sqrt * _sqrt' + I))
 
-        names = "node" .* string.(collect(1:10))
-        dense_id = IndexedDistribution(dense_dist, names)
+        nonzero_pi = (supply_pi=fill(0.1, num_nodes), demand_pi=fill(0.1, num_nodes))
 
-        @testset "with $type" for (type, dist) in (
-            ("Distribution", dense_dist),
-            ("IndexedDistribution", dense_id)
-        )
-            expected = norm(sqrtcov(dist) * volumes, 2)
-            @test volatility(volumes, dist) ≈ expected
-            @test evaluate(volatility, volumes, dist) ≈ expected
-        end
+        node_names = "node" .* string.(collect(1:num_nodes))
 
-        @testset "with samples" begin
-            samples = rand(dense_dist, 5)
-            expected = std(samples' * volumes)
-            @test volatility(volumes, samples) ≈ expected
-            @test evaluate(volatility, volumes, samples; obsdim=2) ≈ expected
+        @testset "distribution type $(typeof(dense_dist))" for dense_dist in [
+            MvNormal(mean_deltas, scale_deltas),
+            # use a reasonably big dof for MvT, otherwise the empircal volatility error would be big
+            GenericMvTDist(10, mean_deltas, scale_deltas)
+        ]
+            @testset "with $type" for (type, dist) in (
+                ("Distribution", dense_dist),
+                ("IndexedDistribution", IndexedDistribution(dense_dist, node_names))
+            )
+                expected = norm(sqrtcov(StatsUtils.cov(dist)) * volumes, 2)
+                @test volatility(volumes, dist) ≈ expected
+                @test evaluate(volatility, volumes, dist) ≈ expected
+
+                # test against empirical results
+                samples = rand(dist, 1_000_000)
+                empirical_vol = std(samples' * volumes)
+                @test volatility(volumes, dist) ≈ empirical_vol atol=1e-1
+            end
+
+            @testset "with samples" begin
+                samples = rand(dense_dist, 5)
+                expected = std(samples' * volumes)
+                @test volatility(volumes, samples) ≈ expected
+                @test evaluate(volatility, volumes, samples; obsdim=2) ≈ expected
+            end
         end
 
         @testset "AbstractVector" begin

@@ -97,17 +97,33 @@ Calculate the analytic expected shortfall of a Normal distribution of `returns` 
 a certain `risk_level`.
 """
 function expected_shortfall(returns::Normal; risk_level::Real=0.05)
+    # See eq(4) in https://papers.ssrn.com/sol3/papers.cfm?abstract_id=3196046
     # ES(w) = (p(q_{1-α}(r)) / α) * (w'Σw)^{1/2} − w'μ
-    # See Section 6, https://drive.google.com/file/d/1SU03QYm-RRmyOKHR-Ap5OrZiqP1NiNr5/view
-    # https://en.wikipedia.org/wiki/Expected_shortfall#Normal_distribution
-    ϕ = pdf(Normal(), quantile(Normal(), risk_level))
-    return (ϕ / risk_level) * std(returns) - mean(returns)
+    ϕ = pdf(Normal(), quantile(Normal(), risk_level)) / risk_level
+    return ϕ * scale(returns) - mean(returns)
+end
+
+function expected_shortfall(returns::GenericTDist; risk_level::Real=0.05)
+    # See eq(5) in https://papers.ssrn.com/sol3/papers.cfm?abstract_id=3196046 (NOTE: don't use wiki)
+    # calculate the es for standard TDist
+    if returns.df <= 1
+        throw(ArgumentError(
+            "analytic expected shortfall only exists for MvT distribution when its degree of freedom " *
+            "is > 1, but got $(returns.df)"
+        ))
+    end
+    ν = returns.df
+    α = risk_level
+    inv_Τ = quantile(TDist(ν), α)
+    ϕ = ((ν + inv_Τ^2) / (ν - 1)) * (pdf(TDist(ν), inv_Τ) / α)
+    # This is the ES for the standardised univarite T-Distribution. Adjust for Generic T Distribution
+    return ϕ * scale(returns) - mean(returns)
 end
 
 """
     expected_shortfall(volumes::AbstractVector, deltas::Sampleable{Multivariate}, args...; kwargs...) -> Number
 
-Calculate the analytic expected shortfall of the distribution of `returns` - with
+Calculate the *analytic* expected shortfall of the distribution of `returns` - with
 [`price impact`](@ref price_impact) ``w'μ − w'Πw`` -  according to a certain `risk_level`
 given a portfolio of `volumes` and known `distribution` of price deltas.
 
@@ -115,15 +131,24 @@ given a portfolio of `volumes` and known `distribution` of price deltas.
 - `volumes::AbstractVector`: the portfolio of `volumes`
 - `deltas::Sampleable{Multivariate}`: the joint distribution of the price deltas
 - `args`: The [`price impact`](@ref price_impact) arguments (excluding `volumes`).
+ Typically, it's `supply_pi, demand_pi` or a unified `Pi` that applies to both supply and demand.
 
 # Keyword Arguments
 - `kwargs::Real`: risk level associated with the lower quantile of the returns distribution
 """
-function expected_shortfall(volumes::AbstractVector, deltas::Sampleable{Multivariate}, args...; kwargs...)
-    @assert length(args) < 3
+function expected_shortfall(volumes::AbstractVector, deltas::MvNormalLike, args...; kwargs...)
+    @assert length(args) < 3 # the number of price impact arguments is <=2
     mean_returns = expected_return(volumes, deltas, args...)
-    sigma_returns = volatility(volumes, deltas)
-    return_dist = Normal(mean_returns, sigma_returns)
+    scale_returns = norm(sqrtcov(StatsUtils.scale(deltas)) * volumes, 2)
+    return_dist = Normal(mean_returns, scale_returns)
+    return expected_shortfall(return_dist; kwargs...)
+end
+
+function expected_shortfall(volumes::AbstractVector, deltas::MvTLike, args...; kwargs...)
+    @assert length(args) < 3 # the number of price impact arguments is <=2
+    mean_returns = expected_return(volumes, deltas, args...)
+    scale_returns = norm(sqrtcov(StatsUtils.scale(deltas)) * volumes, 2)
+    return_dist = GenericTDist(dof(deltas), mean_returns, scale_returns)
     return expected_shortfall(return_dist; kwargs...)
 end
 
@@ -152,6 +177,7 @@ More info: https://www.r-bloggers.com/multivariate-medians/
 - `volumes::AbstractVector`: The MWs volumes of the portfolio
 - `deltas::AbstractMatrix`: The sample of price deltas
 - `args`: The [`price impact`](@ref price_impact) arguments (excluding `volumes`).
+ Typically, it's `supply_pi, demand_pi` or a unified `Pi` that applies to both supply and demand.
 
 # Keyword Arguments
 - `kwargs`: The [`expected shortfall`](@ref expected_shortfall) keyword arguments.
@@ -191,6 +217,7 @@ been included.
 - `volumes::AbstractVector`: The MWs volumes of the portfolio
 - `deltas::AbstractMatrix`: The sample of price deltas
 - `args`: The [`price impact`](@ref price_impact) arguments (excluding `volumes`).
+ Typically, it's `supply_pi, demand_pi` or a unified `Pi` that applies to both supply and demand.
 
 # Keyword Arguments
 - `kwargs`: The [`expected shortfall`](@ref expected_shortfall) keyword arguments.

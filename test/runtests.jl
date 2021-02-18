@@ -1,5 +1,6 @@
 using AxisArrays
 using Distributions
+using Distributions: GenericMvTDist
 using Documenter: doctest
 using FixedPointDecimals
 using IndexedDistributions
@@ -13,6 +14,7 @@ using PDMatsExtras
 using Random
 using Random: seed!
 using Statistics
+using StatsUtils
 using StatsUtils: sqrtcov
 using Test
 
