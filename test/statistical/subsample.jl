@@ -118,13 +118,13 @@
         @test_throws DimensionMismatch Metrics.adaptive_block_size(mean, randn(5), randn(4))
     end
 
-    @testset "Function distance" begin 
+    @testset "Function distance" begin
         f1(x) = x
-        f2(x) = 2x 
+        f2(x) = 2x
         loc = collect(-1:4)
         @test Metrics.l2_distance(f1, f1, loc) == 0
-        @test Metrics.l2_distance(f1, f2, loc) == 1 + 1 + 4 + 9 + 16 
-    end 
+        @test Metrics.l2_distance(f1, f2, loc) == 1 + 1 + 4 + 9 + 16
+    end
 
     @testset "subsample_ci and subsample_difference_ci" begin
 
@@ -178,9 +178,15 @@
             @test subsample_difference_ci(mean, series_a, series_b; studentize=true, β=0.5, old_block_args...) !=
                 subsample_difference_ci(mean, series_a, series_b; studentize=false, β=0.5, old_block_args...)
 
+            @test subsample_pct_difference_ci(mean, series_a, series_b; studentize=true, β=0.5, old_block_args...) !=
+                subsample_pct_difference_ci(mean, series_a, series_b; studentize=false, β=0.5, old_block_args...)
+
             # test that circular affects the result
             @test subsample_difference_ci(mean, series_a, series_b; circular=true, β=0.5, old_block_args...) !=
                 subsample_difference_ci(mean, series_a, series_b; circular=false, β=0.5, old_block_args...)
+
+            @test subsample_pct_difference_ci(mean, series_a, series_b; circular=true, β=0.5, old_block_args...) !=
+                subsample_pct_difference_ci(mean, series_a, series_b; circular=false, β=0.5, old_block_args...)
         end
 
         @testset "linearity of differences in mean" begin
@@ -196,7 +202,7 @@
                 diff_2 = subsample_difference_ci(metric, series_b, series_a; β=0.5, old_block_args...)
                 @test (first(diff_1) ≈ -last(diff_2))
                 @test (last(diff_1) ≈ -first(diff_2))
-            end 
+            end
         end
 
         @testset "increasing alpha level contracts ci bounds" begin
@@ -242,6 +248,14 @@
                 beta = Metrics.estimate_convergence_rate(diff_mean, paired_series; conv_kwargs...)
                 @test ci_result == subsample_difference_ci(mean, series_a, series_b; β=beta, old_block_args...)
 
+                ci_result = subsample_pct_difference_ci(
+                    mean, series_a, series_b;
+                    β=nothing, old_block_args..., conv_kwargs...
+                )
+                pct_diff_mean = x -> 100 * (mean(getfield.(x, 1)) - mean(getfield.(x, 2))) / (abs(mean(last.(x))) + 1e-5)
+                beta = Metrics.estimate_convergence_rate(pct_diff_mean, paired_series; conv_kwargs...)
+                @test ci_result == subsample_pct_difference_ci(mean, series_a, series_b; β=beta, old_block_args...)
+
                 # Warnings
                 warning = r"extra_kwarg"
                 @test_logs (:warn, warning) subsample_difference_ci(
@@ -255,12 +269,12 @@
                 )
 
                 @test_logs (:warn, warning) subsample_ci(
-                    mean, series; # Without block_size 
+                    mean, series; # Without block_size
                     β=beta, extra_kwarg=20, old_block_args...
                 )
 
                 @test_logs (:warn, warning) subsample_ci(
-                    mean, series, 12; # With block_size 
+                    mean, series, 12; # With block_size
                     β=beta, extra_kwarg=20, old_block_args...
                 )
             end
@@ -299,6 +313,19 @@
                 diff_mean = x -> mean(getfield.(x, 1)) - mean(getfield.(x, 2))
                 beta = Metrics.estimate_convergence_rate(diff_mean, paired_series; conv_kwargs...)
                 @test ci_result == subsample_difference_ci(
+                    mean, series_a, series_b; β=beta, block_kwargs...
+                )
+
+                ci_result = subsample_pct_difference_ci(
+                    mean, series_a, series_b;
+                    β=nothing, block_kwargs..., conv_kwargs...
+                )
+                # Pair observations
+                paired_series = collect(zip(series_a, series_b))
+                # Define metric from R² to R
+                pct_diff_mean = x -> 100 * (mean(getfield.(x, 1)) - mean(getfield.(x, 2))) / (abs(mean(last.(x))) + 1e-5)
+                beta = Metrics.estimate_convergence_rate(pct_diff_mean, paired_series; conv_kwargs...)
+                @test ci_result == subsample_pct_difference_ci(
                     mean, series_a, series_b; β=beta, block_kwargs...
                 )
             end
@@ -342,6 +369,9 @@
 
                     ci_result = subsample_difference_ci(metric, sseries1, sseries2, sizemin=40, sizemax=100)
                     @test ci_result == subsample_difference_ci(metric, sseries1, sseries2, sizemax=100)
+
+                    ci_result = subsample_pct_difference_ci(metric, sseries1, sseries2, sizemin=40, sizemax=100)
+                    @test ci_result == subsample_pct_difference_ci(metric, sseries1, sseries2, sizemax=100)
                 end
 
                 for metric in [
@@ -354,6 +384,9 @@
 
                     ci_result = subsample_difference_ci(metric, sseries1, sseries2, sizemin=4, sizemax=100)
                     @test ci_result == subsample_difference_ci(metric, sseries1, sseries2, sizemax=100)
+
+                    ci_result = subsample_pct_difference_ci(metric, sseries1, sseries2, sizemin=4, sizemax=100)
+                    @test ci_result == subsample_pct_difference_ci(metric, sseries1, sseries2, sizemax=100)
                 end
             end
 

@@ -79,5 +79,6 @@ export
     dm_mean_test,
     dm_median_test,
     subsample_ci,
-    subsample_difference_ci
+    subsample_difference_ci,
+    subsample_pct_difference_ci
 end # module
