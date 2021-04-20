@@ -20,8 +20,8 @@ function kullback_leibler(a::MvNormal, b::MvNormal)
     # k is the Distribution Dimension
     k = length(a)
 
-    # Pull out the means, and get the difference
-    μ0, μ1 = mean(a), mean(b)
+    μ0 = mean(a)
+    μ1 = mean(b)
     μdiff = μ1 .- μ0
 
     # μdiff' * (Σ1 \ μdiff) can be more efficiently computed using the Cholesky

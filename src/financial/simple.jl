@@ -40,7 +40,6 @@ function expected_return(volumes::AbstractVector, deltas::AbstractVector, args..
 end
 
 function expected_return(volumes::AbstractVector, deltas::AbstractMatrix, args...)
-    returns = _calculate_returns(volumes, deltas)
     volumes = NamedDimsArray(volumes, :nodes)
     deltas = NamedDimsArray(deltas, (:nodes, :obs))
     expected_deltas = vec(mean(deltas, dims=:obs))

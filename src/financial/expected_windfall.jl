@@ -39,12 +39,12 @@ function expected_windfall(returns; level::Real=0.05, per_mwh=false, volumes=[])
     returns = collect(returns) # required for iterators
     first_index = ceil(Int, (1 - level) * length(returns)) + 1
     last_index = length(returns)
-    if first_index > length(returns)
+    if first_index > last_index
         @warn(
             "Too few samples provided to calculate expected windfall for given level.",
              level,
              minimum_number_of_samples=ceil(Int, 1/level),
-             number_of_samples=length(returns),
+             number_of_samples=last_index,
         )
         return missing
     end
