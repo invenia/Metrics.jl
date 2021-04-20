@@ -222,13 +222,16 @@ function expected_absolute_error(y_true, y_pred::Sampleable)
     z = μ ./ σ
 
     # compute the absolute error over each dimension
-    abs_err = (μ .* erf.(z / √2)) + sqrt(2 / π) * (σ .* exp.(-0.5 * z.^2))
+    abs_err = @. (μ * erf(z / √2)) + sqrt(2 / π) * (σ * exp(-0.5 * z^2))
 
     # we can get NaNs if μ=σ=0 so we skip these when returning the result
     # this is reasonable because μ=σ=0 implies a perfect forecast in that dimension
-    return all(isnan.(abs_err)) ? 0 : sum(abs_err[.!isnan.(abs_err)])
+    return all(isnan, abs_err) ? zero(eltype(abs_err)) : _skipnan_sum(abs_err)
 
 end
+
+_skipnan_sum(x::Number) = x
+_skipnan_sum(x) = NaNMath.sum(x)
 
 expected_absolute_error(y_true::Sampleable, y_pred) = expected_absolute_error(y_pred, y_true)
 ObservationDims.obs_arrangement(::typeof(expected_absolute_error)) = SingleObs()

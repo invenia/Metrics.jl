@@ -35,7 +35,7 @@ function potential_payoff(y_true, y_pred)
     p = dot(y_pred, y_true) / norm(y_pred, 1)
 
     # ensure potential_payoff is stable when predicting 0s
-    return isnan(p) ? 0 : p
+    return isnan(p) ? zero(p) : p
 
 end
 

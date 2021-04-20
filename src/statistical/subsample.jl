@@ -122,9 +122,7 @@ function _compute_quantile_differences(diff_samples, quantmin, quantstep, quantm
         quants = [[quantile(s, t) for t in quant_range] for s in diff_samples]
 
         # Compute the differences between consecutive quantiles
-        quant_diffs = [
-            [quant[i + 1] - quant[i] for i in 1:(length(quant) - 1)] for quant in quants
-        ]
+        quant_diffs = [diff(quant) for quant in quants]
 
         # If there are zeroes, make grid coarser
         quantstep += 0.1
@@ -158,7 +156,7 @@ function _compute_log_log_slope(x, y::Vector{<:Vector})
     # avoid floating point errors by flooring to 0 if below machine precision.
     vars = map(y) do _y
         v = var(log.(_y))
-        return v < eps() ? 0 : v
+        return v < eps(typeof(v)) ? zero(v) : v
     end
 
     # weight each point inversely to its variance
