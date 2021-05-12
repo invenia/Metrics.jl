@@ -22,11 +22,16 @@ StatsUtils = "d94fc345-0ff4-56ba-a2b2-f5d62e4638cc"
 Test = "8dfed614-e22c-5e08-85e1-65c5234f0b40"
 
 [compat]
+AxisArrays = "0.4"
+DataFrames = "1"
 Distributions = "0.21.3, 0.22, 0.23, 0.24"
+FixedPointDecimals = "0.3"
 IndexedDistributions = "2.3"
 Intervals = "1"
+NaNMath = "0.3"
 ObservationDims = "0.1"
 PDMatsExtras = "2.2"
+SpecialFunctions = "1"
 StatsUtils = "1.6"
 julia = "1.1"
 
