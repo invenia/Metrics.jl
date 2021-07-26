@@ -1,5 +1,5 @@
 @testset "evaluate.jl" begin
-    orig_idist = IndexedDistribution(MvNormal(ones(3)), ["a", "b", "c"])
+    orig_idist = KeyedDistribution(MvNormal(ones(3)), ["a", "b", "c"])
 
     # In these testsets the dummy_metric is simply a function that runs a set of tests.
     # The point is to verify that `evaluate` correctly rearrranges the (various) inputs

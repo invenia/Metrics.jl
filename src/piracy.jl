@@ -1,4 +1,5 @@
 #=
+    TODO: remove all of this: https://gitlab.invenia.ca/invenia/Metrics.jl/-/issues/86
     this file includes some functions we defined/extended for `Distributions.jl`.
     They are not used outside the `Metrics.jl` and should probably settle down
     in `Distributions.jl` properly in the long term.
@@ -30,7 +31,7 @@ function GenericTDist(df::T, μ::T, σ::T; check_args=true) where {T <: Real}
     return GenericTDist{T}(df, μ, σ)
 end
 
-dof(d::IndexedDistribution) = dof(parent(d))
+dof(d::KeyedDistribution) = dof(distribution(d))
 dof(d::Union{GenericTDist, GenericMvTDist}) = d.df
 
 Distributions.mean(d::GenericTDist) = d.df>1 ? d.μ : NaN

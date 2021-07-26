@@ -135,14 +135,14 @@
             # the `expected` values are for catching future regression
             @testset "MvNormal" begin
                 dist = MvNormal(ones(size(pd, 1)), pd)
-                idist = IndexedDistribution(dist, names)
+                idist = KeyedDistribution(dist, names)
                 expected = 4.896918621367946
                 @test expected_shortfall(volumes, dist; risk_level=0.3) ≈ expected
                 @test expected_shortfall(volumes, idist; risk_level=0.3) ≈ expected
             end
             @testset "MvT" begin
                 dist = GenericMvTDist(3.0, ones(size(pd, 1)), pd)
-                idist = IndexedDistribution(dist, names)
+                idist = KeyedDistribution(dist, names)
                 expected = 6.971343619802216
                 @test expected_shortfall(volumes, dist; risk_level=0.3) ≈ expected
                 @test expected_shortfall(volumes, idist; risk_level=0.3) ≈ expected

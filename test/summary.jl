@@ -122,17 +122,17 @@
             # y_true
             y_true = [6, 3, 5]
             obs = Symbol.("t_", 1:3)
-            y_true_idx = AxisArray(y_true, Axis{:obs}(obs))
+            y_true_idx = KeyedArray(y_true; obs=obs)
             @testset "distribution type: $(i.dtype)" for i in y_pred_list
                 summary = regression_summary(y_true, i.y_pred)
                 @test !isempty(summary)
-                # AxisArray with IndexedDistribution
-                y_pred_idx = IndexedDistribution(i.y_pred, obs)
+                # KeyedArray with KeyedDistribution
+                y_pred_idx = KeyedDistribution(i.y_pred, obs)
                 summary_withidx = regression_summary(y_true_idx, y_pred_idx)
                 @test summary_withidx == summary
-                # suffle the index
+                # suffle the keys
                 new_obs_order = shuffle(1:3)
-                y_true_idx2 = AxisArray(y_true[new_obs_order], Axis{:obs}(obs[new_obs_order]))
+                y_true_idx2 = KeyedArray(y_true[new_obs_order]; obs=obs[new_obs_order])
                 summary_withdiffidx = regression_summary(y_true_idx2, y_pred_idx)
                 @test summary_withdiffidx == summary
             end

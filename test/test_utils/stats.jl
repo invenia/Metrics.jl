@@ -213,15 +213,15 @@ Statistics.mean(y_pred::AbstractVector{<:Sampleable}) = mean.(y_pred)
             @test mean(dists) == means
         end
 
-        @testset "IndexedDistribution" begin
+        @testset "KeyedDistribution" begin
             means = [rand(5), rand(5), rand(5)]
             sigmas = [1, 2, 3]
             dists = MvNormal.(means, sigmas)
 
             names = ["a", "b", "c", "d", "e"]
-            ind_dists = IndexedDistribution.(dists, Ref(names))
+            ind_dists = KeyedDistribution.(dists, Ref(names))
 
-            expected = AxisArray.(means, Ref(Axis{:variates}(names)))
+            expected = KeyedArray.(means, Ref(names))
             @test mean(ind_dists) == expected
         end
     end

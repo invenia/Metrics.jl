@@ -33,102 +33,79 @@ end
 
 
 """
-    _match(a::AxisArray, b::AxisArray) -> Tuple{a::AxisArray, b::AxisArray}
-    _match(a::AxisArray, d::IndexedDistribution) -> Tuple{a::AxisArray, d::IndexedDistribution}
+    _match(a::KeyedArray, b::KeyedArray) -> Tuple{a::KeyedArray, b::KeyedArray}
+    _match(a::KeyedArray, d::KeyedDistribution) -> Tuple{a::KeyedArray, d::KeyedDistribution}
 
-Match the axis values and/or indices of the provided arguments such that their values are in
-the same order. This can be applied to pairs of `AxisArray`s or an `AxisArray` with an
-`IndexedDistribution`.
-
-Arguments:
-  - `a::AxisArray`: An array of data whose axes are indexed by some values
-  - `b::AxisArray`: An array of data whose axes are indexed by some values
-  - `d::IndexedDistribution`: A distribution indexed by some values, usually produced as the
-  output of a forecaster
+Match the axis keys and/or indices of the provided arguments such that their values are in
+the same order. This can be applied to pairs of `KeyedArray`s or an `KeyedArray` with an
+`KeyedDistribution`.
 
 Returns:
-  - `Tuple{a::AxisArray, b::AxisArray}`: A tuple of the same input data but with axes aligned
+  - `Tuple{a::KeyedArray, b::KeyedArray}`: A tuple of the same input data but with dims aligned
   and ordered.
-  - `Tuple{a::AxisArray, d::IndexedDistribution}`: A tuple of the same input data with their
-  axes and indices aligned. The order is the same as the index in the input IndexedDistribution
+  - `Tuple{a::KeyedArray, d::KeyedDistribution}`: A tuple of the same input data with their
+  dims and keys aligned. The order is the same as the keys in the input `KeyedDistribution`.
 
 Throws:
-  - `ArgumentError`: If the AxisArrays do not have the same orientation
-  - `ArgumentError`: If the AxisArrays do not have the same axis values
-  - `ArgumentError`: If the axis values of the AxisArray do not match the indices of the
-  IndexedDistribution
+  - `ArgumentError`: If the KeyedArrays do not have the same orientation.
+  - `ArgumentError`: If the KeyedArrays do not have the same axiskeys.
+  - `ArgumentError`: If the axiskeys of the KeyedArray do not match the indices of the
+  KeyedDistribution.
 
-```jldoctest; setup = :(using AxisArrays, Distributions, IndexedDistributions, Metrics)
-julia> a = AxisArray([1, 2, 3], Axis{:node}(["b", "a", "c"]));
+```jldoctest; setup = :(using AxisKeys, Distributions, KeyedDistributions, Metrics)
+julia> a = KeyedArray([1, 2, 3]; node=["b", "a", "c"]);
 
-julia> b = AxisArray([1, 2, 3], Axis{:node}(["c", "b", "a"]));
+julia> b = KeyedArray([1, 2, 3]; node=["c", "b", "a"]);
 
 julia> Metrics._match(a, b)
 ([2, 1, 3], [3, 2, 1])
 ```
 """
-function _match(a::AxisArray, d::IndexedDistribution)
+function _match(a::KeyedArray, d::KeyedDistribution)
     # marginal_gaussian_loglikelihood, etc. can accept multiple observations at a time
     # The stricter condition: size(a) == size(d) should be picked up by any metric that
     # requires it
     @_dimcheck first(size(a)) == first(size(d))
 
-    dist, names = parent(d), index(d)
-    index_dim = findfirst(Ref(sort(names)) .== sort.(axisvalues(a)))
+    names = only(axiskeys(d))
+    dim = findfirst(Ref(sort(names)) .== sort.(axiskeys(a)))
 
-    if index_dim isa Nothing
+    if dim isa Nothing
         throw(ArgumentError(
-            "Index and axis values do not match: index = $(index(d)), axis = $(axisvalues(a))"
+            "axiskeys do not match: distribution: $(axiskeys(d)), array: $(axiskeys(a))"
         ))
     end
 
-    if axisvalues(a)[index_dim] == index(d)
+    if axiskeys(a)[dim] == names
         # if the orders match already, return the inputs as they were
         return a, d
     else
-        # if the orders don't match, align the `AxisArray` to match the order in the
-        # `IndexedDistribution` and don't change the `IndexedDistribution`. (This is because
-        # altering the  index order of a distribution is hard to maintain the exact type of
-        # of the underlying distribution and the specific PDMats)
-
-        # re-organise the AxisArray
-        new_a_data = copy(a.data)
-        old_axes = AxisArrays.axes(a)
-        new_axes = (
-            old_axes[1:index_dim-1]...,
-            Axis{axisnames(a)[index_dim]}(names),
-            old_axes[index_dim+1:end]...,
-        )
-        old_idxs, new_idxs = AxisArrays.indexmappings(old_axes, new_axes)
-        new_a_data[new_idxs...] = a.data[old_idxs...]
-        matched_a = AxisArray(new_a_data, new_axes)
-
-        return matched_a, d
+        return a(names), d
     end
 end
 
-function _match(a::AxisArray, b::AxisArray)
+function _match(a::KeyedArray, b::KeyedArray)
     @_dimcheck size(a) == size(b)
 
-    # if AxisArrays already match then short-circtuit the rest
-    if (axisnames(a) == axisnames(b)) && (axisvalues(a) == axisvalues(b))
+    # if KeyedArrays already match then short-circtuit the rest
+    if (dimnames(a) == dimnames(b)) && (axiskeys(a) == axiskeys(b))
         return a, b
     # check that axis orientation is the same
-    elseif axisnames(a) != axisnames(b)
+    elseif dimnames(a) != dimnames(b)
         throw(ArgumentError(
-            "AxisArray orientations do not match: "*
-            "axisnames(a) = $(axisnames(a)), axisnames(b) = $(axisvalues(b))"
+            "KeyedArray orientations do not match: "*
+            "dimnames(a) = $(dimnames(a)), dimnames(b) = $(dimnames(b))"
         ))
     # check that axis values are the same
-    elseif sort.(axisvalues(a)) != sort.(axisvalues(b))
+    elseif sort.(axiskeys(a)) != sort.(axiskeys(b))
         throw(ArgumentError(
-            "AxisArray axis values do not match: "*
-            "axisnames(a) = $(sort.(axisvalues(a))), axisnames(b) = $(sort.(axisvalues(b)))"
+            "KeyedArray axis values do not match: "*
+            "axiskeys(a) = $(sort.(axiskeys(a))), axiskeys(b) = $(sort.(axiskeys(b)))"
         ))
     else
 
-        pa = sortperm.(axisvalues(a))
-        pb = sortperm.(axisvalues(b))
+        pa = sortperm.(axiskeys(a))
+        pb = sortperm.(axiskeys(b))
 
         return a[pa...], b[pb...]
     end

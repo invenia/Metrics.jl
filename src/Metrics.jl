@@ -1,11 +1,11 @@
 module Metrics
 
-using AxisArrays
+using AxisKeys
 using DataFrames: disallowmissing
 using Distributions
 using Distributions: GenericMvTDist
-using IndexedDistributions
-using Intervals
+using Intervals: Interval
+using KeyedDistributions
 using LinearAlgebra: cholesky, det, dot, I, norm, tr
 using NamedDims
 using NaNMath
