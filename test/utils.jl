@@ -53,8 +53,8 @@ using Metrics: @_dimcheck, _match
         plain_array = [3, 2, 1]
         plain_dist = generate_mvnormal([2, 1, 3], 3)
 
-        axis_array = AxisArray(plain_array, Axis{:obs}(["b", "a", "c"]))
-        index_dist = IndexedDistribution(plain_dist, ["c", "b", "a"])
+        keyed_array = KeyedArray(plain_array; obs=["b", "a", "c"])
+        keyed_dist = KeyedDistribution(plain_dist, ["c", "b", "a"])
 
         @testset "Plain array and plain distribution" begin
             new_array, new_dist = _match(plain_array, plain_dist)
@@ -62,79 +62,79 @@ using Metrics: @_dimcheck, _match
             @test new_dist == plain_dist
         end
 
-        @testset "AxisArray and plain distribution" begin
-            new_array, new_dist = _match(axis_array, plain_dist)
-            @test new_array == axis_array
+        @testset "KeyedArray and plain distribution" begin
+            new_array, new_dist = _match(keyed_array, plain_dist)
+            @test new_array == keyed_array
             @test new_dist == plain_dist
         end
 
-        @testset "Plain array and IndexedDistribution" begin
-            new_array, new_dist = _match(plain_array, index_dist)
+        @testset "Plain array and KeyedDistribution" begin
+            new_array, new_dist = _match(plain_array, keyed_dist)
             @test new_array == plain_array
-            @test new_dist == index_dist
+            @test new_dist == keyed_dist
         end
 
-        @testset "AxisArray and IndexedDistribution" begin
-            new_array, new_dist = _match(axis_array, index_dist)
-            @test new_array != axis_array
-            @test new_dist == index_dist
+        @testset "KeyedArray and KeyedDistribution" begin
+            new_array, new_dist = _match(keyed_array, keyed_dist)
+            @test new_array != keyed_array
+            @test new_dist == keyed_dist
 
-            # check the axisvalues are sorted to match the distribution index, while
-            # the order of the distribution index remains the same
-            @test index(new_dist) == axisvalues(new_array)[1] == index(index_dist)
-            @test mean(parent(new_dist)) == [2, 1, 3]
+            # check the axiskeys are sorted to match the distribution keys, while
+            # the order of the distribution keys remains the same
+            @test only(axiskeys(new_dist)) == only(axiskeys(new_array)) == only(axiskeys(keyed_dist))
+            @test mean(distribution(new_dist)) == [2, 1, 3]
             @test parent(new_array) == [1, 3, 2]
         end
 
-        @testset "AxisArray and AxisArray" begin
+        @testset "KeyedArray and KeyedArray" begin
             @testset "1-D" begin
-                axis_array2 = AxisArray([3, 1, 2], Axis{:obs}(["c", "a", "b"]))
-                new_array1, new_array2 = _match(axis_array, axis_array2)
-                @test new_array1 != axis_array
-                @test new_array2 != axis_array2
+                keyed_array2 = KeyedArray([3, 1, 2]; obs=["c", "a", "b"])
+                new_array1, new_array2 = _match(keyed_array, keyed_array2)
+                @test new_array1 != keyed_array
+                @test new_array2 != keyed_array2
 
                 # check indices are now sorted and values are in new order
-                @test axisvalues(new_array1)[1] == axisvalues(new_array2)[1] == ["a", "b", "c"]
+                @test only(axiskeys(new_array1)) == only(axiskeys(new_array2)) == ["a", "b", "c"]
                 @test parent(new_array1) == [2, 3, 1]
                 @test parent(new_array2) == [1, 2, 3]
             end
             @testset "2-D" begin
-                axis_array1 = AxisArray(
-                    [1 3; 2 -1; 5 0],
-                    Axis{:obs}(["c", "a", "b"]),
-                    Axis{:target}([:t1, :t2])
+                keyed_array1 = KeyedArray(
+                    [1 3; 2 -1; 5 0];
+                    obs=["c", "a", "b"],
+                    target=[:t1, :t2]
                 )
-                axis_array2 = AxisArray(
-                    [2 0; 3 5; -2 6],
-                    Axis{:obs}(["a", "c", "b"]),
-                    Axis{:target}([:t2, :t1])
+                keyed_array2 = KeyedArray(
+                    [2 0; 3 5; -2 6];
+                    obs=["a", "c", "b"],
+                    target=[:t2, :t1],
                 )
-                new_array1, new_array2 = _match(axis_array1, axis_array2)
-                @test new_array1 != axis_array1
-                @test new_array2 != axis_array2
+                new_array1, new_array2 = _match(keyed_array1, keyed_array2)
+                @test new_array1 != keyed_array1
+                @test new_array2 != keyed_array2
 
                 # check indices are now sorted and values are in new order
-                @test axisvalues(new_array1)[1] == axisvalues(new_array2)[1] == ["a", "b", "c"]
-                @test axisvalues(new_array1)[2] == axisvalues(new_array2)[2] == Symbol[:t1, :t2]
+                @test axiskeys(new_array1)[1] == axiskeys(new_array2)[1] == ["a", "b", "c"]
+                @test axiskeys(new_array1)[2] == axiskeys(new_array2)[2] == Symbol[:t1, :t2]
                 @test parent(new_array1) == [2 -1; 5 0; 1 3]
                 @test parent(new_array2) == [0 2; 6 -2; 5 3]
             end
 
             @testset "array axes have wrong orientation" begin
-                a = AxisArray(rand(3,2), Axis{:obs}(["c", "a", "b"]), Axis{:target}([:t1, :t2]))
-                b = AxisArray(rand(3,2), Axis{:target}(["c", "a", "b"]), Axis{:obs}([:t1, :t2]))
+                a = KeyedArray(rand(3,2); obs=["c", "a", "b"], target=[:t1, :t2])
+                b = KeyedArray(rand(3,2); target=["c", "a", "b"], obs=[:t1, :t2])
                 @test_throws ArgumentError _match(a, b)
             end
 
             @testset "array axis values do not match" begin
-                a = AxisArray(rand(3,2), Axis{:obs}(["c", "a", "b"]), Axis{:target}([:t1, :t2]))
-                b = AxisArray(rand(3,2), Axis{:obs}(["q", "a", "b"]), Axis{:target}([:t1, :t2]))
+                a = KeyedArray(rand(3,2); obs=["c", "a", "b"], target=[:t1, :t2])
+                b = KeyedArray(rand(3,2); obs=["q", "a", "b"], target=[:t1, :t2])
                 @test_throws ArgumentError _match(a, b)
             end
 
             @testset "arrays have incompatible sizes" begin
-                a = AxisArray(rand(3,2), Axis{:obs}(["c", "a", "b"]), Axis{:target}([:t1, :t2]))
-                b = AxisArray(rand(2,3), Axis{:target}([:t1, :t2]), Axis{:obs}(["c", "a", "b"]))
+                a = KeyedArray(rand(3,2); obs=["c", "a", "b"], target=[:t1, :t2])
+                b = KeyedArray(rand(2,3); target=[:t1, :t2], obs=["c", "a", "b"])
                 @test_throws DimensionMismatch _match(a, b)
             end
         end

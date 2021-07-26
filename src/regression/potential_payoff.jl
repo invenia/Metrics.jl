@@ -61,10 +61,7 @@ without additional constraints such as net total volume, volume-per-node, price 
 function potential_payoff(y_true, y_pred::Sampleable{Multivariate})
     @_dimcheck size(y_true) == size(y_pred)
     _y_pred, _y_true = _match(y_pred, y_true)
-
-    # TODO: Ideally this line would require that \ is defined on AxisArrays
-    # since it currently isn't we have to call parent() no the object
-    _y_pred = parent(cov(_y_pred)) \ parent(mean(_y_pred))
+    _y_pred = cov(_y_pred) \ mean(_y_pred)
     return potential_payoff(_y_true, _y_pred)
 end
 

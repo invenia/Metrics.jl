@@ -41,24 +41,20 @@ function kullback_leibler(a::Normal, b::Normal)
 end
 
 """
-    kullback_leibler(a::IndexedDistribution, b::IndexedDistribution) -> Float64
+    kullback_leibler(a::KeyedMvNormal, b::KeyedMvNormal) -> Float64
 
-Calculate the Kullback-Leibler divergence between two indexed distributions parameterised
-by gaussian distributions.
+Calculate the Kullback-Leibler divergence between two `KeyedMvNormal` distributions.
 """
-function kullback_leibler(
-    a::IndexedDistribution{Multivariate, Continuous, <:AbstractMvNormal},
-    b::IndexedDistribution{Multivariate, Continuous, <:AbstractMvNormal},
-)
+function kullback_leibler(a::KeyedMvNormal, b::KeyedMvNormal)
     @_dimcheck size(a) == size(b)
 
-    id1, d1 = index(a), distribution(a)
-    id2, d2 = index(b), distribution(b)
+    id1, d1 = only(axiskeys(a)), distribution(a)
+    id2, d2 = only(axiskeys(b)), distribution(b)
 
     if !(sort(id1) == sort(id2))
         throw(ArgumentError(
-            "Distribution indices do not match: "*
-            "index(a) = $id1, index(b) = $id2",
+            "Distribution axiskeys do not match: "*
+            "axiskeys(a) = ($id1,), axiskeys(b) = ($id2,)",
         ))
     end
 

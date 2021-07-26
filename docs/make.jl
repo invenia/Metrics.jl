@@ -1,7 +1,7 @@
-using AxisArrays
+using AxisKeys
 using Distributions
 using Documenter
-using IndexedDistributions
+using KeyedDistributions
 using Metrics
 
 makedocs(;

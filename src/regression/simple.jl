@@ -99,14 +99,13 @@ calculating the `mse`.
 """
 mean_squared_error_to_mean(y_true::Union{AbstractArray, Number}, y_pred::Sampleable) =
     mse(y_true, mean(y_pred))
-function mean_squared_error_to_mean(y_true::AxisArray, y_pred::IndexedDistribution)
-    # ensure that the axisnames for AxisArray `y_pred_mean` is the same as `y_true`
-    names = axisnames(y_true)
-    inds = axisvalues(mean(y_pred))
-    y_pred_mean = AxisArray(
-        mean(y_pred),
-        ntuple(i->Axis{names[i]}(inds[i]), length(names))
-    )
+
+function mean_squared_error_to_mean(y_true::KeyedArray, y_pred::KeyedDistribution)
+    keys = only(axiskeys(y_true))
+    # mean(y_pred) doesn't have dims, so we need to rewrap into a KeyedArray{<:NamedDimsArray}
+    # so that it will _match with y_true downstream
+    m = parent(mean(y_pred)(keys))
+    y_pred_mean = KeyedArray(NamedDimsArray(m, dimnames(y_true)...), keys)
     return mse(y_true, y_pred_mean)
 end
 mean_squared_error_to_mean(y_true, y_pred::Number) = mse(y_true, y_pred)

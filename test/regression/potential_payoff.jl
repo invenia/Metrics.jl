@@ -19,12 +19,12 @@
     y_true_scalar = 2
     y_true_vector = [2, 3, 4]
     y_true_matrix = [1 2 3; 4 5 6]
-    y_true_axis = AxisArray(y_true_vector, Axis{:obs}(names))
+    y_true_keyed = KeyedArray(y_true_vector, names)
 
     y_pred_scalar = Normal(5, 2.2)
     y_pred_vector = MvNormal([7, 6, 5], Σ)
     y_pred_matrix = MatrixNormal([1 3 5; 7 9 11], U, V)
-    y_pred_index = IndexedDistribution(y_pred_vector, names)
+    y_pred_keyed = KeyedDistribution(y_pred_vector, names)
 
 
     expected = Dict(
@@ -51,22 +51,22 @@
 
         test_metric_properties(potential_payoff, y_true, y_pred)
 
-        # compute metric on indexed distribution predictions - only defined for multivariates
+        # compute metric on KeyedDistribution predictions - only defined for multivariates
         if type == "vector"
-            @testset "IndexedDistribution with AbstractArray" begin
-                @test potential_payoff(y_true, y_pred_index) ≈ expected["dist"][type]
-                @test evaluate(potential_payoff,y_true, y_pred_index) ≈ expected["dist"][type]
+            @testset "KeyedDistribution with AbstractArray" begin
+                @test potential_payoff(y_true, y_pred_keyed) ≈ expected["dist"][type]
+                @test evaluate(potential_payoff,y_true, y_pred_keyed) ≈ expected["dist"][type]
             end
-            @testset "IndexedDistribution with AxisArray" begin
-                @test potential_payoff(y_true_axis, y_pred_index) ≈ expected["dist"][type]
-                @test evaluate(potential_payoff,y_true_axis, y_pred_index) ≈ expected["dist"][type]
+            @testset "KeyedDistribution with KeyedArray" begin
+                @test potential_payoff(y_true_keyed, y_pred_keyed) ≈ expected["dist"][type]
+                @test evaluate(potential_payoff,y_true_keyed, y_pred_keyed) ≈ expected["dist"][type]
             end
-            @testset "IndexedDistribution with shuffled AxisArray" begin
+            @testset "KeyedDistribution with shuffled KeyedArray" begin
                 new_order = shuffle(1:length(names))
-                _y_true_axis = AxisArray(y_true[new_order], Axis{:obs}(names[new_order]))
+                _y_true_keyed = KeyedArray(y_true[new_order], obs=names[new_order])
 
-                @test potential_payoff(_y_true_axis, y_pred_index) ≈ expected["dist"][type]
-                @test evaluate(potential_payoff,_y_true_axis, y_pred_index) ≈ expected["dist"][type]
+                @test potential_payoff(_y_true_keyed, y_pred_keyed) ≈ expected["dist"][type]
+                @test evaluate(potential_payoff,_y_true_keyed, y_pred_keyed) ≈ expected["dist"][type]
             end
         end
     end

@@ -55,7 +55,7 @@ using Metrics: split_volume
 
             @testset "with $type" for (type, dist) in (
                 ("Distribution", dense_dist),
-                ("IndexedDistribution", IndexedDistribution(dense_dist, node_names))
+                ("KeyedDistribution", KeyedDistribution(dense_dist, node_names))
             )
                 expected = dot(volumes, mean_deltas)
                 @test expected_return(volumes, dist) ≈ expected
@@ -124,7 +124,7 @@ using Metrics: split_volume
         ]
             @testset "with $type" for (type, dist) in (
                 ("Distribution", dense_dist),
-                ("IndexedDistribution", IndexedDistribution(dense_dist, node_names))
+                ("KeyedDistribution", KeyedDistribution(dense_dist, node_names))
             )
                 expected = norm(sqrtcov(StatsUtils.cov(dist)) * volumes, 2)
                 @test volatility(volumes, dist) ≈ expected
@@ -225,11 +225,11 @@ using Metrics: split_volume
             nonzero_pi = (supply_pi=fill(0.1, 10), demand_pi=fill(0.1, 10))
 
             names = "nodes" .* string.(collect(1:10))
-            dense_id = IndexedDistribution(dense_dist, names)
+            dense_id = KeyedDistribution(dense_dist, names)
 
             @testset "with $type" for (type, dist) in (
                 ("Distribution", dense_dist),
-                ("IndexedDistribution", dense_id)
+                ("KeyedDistribution", dense_id)
             )
                 exp_return = expected_return(volumes, dist)
                 exp_vol = volatility(volumes, dist)

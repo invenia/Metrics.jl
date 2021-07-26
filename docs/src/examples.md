@@ -34,15 +34,15 @@ expected_return(volumes, deltas_2)
 but would need to ensure the data is oriented correctly otherwise it will error.
 
 
-### IndexedDistributions and AxisArrays
+### KeyedDistributions and KeyedArrays
 
-Any `regression` metric compatible with `IndexedDistribution`s and `AxisArray`s will match their indices to ensure the metric is computed correctly, even outside of [`evaluate`](@ref),
+Any `regression` metric compatible with `KeyedDistribution`s and `KeyedArray`s will match their indices to ensure the metric is computed correctly, even outside of [`evaluate`](@ref),
 
 ```@example
-using Metrics, Distributions, IndexedDistributions, AxisArrays
+using Metrics, Distributions, KeyedDistributions, AxisKeys
 
-predictions = IndexedDistribution(MvNormal([1, 2, 3], ones(3)), ["a", "b", "c"])
-truths = AxisArray([1, 2, 3], Axis{:nodes}(["b", "c", "a"]))
+predictions = KeyedDistribution(MvNormal([1, 2, 3], ones(3)), ["a", "b", "c"])
+truths = KeyedArray([1, 2, 3]; nodes=["b", "c", "a"])
 
 evaluate(mse, truths, predictions)
 ```

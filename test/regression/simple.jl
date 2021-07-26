@@ -191,12 +191,12 @@
         y_true_scalar = 2
         y_true_vector = [2, 3, 4]
         y_true_matrix = [1 2 3; 4 5 6]
-        y_true_axis = AxisArray(y_true_vector, Axis{:obs}(names))
+        y_true_keyed = KeyedArray(y_true_vector, obs=names)
 
         y_pred_scalar = Normal(5, 2.2)
         y_pred_vector = MvNormal([7, 6, 5], Σ)
         y_pred_matrix = MatrixNormal([1 3 5; 7 9 11], U, V)
-        y_pred_index = IndexedDistribution(y_pred_vector, names)
+        y_pred_keyed = KeyedDistribution(y_pred_vector, names)
 
         expected = Dict(
             typeof(expected_squared_error) => Dict(
@@ -255,22 +255,22 @@
                     @test evaluate(m, y_true, y_pred) ≈ expected[typeof(m)]["dist"][type]
                 end
 
-                # compute metric on indexed distribution predictions - only defined for multivariates
+                # compute metric on KeyedDistribution predictions - only defined for multivariates
                 if type == "vector"
-                    @testset "IndexedDistribution with AbstractArray" begin
-                        @test m(y_true, y_pred_index) ≈ expected[typeof(m)]["dist"][type]
-                        @test evaluate(m, y_true, y_pred_index) ≈ expected[typeof(m)]["dist"][type]
+                    @testset "KeyedDistribution with AbstractArray" begin
+                        @test m(y_true, y_pred_keyed) ≈ expected[typeof(m)]["dist"][type]
+                        @test evaluate(m, y_true, y_pred_keyed) ≈ expected[typeof(m)]["dist"][type]
                     end
-                    @testset "IndexedDistribution with AxisArray" begin
-                        @test m(y_true_axis, y_pred_index) ≈ expected[typeof(m)]["dist"][type]
-                        @test evaluate(m, y_true_axis, y_pred_index) ≈ expected[typeof(m)]["dist"][type]
+                    @testset "KeyedDistribution with KeyedArray" begin
+                        @test m(y_true_keyed, y_pred_keyed) ≈ expected[typeof(m)]["dist"][type]
+                        @test evaluate(m, y_true_keyed, y_pred_keyed) ≈ expected[typeof(m)]["dist"][type]
                     end
-                    @testset "IndexedDistribution with shuffled AxisArray" begin
+                    @testset "KeyedDistribution with shuffled KeyedArray" begin
                         new_order = shuffle(1:length(names))
-                        _y_true_axis = AxisArray(y_true[new_order], Axis{:obs}(names[new_order]))
+                        _y_true_keyed = KeyedArray(y_true[new_order], obs=names[new_order])
 
-                        @test m(_y_true_axis, y_pred_index) ≈ expected[typeof(m)]["dist"][type]
-                        @test evaluate(m, _y_true_axis, y_pred_index) ≈ expected[typeof(m)]["dist"][type]
+                        @test m(_y_true_keyed, y_pred_keyed) ≈ expected[typeof(m)]["dist"][type]
+                        @test evaluate(m, _y_true_keyed, y_pred_keyed) ≈ expected[typeof(m)]["dist"][type]
                     end
                 end
             end
@@ -300,53 +300,53 @@
                         )
                     end
 
-                    # compute metric on indexed distribution predictions - only defined for multivariates
+                    # compute metric on KeyedDistribution predictions - only defined for multivariates
                     if type == "vector"
-                        @testset "AxisArray with AxisArray" begin
-                            y_pred_axis = AxisArray(y_means, Axis{:obs}(names))
+                        @testset "KeyedArray with KeyedArray" begin
+                            y_pred_keyarr = KeyedArray(y_means, obs=names)
 
                             @test isapprox(
-                                mean_metric(y_true_axis, y_pred_axis),
+                                mean_metric(y_true_keyed, y_pred_keyarr),
                                 expected[typeof(single_metric)]["point"][type] / length(y_true)
                             )
                         end
-                        @testset "AxisArray with shuffled AxisArray" begin
+                        @testset "KeyedArray with shuffled KeyedArray" begin
                             new_order = shuffle(1:length(names))
-                            y_pred_axis = AxisArray(y_means, Axis{:obs}(names[new_order]))
+                            y_pred_keyarr = KeyedArray(y_means, obs=names[new_order])
 
                             @test isapprox(
-                                mean_metric(y_true_axis, y_pred_axis),
+                                mean_metric(y_true_keyed, y_pred_keyarr),
                                 expected[typeof(single_metric)]["point"][type] / length(y_true)
                             )
                         end
-                        @testset "AxisArrays don't match" begin
-                            y_pred_axis = AxisArray(y_means, Axis{:obs}(["a", "b", "q"]))
-                            @test_throws ArgumentError mean_metric(y_true_axis, y_pred_axis)
+                        @testset "KeyedArrays don't match" begin
+                            y_pred_keyarr = KeyedArray(y_means, obs=["a", "b", "q"])
+                            @test_throws ArgumentError mean_metric(y_true_keyed, y_pred_keyarr)
                         end
-                        @testset "IndexedDistribution with AbstractArray" begin
+                        @testset "KeyedDistribution with AbstractArray" begin
                             @test isapprox(
-                                mean_metric(y_true, y_pred_index),
+                                mean_metric(y_true, y_pred_keyed),
                                 expected[typeof(single_metric)]["dist"][type] / length(y_true)
                             )
                         end
-                        @testset "IndexedDistribution with AxisArray" begin
+                        @testset "KeyedDistribution with KeyedArray" begin
                             @test isapprox(
-                                mean_metric(y_true_axis, y_pred_index),
+                                mean_metric(y_true_keyed, y_pred_keyed),
                                 expected[typeof(single_metric)]["dist"][type] / length(y_true)
                             )
                         end
-                        @testset "IndexedDistribution with shuffled AxisArray" begin
+                        @testset "KeyedDistribution with shuffled KeyedArray" begin
                             new_order = shuffle(1:length(names))
-                            _y_true_axis = AxisArray(y_true[new_order], Axis{:obs}(names[new_order]))
+                            _y_true_keyed = KeyedArray(y_true[new_order], obs=names[new_order])
 
                             @test isapprox(
-                                mean_metric(_y_true_axis, y_pred_index),
+                                mean_metric(_y_true_keyed, y_pred_keyed),
                                 expected[typeof(single_metric)]["dist"][type] / length(y_true)
                             )
                         end
-                        @testset "IndexedDistribution and AxisArray don't match" begin
-                            _y_true_axis = AxisArray(y_true, Axis{:obs}(["a", "z", "t"]))
-                            @test_throws ArgumentError mean_metric(_y_true_axis, y_pred_index)
+                        @testset "KeyedDistribution and KeyedArray don't match" begin
+                            _y_true_keyed = KeyedArray(y_true, obs=["a", "z", "t"])
+                            @test_throws ArgumentError mean_metric(_y_true_keyed, y_pred_keyed)
                         end
                     end  # if vector
                 end # mean metrics
@@ -371,12 +371,12 @@
         y_true_scalar = [2, -3, 6]
         y_true_vector = [[2, 3, 0], [-9, 6, 4], [10, -2, 11]]
         y_true_matrix = [[1 2 3; 4 5 6], [4 -3 2; 1 0 -1], [2 9 0; 6 5 6]]
-        y_true_axis = AxisArray.(y_true_vector, Ref(Axis{:obs}(names)))
+        y_true_keyed = [KeyedArray(y; obs=names) for y in y_true_vector]
 
         y_pred_scalar = Normal.([1, 0, -2], Ref(2.2))
         y_pred_vector = MvNormal.([[7, 6, 5], [-4, 0, -1], [7, 8, 5]], Ref(Σ))
         y_pred_matrix = MatrixNormal.([[1 3 5; 7 9 11], [0 0 2; 1 9 11], [-2 8 5; 7 5 3]], Ref(U), Ref(V))
-        y_pred_index = IndexedDistribution.(y_pred_vector, Ref(names))
+        y_pred_keyed = KeyedDistribution.(y_pred_vector, Ref(names))
 
         expected = Dict(
             typeof(mean_squared_error) => Dict(
@@ -507,39 +507,39 @@
                     @test evaluate(m, y_true, y_pred) ≈ expected[typeof(m)]["dist"][type]
                 end
 
-                # compute metric on indexed distribution predictions - only defined for multivariates
+                # compute metric on KeyedDistribution predictions - only defined for multivariates
                 if type == "vector"
-                    @testset "AxisArray with AxisArray" begin
-                        # make a new vector of predicted AxisArrays
-                        y_pred_axis = [AxisArray(y, Axis{:obs}(names)) for y in y_means]
-                        @test m(y_true_axis, y_pred_axis) ≈ expected[typeof(m)]["point"][type]
+                    @testset "KeyedArray with KeyedArray" begin
+                        # make a new vector of predicted KeyedArrays
+                        y_pred_keyarr = [KeyedArray(y, obs=names) for y in y_means]
+                        @test m(y_true_keyed, y_pred_keyarr) ≈ expected[typeof(m)]["point"][type]
                     end
-                    @testset "AxisArray with shuffled AxisArray" begin
-                        # make a new vector of predicted AxisArrays with shuffles axis names
+                    @testset "KeyedArray with shuffled KeyedArray" begin
+                        # make a new vector of predicted KeyedArrays with shuffles axis names
                         new_order = shuffle(1:length(names))
-                        y_pred_axis = [AxisArray(y[new_order], Axis{:obs}(names[new_order])) for y in y_means]
-                        @test m(y_true_axis, y_pred_axis) ≈ expected[typeof(m)]["point"][type]
+                        y_pred_keyarr = [KeyedArray(y[new_order], obs=names[new_order]) for y in y_means]
+                        @test m(y_true_keyed, y_pred_keyarr) ≈ expected[typeof(m)]["point"][type]
                     end
-                    @testset "AxisArrays don't match" begin
-                        # make a new vector of predicted AxisArrays with mismatched axis names
-                        y_pred_axis = [AxisArray(y, Axis{:obs}(["b", "c", "q"])) for y in y_means]
-                        @test_throws ArgumentError m(y_true_axis, y_pred_axis)
+                    @testset "KeyedArrays don't match" begin
+                        # make a new vector of predicted KeyedArrays with mismatched axis names
+                        y_pred_keyarr = [KeyedArray(y, obs=["b", "c", "q"]) for y in y_means]
+                        @test_throws ArgumentError m(y_true_keyed, y_pred_keyarr)
                     end
-                    @testset "IndexedDistribution with AbstractArray" begin
-                        @test m(y_true, y_pred_index) ≈ expected[typeof(m)]["dist"][type]
-                        @test evaluate(m, y_true, y_pred_index) ≈ expected[typeof(m)]["dist"][type]
+                    @testset "KeyedDistribution with AbstractArray" begin
+                        @test m(y_true, y_pred_keyed) ≈ expected[typeof(m)]["dist"][type]
+                        @test evaluate(m, y_true, y_pred_keyed) ≈ expected[typeof(m)]["dist"][type]
                     end
-                    @testset "IndexedDistribution with AxisArray" begin
-                        @test m(y_true_axis, y_pred_index) ≈ expected[typeof(m)]["dist"][type]
-                        @test evaluate(m, y_true_axis, y_pred_index) ≈ expected[typeof(m)]["dist"][type]
+                    @testset "KeyedDistribution with KeyedArray" begin
+                        @test m(y_true_keyed, y_pred_keyed) ≈ expected[typeof(m)]["dist"][type]
+                        @test evaluate(m, y_true_keyed, y_pred_keyed) ≈ expected[typeof(m)]["dist"][type]
                     end
-                    @testset "IndexedDistribution with shuffled AxisArray" begin
-                        # make a new vector of AxisArrays with shuffled axisnames
+                    @testset "KeyedDistribution with shuffled KeyedArray" begin
+                        # make a new vector of KeyedArrays with shuffled dimnames
                         new_order = shuffle(1:length(names))
-                        _y_true_axis = [AxisArray(y[new_order], Axis{:obs}(names[new_order])) for y in y_true_axis]
+                        _y_true_keyed = [y[new_order] for y in y_true_keyed]
 
-                        @test m(_y_true_axis, y_pred_index) ≈ expected[typeof(m)]["dist"][type]
-                        @test evaluate(m, _y_true_axis, y_pred_index) ≈ expected[typeof(m)]["dist"][type]
+                        @test m(_y_true_keyed, y_pred_keyed) ≈ expected[typeof(m)]["dist"][type]
+                        @test evaluate(m, _y_true_keyed, y_pred_keyed) ≈ expected[typeof(m)]["dist"][type]
                     end
                 end
             end  # expected results

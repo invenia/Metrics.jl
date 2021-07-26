@@ -1,9 +1,9 @@
-using AxisArrays
+using AxisKeys
 using Distributions
 using Distributions: GenericMvTDist
 using Documenter: doctest
 using FixedPointDecimals
-using IndexedDistributions
+using KeyedDistributions
 using LinearAlgebra
 using Metrics
 using Metrics: price_impact

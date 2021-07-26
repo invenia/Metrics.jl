@@ -35,25 +35,25 @@
                 @test marginal_gaussian_loglikelihood(y_true, dist) ≈ marginal_gaussian_loglikelihood(y_true, canonform(dist))
             end
 
-            @testset "Using IndexedDistributions and AxisArrays" begin
+            @testset "Using KeyedDistributions and KeyedArrays" begin
 
                 obs = ["a", "b", "c"]
                 features = [:f1, :f2, :f3, :f4]
-                id = IndexedDistribution(dist, obs)
+                id = KeyedDistribution(dist, obs)
 
                 expected = marginal_gaussian_loglikelihood(y_true, dist)
 
                 # normal
-                a = AxisArray(y_true, Axis{:obs}(obs), Axis{:feature}(features))
+                a = KeyedArray(y_true; obs=obs, feature=features)
                 @test marginal_gaussian_loglikelihood(a, id) ≈ expected
 
                 #shuffled
                 new_obs_order = shuffle(1:3)
                 new_feature_order = shuffle(1:4)
-                a = AxisArray(
+                a = KeyedArray(
                     y_true[new_obs_order, new_feature_order],
-                    Axis{:obs}(obs[new_obs_order]),
-                    Axis{:feature}(features[new_feature_order]),
+                    obs=obs[new_obs_order],
+                    feature=features[new_feature_order],
                 )
                 @test marginal_gaussian_loglikelihood(a, id) ≈ expected
 
@@ -107,25 +107,25 @@
 
             end
 
-            @testset "Using IndexedDistributions with AxisArrays" begin
+            @testset "Using KeyedDistributions with KeyedArrays" begin
 
                 obs = ["a", "b", "c"]
                 features = [:f1, :f2, :f3, :f4]
-                id = IndexedDistribution(dist, obs)
+                id = KeyedDistribution(dist, obs)
 
                 expected = joint_gaussian_loglikelihood(y_true, dist)
 
                 # normal
-                a = AxisArray(y_true, Axis{:obs}(obs), Axis{:feature}(features))
+                a = KeyedArray(y_true, obs=obs, feature=features)
                 @test joint_gaussian_loglikelihood(a, id) ≈ expected
 
                 #shuffled
                 new_obs_order = shuffle(1:3)
                 new_feature_order = shuffle(1:4)
-                a = AxisArray(
+                a = KeyedArray(
                     y_true[new_obs_order, new_feature_order],
-                    Axis{:obs}(obs[new_obs_order]),
-                    Axis{:feature}(features[new_feature_order]),
+                    obs=obs[new_obs_order],
+                    feature=features[new_feature_order],
                 )
                 @test joint_gaussian_loglikelihood(a, id) ≈ expected
 
@@ -163,31 +163,31 @@
             pred_scale = [2.25 0.1 0.0; 0.1 1.25 0.0; 0.0 0.0 3.25]
             y_true = [0.1, 0.2, 0.3]
             obs = Symbol.("t_", 1:3)
-            y_true_idx = AxisArray(y_true, Axis{:obs}(obs))
+            y_true_idx = KeyedArray(y_true, obs=obs)
             @testset "Normal distribution" begin
                 y_pred = MvNormal(pred_location, pred_scale)
                 expected = Distributions.loglikelihood(y_pred, y_true)
                 @test Metrics.loglikelihood(y_true, y_pred) == expected
-                # - Using IndexedDistributions with AxisArrays
-                y_pred_idx = IndexedDistribution(y_pred, obs)
+                # - Using KeyedDistributions with KeyedArrays
+                y_pred_idx = KeyedDistribution(y_pred, obs)
                 @test Metrics.loglikelihood(y_true_idx, y_pred_idx) == expected
                 # if the observation dimensions don't match the order, should use the axis
                 # to match the order and give a correct resuilt
                 new_obs_order = shuffle(1:3)
-                y_true_idx2 = AxisArray(y_true[new_obs_order], Axis{:obs}(obs[new_obs_order]))
+                y_true_idx2 = KeyedArray(y_true[new_obs_order], obs=obs[new_obs_order])
                 @test Metrics.loglikelihood(y_true_idx2, y_pred_idx) == expected
             end
             @testset "T distribution" begin
                 y_pred = Distributions.GenericMvTDist(3.0, pred_location, PDMat(pred_scale))
                 expected = Distributions.loglikelihood(y_pred, y_true)
                 @test Metrics.loglikelihood(y_true, y_pred) == expected
-                # - Using IndexedDistributions with AxisArrays
-                y_pred_idx = IndexedDistribution(y_pred, obs)
+                # - Using KeyedDistributions with KeyedArrays
+                y_pred_idx = KeyedDistribution(y_pred, obs)
                 @test Metrics.loglikelihood(y_true_idx, y_pred_idx) == expected
                 # if the observation dimensions don't match the order, should use the axis
                 # to match the order and give a correct resuilt
                 new_obs_order = shuffle(1:3)
-                y_true_idx2 = AxisArray(y_true[new_obs_order], Axis{:obs}(obs[new_obs_order]))
+                y_true_idx2 = KeyedArray(y_true[new_obs_order], obs=obs[new_obs_order])
                 @test Metrics.loglikelihood(y_true_idx2, y_pred_idx) == expected
             end
         end

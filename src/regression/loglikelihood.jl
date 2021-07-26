@@ -45,10 +45,9 @@ end
 function joint_gaussian_loglikelihood(y_true, y_pred::Sampleable{Multivariate})
     y_true, y_pred = _match(y_true, y_pred)
     normalized_dist = MvNormal(parent(mean(y_pred)), parent(cov(y_pred)))
-    return Distributions.loglikelihood(normalized_dist, y_true)
+    # need to extract parent to prevent method ambiguity error using KeyedArrays
+    return Distributions.loglikelihood(normalized_dist, parent(y_true))
 end
-
-joint_gaussian_loglikelihood(y_true, y_pred::MvNormal) = Distributions.loglikelihood(y_pred, y_true)
 
 function joint_gaussian_loglikelihood(y_pred::Sampleable, y_true)
     return joint_gaussian_loglikelihood(y_true, y_pred)
@@ -66,12 +65,12 @@ Use `Distributions.loglikelihood` under the hood with argument order swap to ali
 API in Metrics.jl
 
 
-!!! note This is a seperate function from Distributions.loglikelyhood
+!!! note This is a seperate function from Distributions.loglikelihood
 
     As this follows the Metrics API which puts `y_true` first, this is a seperate function
-    from `Distributions.loglikelyhood`. This means if you are using both `Distributions` 
-    and `Metrics` you will need to specify whether your want `Distributions.loglikelyhood`
-    or `Metrics.loglikelyhood`.
+    from `Distributions.loglikelihood`. This means if you are using both `Distributions`
+    and `Metrics` you will need to specify whether your want `Distributions.loglikelihood`
+    or `Metrics.loglikelihood`.
     You can do this once for a package by defining
     `const loglikelyhood = Metrics.loglikelyhood` at the start.
 
@@ -79,7 +78,10 @@ API in Metrics.jl
 """
 function loglikelihood(y_true, y_pred::Sampleable)
     y_true, y_pred = _match(y_true, y_pred)
-    return Distributions.loglikelihood(y_pred, y_true)
+    return Distributions.loglikelihood(y_pred, _maybe_parent(y_true))
 end
 
 ObservationDims.obs_arrangement(::typeof(loglikelihood)) = SingleObs()
+
+_maybe_parent(x) = x
+_maybe_parent(x::AbstractArray) = parent(x)

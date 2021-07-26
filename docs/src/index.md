@@ -17,7 +17,7 @@ As we uncover more use cases for new metrics, they should be added to this packa
 Metrics are organized according to their typical use-cases: `regression`, `model`, and `financial`.
 
 The `regression` metrics are used to evaluate the accuracy of a model's `predicted` values against some known `truth`.
-Since our [`BaselineForecasters`](https://gitlab.invenia.ca/invenia/BaselineForecasters.jl) and [`GPForecaster`](https://gitlab.invenia.ca/research/GPForecaster.jl) predict posterior distributions over the target variables (delta LMPs), the `regression` metrics are also compatible with [`Distributions`](https://github.com/JuliaStats/Distributions.jl), as well as [`IndexedDistributions`](https://gitlab.invenia.ca/invenia/IndexedDistributions.jl) and [`AxisArrays`](https://github.com/JuliaArrays/AxisArrays.jl).
+Since our [`BaselineForecasters`](https://gitlab.invenia.ca/invenia/BaselineForecasters.jl) and [`GPForecaster`](https://gitlab.invenia.ca/research/GPForecaster.jl) predict posterior distributions over the target variables (delta LMPs), the `regression` metrics are also compatible with [`Distributions`](https://github.com/JuliaStats/Distributions.jl), as well as [`KeyedDistributions`](https://github.com/invenia/KeyedDistributions.jl) and [`AxisKeys`](https://github.com/mcabbott/AxisKeys.jl).
 Thus, they may be used at all levels of the [RTE pipeline](https://gitlab.invenia.ca/invenia/wiki/blob/master/research/research-testing-environment.md#design) to evaluate the accuracy of a model or [`Forecaster`](https://gitlab.invenia.ca/invenia/Forecasters.jl), from the experimentation phase (green) up to full backruns (red).
 
 The `model` metrics are used to compare the outputs of models and forecasters against each other.
