@@ -1,7 +1,7 @@
 name = "Metrics"
 uuid = "273c2e6c-7e43-11e9-12af-8fca11176a4c"
 authors = ["Invenia Technical Computing Corporation"]
-version = "0.14.1"
+version = "0.14.2"
 
 [deps]
 AxisKeys = "94b1ba4f-4ee9-5380-92f1-94cde586c3c5"
@@ -24,7 +24,7 @@ Test = "8dfed614-e22c-5e08-85e1-65c5234f0b40"
 [compat]
 AxisKeys = "0.1"
 DataFrames = "1"
-Distributions = "0.21.3, 0.22, 0.23, 0.24"
+Distributions = "0.21.3, 0.22, 0.23, 0.24, 0.25"
 FixedPointDecimals = "0.3"
 Intervals = "1"
 KeyedDistributions = "0.1.3"
