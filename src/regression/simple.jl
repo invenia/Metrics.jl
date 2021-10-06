@@ -310,7 +310,7 @@ end
 """
     correct_sign_ratio(y_true, y_pred) -> Float64
 
-Calculate percentage of prediction `y_pred` having the same sign as it's corresponding
+Calculate percentage of prediction `y_pred` having the same sign as its corresponding
 component in the observation `y_true`.
 """
 function correct_sign_ratio(y_true::AbstractArray{<:Number}, y_pred::AbstractArray{<:Number})
