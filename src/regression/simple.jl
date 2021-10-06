@@ -297,9 +297,9 @@ const mase = mean_absolute_scaled_error
 """
     correct_sign_ratio(y_true, y_pred) -> Float64
 
-Calculate ratio of _a set of_ predictions `y_pred` having the same sign as it's
-corresponding component in the set of observations `y_true`. Following the same convention
-of `mean_squared_error`, the result is normalised over the number of elements in the set.
+Calculate the ratio of _a set of_ predictions `y_pred` having the same sign as it's
+corresponding component in the set of observations `y_true`. The result is normalised over
+the number of elements in the set.
 """
 function correct_sign_ratio(y_true::AbstractArray, y_pred::AbstractArray)
     @_dimcheck size(y_true) == size(y_pred)
@@ -310,13 +310,13 @@ end
 """
     correct_sign_ratio(y_true, y_pred) -> Float64
 
-Calculate percentage of prediction `y_pred` having the same sign as its corresponding
+Calculate the ratio of prediction `y_pred` having the same sign as its corresponding
 component in the observation `y_true`.
 """
 function correct_sign_ratio(y_true::AbstractArray{<:Number}, y_pred::AbstractArray{<:Number})
     @_dimcheck size(y_true) == size(y_pred)
     y_true, y_pred = _match(y_true, y_pred)
-    return mean((y_true .* y_pred) .> 0)
+    return mean(sign.(y_pred) .== sign.(y_true))
 end
 correct_sign_ratio(y_true::Number, y_pred::Number) = correct_sign_ratio([y_true], [y_pred])
 
