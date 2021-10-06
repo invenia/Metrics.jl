@@ -316,7 +316,7 @@ component in the observation `y_true`.
 function correct_sign_ratio(y_true::AbstractArray{<:Number}, y_pred::AbstractArray{<:Number})
     @_dimcheck size(y_true) == size(y_pred)
     y_true, y_pred = _match(y_true, y_pred)
-    return sum((y_true .* y_pred) .> 0) / length(y_true)
+    return mean((y_true .* y_pred) .> 0)
 end
 correct_sign_ratio(y_true::Number, y_pred::Number) = correct_sign_ratio([y_true], [y_pred])
 
