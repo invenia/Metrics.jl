@@ -77,7 +77,7 @@ const mse = mean_squared_error
 """
     mean_squared_error_to_mean(y_true, y_pred) -> Float64
 
-Camculate the mean squared error between a set of  observations `y_true` and the mean of a
+Calculate the mean squared error between a set of  observations `y_true` and the mean of a
 set of predictions `y_pred`. Following the same convention of `mean_squared_error`, the
 result in normalised over both the dimensions and the observations.
 """
@@ -90,7 +90,7 @@ end
 """
     mean_squared_error_to_mean(y_true, y_pred) -> Float64
 
-Camculate the mean squared error between a single observation `y_true` and the mean of a
+Calculate the mean squared error between a single observation `y_true` and the mean of a
 single prediction `y_pred`. Following the same convention of `mean_squared_error`, the
 result in normalised over the dimension.
 
@@ -293,3 +293,48 @@ function mean_absolute_scaled_error(y_true, y_pred)
 end
 ObservationDims.obs_arrangement(::typeof(mean_absolute_scaled_error)) = SingleObs()
 const mase = mean_absolute_scaled_error
+
+"""
+    correct_sign_ratio(y_true, y_pred) -> Float64
+
+Calculate percentage of _a set of_ predictions `y_pred` having the same sign as it's
+corresponding component in the set of observations `y_true`. Following the same convention
+of `mean_squared_error`, the result in normalised over the number of elements in the set.
+"""
+function correct_sign_ratio(y_true::AbstractArray, y_pred::AbstractArray)
+    @_dimcheck size(y_true) == size(y_pred)
+    y_true, y_pred = _match(y_true, y_pred)
+    return mean(correct_sign_ratio.(y_true, y_pred))
+end
+
+"""
+    correct_sign_ratio(y_true, y_pred) -> Float64
+
+Calculate percentage of prediction `y_pred` having the same sign as it's corresponding
+component in the observation `y_true`.
+"""
+function correct_sign_ratio(y_true::AbstractArray{<:Number}, y_pred::AbstractArray{<:Number})
+    @_dimcheck size(y_true) == size(y_pred)
+    y_true, y_pred = _match(y_true, y_pred)
+    return sum((y_true .* y_pred) .> 0) / length(y_true)
+end
+correct_sign_ratio(y_true::Number, y_pred::Number) = correct_sign_ratio([y_true], [y_pred])
+
+correct_sign_ratio(y_true::Union{AbstractArray, Number}, y_pred::Sampleable) =
+    correct_sign_ratio(y_true, mean(y_pred))
+
+function correct_sign_ratio(y_true::KeyedArray, y_pred::KeyedDistribution)
+    keys = only(axiskeys(y_true))
+    # mean(y_pred) doesn't have dims, so we need to rewrap into a KeyedArray{<:NamedDimsArray}
+    # so that it will _match with y_true downstream
+    m = parent(mean(y_pred)(keys))
+    y_pred_mean = KeyedArray(NamedDimsArray(m, dimnames(y_true)...), keys)
+    return correct_sign_ratio(y_true, y_pred_mean)
+end
+
+# for symmetry
+correct_sign_ratio(y_true::Sampleable, y_pred::Union{AbstractArray, Number}) =
+    correct_sign_ratio(y_pred, y_true)
+
+ObservationDims.obs_arrangement(::typeof(correct_sign_ratio)) = SingleObs()
+const csr = correct_sign_ratio
