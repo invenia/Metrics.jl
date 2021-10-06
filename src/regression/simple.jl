@@ -337,4 +337,3 @@ correct_sign_ratio(y_true::Sampleable, y_pred::Union{AbstractArray, Number}) =
     correct_sign_ratio(y_pred, y_true)
 
 ObservationDims.obs_arrangement(::typeof(correct_sign_ratio)) = SingleObs()
-const csr = correct_sign_ratio
