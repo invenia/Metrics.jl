@@ -178,6 +178,15 @@
         end
     end
 
+    """correct_sign_ratio"""
+    function test_metric_properties(metric::typeof(correct_sign_ratio), args...)
+        is_symmetric(metric, args...)
+        is_nonzero_if_ypred_equals_ytrue(metric, args...)
+        dist_error_converges_safely(metric, args...)
+        metric_invariant_to_var(metric, args...)
+        errors_correctly(metric, args...)
+    end
+
     # constants for defining Distributions
     Σ = [2 1 1; 1 2.2 2; 1 2 3]
     U = [1 2; 2 4.5]
@@ -364,6 +373,7 @@
             standardized_mean_squared_error,
             mean_absolute_error,
             mean_absolute_scaled_error,
+            correct_sign_ratio,
         )
 
         names = ["a", "b", "c"]
@@ -474,7 +484,19 @@
                     "vector" => 48 / 78,
                     "matrix" => 57 / 85.5,
                 ),
-            )
+            ),
+            typeof(correct_sign_ratio) => Dict(
+                "dist" => Dict(
+                    "scalar" => 1 / 3,
+                    "vector" => (2/3 + 1/3 + 2/3) / 3,
+                    "matrix" => (6/6 + 2/6 + 4/6) / 3,
+                ),
+                "point" => Dict(
+                    "scalar" => 1 / 3,
+                    "vector" => (2/3 + 1/3 + 2/3) / 3,
+                    "matrix" => (6/6 + 2/6 + 4/6) / 3,
+                ),
+            ),
         )
 
         forecast_pairs = (

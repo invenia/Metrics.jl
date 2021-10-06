@@ -52,6 +52,7 @@ export
     expected_absolute_error, ae,
     mean_absolute_error, mae,
     mean_absolute_scaled_error, mase,
+    correct_sign_ratio,
     marginal_gaussian_loglikelihood,
     joint_gaussian_loglikelihood,
     loglikelihood,
