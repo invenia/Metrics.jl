@@ -297,7 +297,7 @@ const mase = mean_absolute_scaled_error
 """
     correct_sign_ratio(y_true, y_pred) -> Float64
 
-Calculate percentage of _a set of_ predictions `y_pred` having the same sign as it's
+Calculate ratio of _a set of_ predictions `y_pred` having the same sign as it's
 corresponding component in the set of observations `y_true`. Following the same convention
 of `mean_squared_error`, the result is normalised over the number of elements in the set.
 """
