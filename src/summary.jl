@@ -53,6 +53,7 @@ function financial_summary(returns; risk_level::Real=0.05, kwargs...)
         :sharpe_ratio => sharpe_ratio(returns),
         :volatility => volatility(returns),
         :mean_over_expected_shortfall => mean_over_es(returns; risk_level=risk_level, kwargs...),
+        :mean_minus_es10 => mean_minus_es(returns; risk_level=0.10, kwargs...),
     )
 end
 

@@ -375,3 +375,54 @@ end
         end
     end
 end
+
+@testset "mean_minus_es" begin
+    @testset "simple case" begin
+        returns = 1:20
+
+        # Default α is 0.25
+        expected = 10.5 - 0.25 * (-1)
+        @test mean_minus_es(returns) ≈ expected
+        @test evaluate(mean_minus_es, returns) ≈ expected
+
+        @testset "Different risk level" begin
+            expected = 10.5 - 0.25 * (-1.5)
+            @test mean_minus_es(returns; risk_level=0.1) ≈ expected
+            @test evaluate(mean_minus_es, returns; risk_level=0.1) ≈ expected
+        end
+
+        @testset "Different alpha" begin
+            expected = 10.5 - 0.1 * (-1.5)
+            @test mean_minus_es(returns; α=0.1, risk_level=0.1) ≈ expected
+            @test evaluate(mean_minus_es, returns; α=0.1, risk_level=0.1) ≈ expected
+        end
+
+        @testset "Random data" begin
+            returns = randn(1000)
+            @test mean_minus_es(returns) ≈ mean(returns) - 0.25 * es(returns)
+        end
+    end
+
+    @testset "volumes and deltas" begin
+        volumes = randn(10)
+        deltas = randn(10, 100)
+
+        returns = vec(sum(volumes .* deltas; dims=1))
+
+        expected = mean(returns) - 0.25 * es(returns)
+        @test mean_minus_es(volumes, deltas) ≈ expected
+        @test evaluate(mean_minus_es, volumes, deltas; obsdim=2) ≈ expected
+
+        @testset "Different risk level" begin
+            expected = mean(returns) - 0.25 * es(returns; risk_level=0.1)
+            @test mean_minus_es(volumes, deltas; risk_level=0.1) ≈ expected
+            @test evaluate(mean_minus_es, volumes, deltas; risk_level=0.1, obsdim=2) ≈ expected
+        end
+
+        @testset "Different alpha" begin
+            expected = mean(returns) - 0.1 * es(returns; risk_level=0.1)
+            @test mean_minus_es(volumes, deltas; α=0.1, risk_level=0.1) ≈ expected
+            @test evaluate(mean_minus_es, volumes, deltas; α=0.1, risk_level=0.1, obsdim=2) ≈ expected
+        end
+    end
+end

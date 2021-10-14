@@ -70,6 +70,7 @@ export
     sharpe_ratio,
     median_over_expected_shortfall, median_over_es, evano,
     mean_over_es,
+    mean_minus_es,
     median_return,
     expected_shortfall, es, expected_windfall, ew,
     ew_over_es, expected_windfall_over_expected_shortfall,
