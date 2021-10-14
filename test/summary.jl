@@ -180,6 +180,7 @@
                 :sharpe_ratio => 1.0,
                 :volatility => 1.0,
                 :mean_over_expected_shortfall => 1.0,
+                :mean_minus_es10 => 1.0,
             ))
 
             summary = financial_summary(returns; risk_level=risk_level)
