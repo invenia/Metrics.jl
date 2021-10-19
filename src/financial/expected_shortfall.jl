@@ -41,6 +41,7 @@ function expected_shortfall(returns; risk_level::Real=0.05, per_mwh=false, volum
         )
     end
 
+    # This ensures that returns is a copy, so we can mutate it later.
     returns = collect(returns)
     last_index = floor(Int, risk_level * length(returns))
     if last_index === 0
@@ -55,7 +56,12 @@ function expected_shortfall(returns; risk_level::Real=0.05, per_mwh=false, volum
 
     scale = per_mwh ? mean(volumes[partialsortperm(returns, 1:last_index)]) : 1.0
 
-    return -mean(partialsort(returns, 1:last_index)) / scale
+    # Note that it is OK to mutate returns, since they were previously copied.
+    partialsort!(returns, last_index)
+    # These tail returns might be in any order, but that doesn't matter since we just need
+    # to take the mean.
+    tail_returns = @inbounds @view returns[1:last_index]
+    return -mean(tail_returns) / scale
 end
 
 ObservationDims.obs_arrangement(::typeof(expected_shortfall)) = MatrixColsOfObs()
