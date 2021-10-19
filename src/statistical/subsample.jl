@@ -14,12 +14,13 @@ function block_subsample(series, block_size; circular=false)
         ))
     end
     n_blocks = length(series) - block_size + 1
-    regular = [series[i:(block_size + i - 1)] for i in 1:n_blocks]
+    regular = @inbounds [@view(series[i:(block_size + i - 1)]) for i in 1:n_blocks]
     if !circular
         return regular
     else
-        wrapping = [
-            vcat(series[(end - block_size + i):end], series[1:i - 1]) for i in 2:block_size
+        @inbounds wrapping = [
+            vcat(@view(series[(end - block_size + i):end]), @view(series[1:i - 1]))
+            for i in 2:block_size
         ]
         return vcat(regular, wrapping)
     end
@@ -132,7 +133,7 @@ function _compute_quantile_differences(diff_samples, quantmin, quantstep, quantm
 end
 
 """
-    _compute_log_log_slope(x, y::Vector{<:Vector}))
+    _compute_log_log_slope(x, y::AbstractVector{<:AbstractVector}))
 
 Compute the weighted least squares estimate for the slope of the line that best fits to the
 natural logarithm of `x` vs the natural logarithm of `y` where `y ~ x^β`.
@@ -144,7 +145,7 @@ the inverse of the variance of the responses, i.e. `w_i` =  `1 / var.(log.(y_{ij
     This is for internal use only. The assumption made here are specific to the outputs of
     [`_compute_quantile_differences`](@ref).
 """
-function _compute_log_log_slope(x, y::Vector{<:Vector})
+function _compute_log_log_slope(x, y::AbstractVector{<:AbstractVector})
 
     log_y = map(q -> mean(log.(q)), y)
     log_x = log.(x)
@@ -168,7 +169,7 @@ function _compute_log_log_slope(x, y::Vector{<:Vector})
     end
 
     # Use matrix inversion to compute the slope, i.e. converenge rate
-    beta = sum(weights .* diff_y .* diff_x) / sum(weights .* (diff_x .^ 2))
+    return sum(weights .* diff_y .* diff_x) / sum(weights .* (diff_x .^ 2))
 end
 
 """
@@ -443,7 +444,7 @@ function subsample_ci(
 
     # Internal function to compute a measure of spread for studentisation
     spread(series) = std(series)
-    spread(series::Vector{<:Tuple}) = sqrt(var(first.(series)) + var(last.(series)))
+    spread(series::AbstractVector{<:Tuple}) = sqrt(var(first.(series)) + var(last.(series)))
 
     # By default, Statistics uses the unbiased version of `var`.
     σ_b = studentize ? spread.(blocks) : ones(length(blocks))
