@@ -11,7 +11,7 @@ using NamedDims
 using NaNMath
 using ObservationDims
 using PDMatsExtras
-using SpecialFunctions
+using SpecialFunctions: erf
 using StatsBase
 using StatsUtils
 using StatsUtils: sqrtcov
