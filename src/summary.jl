@@ -171,7 +171,7 @@ function financial_summary(
     mean_return = mean(returns) / mean(scale)
     # Notice that here we are computing the median of the ratios, not the ratio of the
     # medians. For discussion, see https://gitlab.invenia.ca/invenia/Metrics.jl/-/issues/56
-    median_return = NaNMath.median(returns ./ scale)
+    median_return = median(returns ./ scale)
 
     # We now have everything we need to build up our stats dictionary
     return (;

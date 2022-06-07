@@ -230,7 +230,7 @@ function expected_absolute_error(y_true, y_pred::Sampleable)
 end
 
 _skipnan_sum(x::Number) = x
-_skipnan_sum(x) = NaNMath.sum(x)
+_skipnan_sum(xs) = sum(x for x in xs if !isnan(x))
 
 expected_absolute_error(y_true::Sampleable, y_pred) = expected_absolute_error(y_pred, y_true)
 ObservationDims.obs_arrangement(::typeof(expected_absolute_error)) = SingleObs()
