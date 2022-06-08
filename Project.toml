@@ -1,13 +1,12 @@
 name = "Metrics"
 uuid = "273c2e6c-7e43-11e9-12af-8fca11176a4c"
 authors = ["Invenia Technical Computing Corporation"]
-version = "0.14.8"
+version = "0.14.9"
 
 [deps]
 AxisKeys = "94b1ba4f-4ee9-5380-92f1-94cde586c3c5"
 DataFrames = "a93c6f00-e57d-5684-b7b6-d8193f3e46c0"
 Distributions = "31c24e10-a181-5473-b8eb-7969acd0382f"
-FixedPointDecimals = "fb4d412d-6eee-574d-9565-ede6634db7b0"
 Intervals = "d8418881-c3e1-53bb-8760-2df7ec849ed5"
 KeyedDistributions = "2576fb08-064d-4cab-b15d-8dda7fcb9a6d"
 LinearAlgebra = "37e2e46d-f89d-539d-b4ee-838fcccc9c8e"
@@ -24,7 +23,7 @@ Test = "8dfed614-e22c-5e08-85e1-65c5234f0b40"
 AxisKeys = "0.1, 0.2"
 DataFrames = "1"
 Distributions = "0.21.3, 0.22, 0.23, 0.24, 0.25"
-FixedPointDecimals = "0.3"
+FixedPointDecimals = "0.3, 0.4"
 Intervals = "1"
 KeyedDistributions = "0.1.3"
 NamedDims = "0.2"
