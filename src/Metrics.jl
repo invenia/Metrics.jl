@@ -8,7 +8,6 @@ using Intervals: Interval
 using KeyedDistributions
 using LinearAlgebra: cholesky, det, dot, I, norm, tr
 using NamedDims
-using NaNMath
 using ObservationDims
 using PDMatsExtras
 using SpecialFunctions: erf

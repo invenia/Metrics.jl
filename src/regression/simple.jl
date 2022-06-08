@@ -225,12 +225,12 @@ function expected_absolute_error(y_true, y_pred::Sampleable)
 
     # we can get NaNs if μ=σ=0 so we skip these when returning the result
     # this is reasonable because μ=σ=0 implies a perfect forecast in that dimension
-    return all(isnan, abs_err) ? zero(eltype(abs_err)) : _skipnan_sum(abs_err)
+    return _skipnan_sum(abs_err)
 
 end
 
-_skipnan_sum(x::Number) = x
-_skipnan_sum(x) = NaNMath.sum(x)
+_skipnan_sum(x::Number) = isnan(x) ? zero(x) : x
+_skipnan_sum(xs) = sum(x for x in xs if !isnan(x))
 
 expected_absolute_error(y_true::Sampleable, y_pred) = expected_absolute_error(y_pred, y_true)
 ObservationDims.obs_arrangement(::typeof(expected_absolute_error)) = SingleObs()
