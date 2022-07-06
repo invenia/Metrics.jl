@@ -225,8 +225,9 @@
                 # empty input
                 test_returns = Vector{Int}()
                 test_volumes = Vector{Int}()
+                test_net_volumes = Vector{Int}()
 
-                result = financial_summary(test_returns, test_volumes)
+                result = financial_summary(test_returns, test_volumes, test_net_volumes)
 
                 @test sort(collect(keys(result))) == expected_keys
 
@@ -254,8 +255,9 @@
                 # Empty Input but the type is FixedDecimal, which doesn't have a NaN type
                 test_returns = Vector{FD}()
                 test_volumes = Vector{FD}()
+                test_net_volumes = Vector{FD}()
 
-                result = financial_summary(test_returns, test_volumes)
+                result = financial_summary(test_returns, test_volumes, test_net_volumes)
 
                 @test sort(collect(keys(result)))  == expected_keys
 
@@ -285,19 +287,26 @@
                 # Test input with no losses
                 test_returns = [1, 2, 3, 4, 5, 6]
                 test_volumes = [1, 2, 3, 4, 5, 6, 7, 9]
+                test_net_volumes = [1, 2, 3, 4, 5, 6, 7, 9]
 
-                @test_throws ErrorException financial_summary(test_returns, test_volumes, risk_level=0.5)
+                @test_throws ErrorException financial_summary(
+                    test_returns,
+                    test_volumes,
+                    test_net_volumes,
+                    risk_level=0.5
+                )
             end
 
             @testset "NaN return/volume" begin
                 test_returns = [0, -1, 2]
                 test_volumes = [0, 1, 2]
+                test_net_volumes = [0, 1, 2]
 
                 for per_mwh in [true, false]
 
                     # es percentile to 50 so that es metrics are
                     # not 'missing' (!isnan(missing) == missing)
-                    result = financial_summary(test_returns, test_volumes,
+                    result = financial_summary(test_returns, test_volumes, test_net_volumes,
                                             risk_level=0.5, per_mwh=per_mwh)
 
                     for val in values(result)
@@ -312,8 +321,14 @@
                 # Test input with no losses
                 test_returns = [1, 2, 3, 4, 5, 6]
                 test_volumes = [1, 2, 3, 4, 5, 6]
+                test_net_volumes = [1, 2, 3, 4, 5, 6]
 
-                result = financial_summary(test_returns, test_volumes, risk_level=0.2)
+                result = financial_summary(
+                    test_returns,
+                    test_volumes,
+                    test_net_volumes,
+                    risk_level=0.2
+                )
 
                 @test sort(collect(keys(result))) == expected_keys
 
@@ -342,8 +357,14 @@
                 # Test input with only losses
                 test_returns = [-1.0, -2.0, -3.0, -4.0, -5.0, -6.0]
                 test_volumes = [1, 2, 3, 4, 5, 6]
+                test_net_volumes = [1, 2, 3, 4, 5, 6]
 
-                result = financial_summary(test_returns, test_volumes, risk_level=0.2)
+                result = financial_summary(
+                    test_returns,
+                    test_volumes,
+                    test_net_volumes,
+                    risk_level=0.2
+                )
 
                 @test sort(collect(keys(result)))  == expected_keys
 
@@ -371,8 +392,14 @@
                 # Test input with some losses
                 test_returns = [1.0, -2.0, 3.0, -4.0, 5.0, -6.0]
                 test_volumes = [1, 2, 3, 4, 5, 6]
+                test_net_volumes = [1, 2, 3, 4, 5, 6]
 
-                result = financial_summary(test_returns, test_volumes, risk_level=0.2)
+                result = financial_summary(
+                    test_returns,
+                    test_volumes,
+                    test_net_volumes,
+                    risk_level=0.2
+                )
 
                 @test sort(collect(keys(result)))  == expected_keys
 
@@ -400,11 +427,13 @@
                 # Test with a larger ES percentage
                 test_returns = [1.0, -2.0, 3.0, -4.0, 5.0, -6.0]
                 test_volumes = [1, 2, 3, 4, 5, 6]
+                test_net_volumes = [1, 2, 3, 4, 5, 6]
                 test_es_percentile = 0.5
 
                 result = financial_summary(
                     test_returns,
-                    test_volumes;
+                    test_volumes,
+                    test_net_volumes;
                     risk_level=test_es_percentile
                 )
 
@@ -436,12 +465,14 @@
                 # A few negative volumes we expect to be absolute valued
                 test_returns = [1.0, -2.0, 3.0, -4.0, 5.0, -6.0]
                 test_volumes = [-1, -2, -3, 4, 5, 6]
+                test_net_volumes = [-1, -2, -3, 4, 5, 6]
                 test_unchanged_volumes = [-1, -2, -3, 4, 5, 6]
                 test_es_percentile = 0.5
 
                 result = financial_summary(
                     test_returns,
-                    test_volumes;
+                    test_volumes,
+                    test_net_volumes;
                     risk_level=test_es_percentile
                 )
 
@@ -468,6 +499,7 @@
 
                 # Test that the volumes didn't get changed by calling the function.
                 @test test_volumes == test_unchanged_volumes
+                @test test_net_volumes == test_unchanged_volumes
             end
 
 
@@ -475,8 +507,14 @@
                 # Test input that would give a missing for some fields
                 test_returns = [FD(1), FD(2), FD(3), FD(4), FD(5), FD(6)]
                 test_volumes = [FD(1), FD(2), FD(3), FD(4), FD(5), FD(6)]
+                test_net_volumes = [FD(1), FD(2), FD(3), FD(4), FD(5), FD(6)]
 
-                result = financial_summary(test_returns, test_volumes, risk_level=0.2)
+                result = financial_summary(
+                    test_returns,
+                    test_volumes,
+                    test_net_volumes,
+                    risk_level=0.2
+                )
 
                 @test sort(collect(keys(result)))  == expected_keys
 
@@ -507,8 +545,9 @@
                 # Test only missing values.
                 test_returns = [missing, missing, missing]
                 test_volumes = [missing, missing, missing]
+                test_net_volumes = [missing, missing, missing]
 
-                result = financial_summary(test_returns, test_volumes)
+                result = financial_summary(test_returns, test_volumes, test_net_volumes)
 
                 # Test that the dict has exactly the keys we expect.
                 @test sort(collect(keys(result)))  == expected_keys
@@ -536,15 +575,18 @@
 
                 # Test some missing values added to a previous dataset
                 # A few negative volumes we expect to be absolute valued
-                test_returns = [1.0, missing, -2.0, 3.0, missing, -4.0, 5.0, missing, -6.0, missing]
-                test_volumes = [-1, missing, -2, -3, missing, 4, 5, missing, 6, missing]
+                test_returns = [1.0, missing, -2.0, 3.0, missing, -4.0, 5.0, missing, -6.0, missing, 7.0]
+                test_volumes = [-1, missing, -2, -3, missing, 4, 5, missing, 6, missing, 7.0]
+                test_net_volumes = [-1, 1, -2, -3, missing, 4, 5, missing, 6, missing, missing]
 
-                test_unchanged_volumes = [-1, missing, -2, -3, missing, 4, 5, missing, 6, missing]
+                test_unchanged_volumes = [-1, missing, -2, -3, missing, 4, 5, missing, 6, missing, 7.0]
+                test_unchanged_net_volumes = [-1, 1, -2, -3, missing, 4, 5, missing, 6, missing, missing]
                 test_es_percentile = 0.5
 
                 result = financial_summary(
                     test_returns,
-                    test_volumes;
+                    test_volumes,
+                    test_net_volumes;
                     risk_level=test_es_percentile
                 )
 
@@ -573,21 +615,25 @@
 
                 # Test that the volumes didn't get changed by calling the function.
                 @test isequal(test_volumes, test_unchanged_volumes)
-
+                @test isequal(test_net_volumes, test_unchanged_net_volumes)
 
                 # Test with missings in different places in the array
-                test_returns = [1.0, -2.0, missing, 3.0, -4.0, 5.0, -6.0, missing, missing, missing]
-                test_volumes = [-1, missing, -2, -3, missing, 4, 5, missing, 6, missing]
+                test_returns = [1.0, -2.0, missing, 3.0, -4.0, 5.0, -6.0, missing, missing, missing, 7]
+                test_volumes = [-1, missing, -2, -3, missing, 4, 5, missing, 6, missing, 7]
+                test_net_volumes = [-1, 1, -2, -3, missing, 4, 5, missing, 6, missing, missing]
                 # These array should look like this after missings are removed:
                 # [1, 3, 5, -6]
                 # [-1, -3, 4, 5]
+                # [-1, -3, 4, 5]
 
-                test_unchanged_volumes = [-1, missing, -2, -3, missing, 4, 5, missing, 6, missing]
+                test_unchanged_volumes = [-1, missing, -2, -3, missing, 4, 5, missing, 6, missing, 7]
+                test_unchanged_net_volumes = [-1, 1, -2, -3, missing, 4, 5, missing, 6, missing, missing]
                 test_es_percentile = 0.5
 
                 result = financial_summary(
                     test_returns,
-                    test_volumes;
+                    test_volumes,
+                    test_net_volumes;
                     risk_level=test_es_percentile
                 )
 
@@ -616,6 +662,7 @@
 
                 # Test that the volumes didn't get changed by calling the function.
                 @test isequal(test_volumes, test_unchanged_volumes)
+                @test isequal(test_net_volumes, test_unchanged_net_volumes)
             end
         end
     end
