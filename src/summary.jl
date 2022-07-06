@@ -88,6 +88,10 @@ must be in the bottom 5 percent of returns.
     :mean_volume - Mean volume traded of a period
     :median_volume - Median volume traded of a period
     :std_volume - standard deviation of volume traded each period
+    :total_net_volume - Total net volume traded
+    :mean_net_volume - Mean net volume traded of a period
+    :median_net_volume - Median net volume traded of a period
+    :std_net_volume - standard deviation of net volume traded each period
     :total_return - Total financial return
     :mean_return - Mean financial return of a period
     :median_return - Median financial return of a period
@@ -132,6 +136,10 @@ function financial_summary(
         :mean_volume => missing,
         :median_volume => missing,
         :std_volume => missing,
+        :total_net_volume => missing,
+        :mean_net_volume => missing,
+        :median_net_volume => missing,
+        :std_net_volume => missing,
         :total_return => missing,
         :mean_return => missing,
         :median_return => missing,
@@ -146,12 +154,12 @@ function financial_summary(
 
     # Take the absolute of volumes, we don't want our volume negating itself here.
     # We want the actual total.
-    volumes = abs.(volumes)
+    abs_volumes = abs.(volumes)
 
     # Determine scaling factor
     # Calling `float()` here because statistics over money should not have precision
     # only up to cents, thus we have to remove the `FixedDecimal`s.
-    scale = per_mwh ? convert.(Float64, volumes) : ones(length(returns))
+    scale = per_mwh ? convert.(Float64, abs_volumes) : ones(length(returns))
 
     # Not using scale directly below because the total dollar is also dollar.
     # Note that sum(returns ./ scale) is not an extensive property
@@ -163,7 +171,7 @@ function financial_summary(
         float.(returns);
         risk_level=risk_level,
         per_mwh=per_mwh,
-        volumes=volumes,
+        volumes=abs_volumes,
     )
 
     # We cannot use the mean and median from the other financial output
@@ -175,16 +183,20 @@ function financial_summary(
 
     # We now have everything we need to build up our stats dictionary
     return (;
-        :total_volume => sum(volumes),
+        :total_volume => sum(abs_volumes),
         # Calling `float()` here because statistics over money should not have precision
         # only up to cents, thus we have to remove the `FixedDecimal`s.
-        :mean_volume => mean(float.(volumes)),
-        :median_volume => median(float.(volumes)),
+        :mean_volume => mean(float.(abs_volumes)),
+        :median_volume => median(float.(abs_volumes)),
         # Calculating the `std` when we have ≤ 1 FixedDecimal values will result in
         # attempting to convert a `NaN` into a FixedDecimal which will error. As a work
         # around we'll use `missing` in these cases.
         # See: https://github.com/JuliaLang/julia/issues/25300
-        :std_volume => length(volumes) <= 1 ? missing : std(volumes),
+        :std_volume => length(abs_volumes) <= 1 ? missing : std(abs_volumes),
+        :total_net_volume => sum(volumes),
+        :mean_net_volume => mean(float.(volumes)),
+        :median_net_volume => median(float.(volumes)),
+        :std_net_volume => length(volumes) <= 1 ? missing : std(volumes),
         :total_return => total_return,
         :mean_return => mean_return,
         :median_return => median_return,
