@@ -207,6 +207,10 @@
                 :mean_volume,
                 :median_volume,
                 :std_volume,
+                :total_net_volume,
+                :mean_net_volume,
+                :median_net_volume,
+                :std_net_volume,
                 :total_return,
                 :mean_return,
                 :median_return,
@@ -231,6 +235,11 @@
                 @test isequal(result[:median_volume], missing)
                 @test isequal(result[:std_volume], missing)
 
+                @test isequal(result[:total_net_volume], missing)
+                @test isequal(result[:mean_net_volume], missing)
+                @test isequal(result[:median_net_volume], missing)
+                @test isequal(result[:std_net_volume], missing)
+
                 @test isequal(result[:total_return], missing)
                 @test isequal(result[:mean_return], missing)
                 @test isequal(result[:median_return], missing)
@@ -254,6 +263,11 @@
                 @test isequal(result[:mean_volume], missing)
                 @test isequal(result[:median_volume], missing)
                 @test isequal(result[:std_volume], missing)
+
+                @test isequal(result[:total_net_volume], missing)
+                @test isequal(result[:mean_net_volume], missing)
+                @test isequal(result[:median_net_volume], missing)
+                @test isequal(result[:std_net_volume], missing)
 
                 @test isequal(result[:total_return], missing)
                 @test isequal(result[:mean_return], missing)
@@ -308,6 +322,11 @@
                 @test isequal(result[:median_volume], 3.5)
                 @test isequal(result[:std_volume], 1.8708286933869707)
 
+                @test isequal(result[:total_net_volume], 21)
+                @test isequal(result[:mean_net_volume], 3.5)
+                @test isequal(result[:median_net_volume], 3.5)
+                @test isequal(result[:std_net_volume], 1.8708286933869707)
+
                 @test isequal(result[:total_return], 21)
                 @test isequal(result[:mean_return], 3.5)
                 @test isequal(result[:median_return], 3.5)
@@ -333,6 +352,11 @@
                 @test isequal(result[:median_volume], 3.5)
                 @test isequal(result[:std_volume], 1.8708286933869707)
 
+                @test isequal(result[:total_net_volume], 21)
+                @test isequal(result[:mean_net_volume], 3.5)
+                @test isequal(result[:median_net_volume], 3.5)
+                @test isequal(result[:std_net_volume], 1.8708286933869707)
+
                 @test isequal(result[:total_return], -21)
                 @test isequal(result[:mean_return], -3.5)
                 @test isequal(result[:median_return], -3.5)
@@ -356,6 +380,11 @@
                 @test isequal(result[:mean_volume], 3.5)
                 @test isequal(result[:median_volume], 3.5)
                 @test isequal(result[:std_volume], 1.8708286933869707)
+
+                @test isequal(result[:total_net_volume], 21)
+                @test isequal(result[:mean_net_volume], 3.5)
+                @test isequal(result[:median_net_volume], 3.5)
+                @test isequal(result[:std_net_volume], 1.8708286933869707)
 
                 @test isequal(result[:total_return], -3)
                 @test isequal(result[:mean_return], -0.5)
@@ -385,6 +414,11 @@
                 @test isequal(result[:mean_volume], 3.5)
                 @test isequal(result[:median_volume], 3.5)
                 @test isequal(result[:std_volume], 1.8708286933869707)
+
+                @test isequal(result[:total_net_volume], 21)
+                @test isequal(result[:mean_net_volume], 3.5)
+                @test isequal(result[:median_net_volume], 3.5)
+                @test isequal(result[:std_net_volume], 1.8708286933869707)
 
                 @test isequal(result[:total_return], -3)
                 @test isequal(result[:mean_return], -0.5)
@@ -418,6 +452,11 @@
                 @test isequal(result[:median_volume], 3.5)
                 @test isequal(result[:std_volume], 1.8708286933869707)
 
+                @test isequal(result[:total_net_volume], 9)
+                @test isequal(result[:mean_net_volume], 1.5)
+                @test isequal(result[:median_net_volume], 1.5)
+                @test isequal(result[:std_net_volume], 3.9370039370059056)
+
                 @test isequal(result[:total_return], -3)
                 @test isequal(result[:mean_return], -0.5)
                 @test isequal(result[:median_return], -0.5)
@@ -445,6 +484,11 @@
                 @test isequal(result[:mean_volume], 3.5)
                 @test isequal(result[:median_volume], 3.5)
                 @test isequal(result[:std_volume], 1.8708286933869707)
+
+                @test isequal(result[:total_net_volume], 21)
+                @test isequal(result[:mean_net_volume], 3.5)
+                @test isequal(result[:median_net_volume], 3.5)
+                @test isequal(result[:std_net_volume], 1.8708286933869707)
 
                 @test isequal(result[:total_return], 21)
                 @test isequal(result[:mean_return], 3.5)
@@ -474,6 +518,11 @@
                 @test isequal(result[:mean_volume], missing)
                 @test isequal(result[:median_volume], missing)
                 @test isequal(result[:std_volume], missing)
+
+                @test isequal(result[:total_net_volume], missing)
+                @test isequal(result[:mean_net_volume], missing)
+                @test isequal(result[:median_net_volume], missing)
+                @test isequal(result[:std_net_volume], missing)
 
                 @test isequal(result[:total_return], missing)
                 @test isequal(result[:mean_return], missing)
@@ -506,6 +555,11 @@
                 @test isequal(result[:mean_volume], 3.5)
                 @test isequal(result[:median_volume], 3.5)
                 @test isequal(result[:std_volume], 1.8708286933869707)
+
+                @test isequal(result[:total_net_volume], 9)
+                @test isequal(result[:mean_net_volume], 1.5)
+                @test isequal(result[:median_net_volume], 1.5)
+                @test isequal(result[:std_net_volume], 3.9370039370059056)
 
                 @test isequal(result[:total_return], -3)
                 @test isequal(result[:mean_return], -0.5)
@@ -544,6 +598,11 @@
                 @test result[:mean_volume] == 3.25
                 @test result[:median_volume] == 3.5
                 @test result[:std_volume] == 1.707825127659933
+
+                @test result[:total_net_volume] == 5
+                @test result[:mean_net_volume] == 1.25
+                @test result[:median_net_volume] == 1.5
+                @test result[:std_net_volume] == 3.8622100754188224
 
                 @test result[:total_return] == 3
                 @test result[:mean_return] == 0.75
