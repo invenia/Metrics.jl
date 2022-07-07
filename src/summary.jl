@@ -59,12 +59,12 @@ end
 
 """
     financial_summary(
-        returns, volumes;
+        returns, volumes, net_volumes;
         risk_level::Real=0.05,
         per_mwh=false,
     ) -> NamedTuple
 
-Calculate and stores basic financial data about a set of returns and volumes.
+Calculate and stores basic financial data about a set of returns, volumes and net volumes.
 Values that cannot be calculated will be missing.
 
 Volume will be absolute valued before stats are calculated.
@@ -75,6 +75,7 @@ as it is just the sum of daily return per MWh fractions.
 # Arguments
 - `returns`: Financial returns.
 - `volumes`: Volume associated with the same index of financial return.
+- `net_volumes`: Net Volume associated with the same index of financial return.
 
 # Keyword Arguments
 - `risk_level::Real=0.05`: The risk level for expected shortfall. For the default, the returns
@@ -103,17 +104,18 @@ must be in the bottom 5 percent of returns.
     :median_over_expected_shortfall - Median return divided by expected shortfall
     """
 function financial_summary(
-    returns, volumes;
+    returns, volumes, net_volumes;
     risk_level::Real=0.05,
     per_mwh=false,
 )
     # We expect these to be equal in size
-    if length(returns) != length(volumes)
+    if !(length(returns) == length(volumes) == length(net_volumes))
         error(
             """
             Given return and volume vectors must be the same length.
             Return length: $(length(returns))
             Volume length: $(length(volumes))
+            Net volume length: $(length(net_volumes))
             """
         )
     end
@@ -123,9 +125,10 @@ function financial_summary(
     # the returns vector, so we can't just use skipmissing
     # Note: `disallowmissing` converts the type of the array to no longer allow `missing`
     # values. We do this to ensure that `std` on `FixedDecimal` arrays always works.
-    not_missing_mask = .!(ismissing.(returns) .| ismissing.(volumes))
+    not_missing_mask = .!(ismissing.(returns) .| ismissing.(volumes) .| ismissing.(net_volumes))
     returns = disallowmissing(returns[not_missing_mask])
     volumes = disallowmissing(volumes[not_missing_mask])
+    net_volumes = disallowmissing(net_volumes[not_missing_mask])
 
     # Make everything missing if the return vector is empty, except traded periods which
     # we know the value of correctly.
@@ -154,12 +157,12 @@ function financial_summary(
 
     # Take the absolute of volumes, we don't want our volume negating itself here.
     # We want the actual total.
-    abs_volumes = abs.(volumes)
+    volumes = abs.(volumes)
 
     # Determine scaling factor
     # Calling `float()` here because statistics over money should not have precision
     # only up to cents, thus we have to remove the `FixedDecimal`s.
-    scale = per_mwh ? convert.(Float64, abs_volumes) : ones(length(returns))
+    scale = per_mwh ? convert.(Float64, volumes) : ones(length(returns))
 
     # Not using scale directly below because the total dollar is also dollar.
     # Note that sum(returns ./ scale) is not an extensive property
@@ -171,7 +174,7 @@ function financial_summary(
         float.(returns);
         risk_level=risk_level,
         per_mwh=per_mwh,
-        volumes=abs_volumes,
+        volumes=volumes,
     )
 
     # We cannot use the mean and median from the other financial output
@@ -183,20 +186,20 @@ function financial_summary(
 
     # We now have everything we need to build up our stats dictionary
     return (;
-        :total_volume => sum(abs_volumes),
+        :total_volume => sum(volumes),
         # Calling `float()` here because statistics over money should not have precision
         # only up to cents, thus we have to remove the `FixedDecimal`s.
-        :mean_volume => mean(float.(abs_volumes)),
-        :median_volume => median(float.(abs_volumes)),
+        :mean_volume => mean(float.(volumes)),
+        :median_volume => median(float.(volumes)),
         # Calculating the `std` when we have ≤ 1 FixedDecimal values will result in
         # attempting to convert a `NaN` into a FixedDecimal which will error. As a work
         # around we'll use `missing` in these cases.
         # See: https://github.com/JuliaLang/julia/issues/25300
-        :std_volume => length(abs_volumes) <= 1 ? missing : std(abs_volumes),
-        :total_net_volume => sum(volumes),
-        :mean_net_volume => mean(float.(volumes)),
-        :median_net_volume => median(float.(volumes)),
-        :std_net_volume => length(volumes) <= 1 ? missing : std(volumes),
+        :std_volume => length(volumes) <= 1 ? missing : std(volumes),
+        :total_net_volume => sum(net_volumes),
+        :mean_net_volume => mean(float.(net_volumes)),
+        :median_net_volume => median(float.(net_volumes)),
+        :std_net_volume => length(net_volumes) <= 1 ? missing : std(net_volumes),
         :total_return => total_return,
         :mean_return => mean_return,
         :median_return => median_return,
