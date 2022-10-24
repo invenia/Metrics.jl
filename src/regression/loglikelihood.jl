@@ -44,9 +44,9 @@ end
 
 function joint_gaussian_loglikelihood(y_true, y_pred::Sampleable{Multivariate})
     y_true, y_pred = _match(y_true, y_pred)
-    normalized_dist = MvNormal(parent(mean(y_pred)), parent(cov(y_pred)))
+    normalized_dist = MvNormal(mean(y_pred), cov(y_pred))
     # need to extract parent to prevent method ambiguity error using KeyedArrays
-    return Distributions.loglikelihood(normalized_dist, parent(y_true))
+    return Distributions.loglikelihood(normalized_dist, y_true)
 end
 
 function joint_gaussian_loglikelihood(y_pred::Sampleable, y_true)
