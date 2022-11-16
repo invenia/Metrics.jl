@@ -13,8 +13,8 @@ Returns:
 function _calculate_returns(volumes::AbstractVector, deltas::AbstractMatrix)
     # we put these in NamedDimsArrays as excutable documentation of what we expect the arrangement to represent
     # and so that we get back something with namedims
-    volumes = NamedDimsArray(volumes, :nodes)
-    deltas = NamedDimsArray(deltas, (:nodes, :obs))
+    volumes = NamedDimsArray(unname(volumes), :nodes)
+    deltas = NamedDimsArray(unname(deltas), (:nodes, :obs))
     return  deltas' * volumes
 end
 
@@ -40,8 +40,8 @@ function expected_return(volumes::AbstractVector, deltas::AbstractVector, args..
 end
 
 function expected_return(volumes::AbstractVector, deltas::AbstractMatrix, args...)
-    volumes = NamedDimsArray(volumes, :nodes)
-    deltas = NamedDimsArray(deltas, (:nodes, :obs))
+    volumes = NamedDimsArray(unname(volumes), :nodes)
+    deltas = NamedDimsArray(unname(deltas), (:nodes, :obs))
     expected_deltas = vec(mean(deltas, dims=:obs))
     return  expected_return(volumes, expected_deltas, args...)
 end
