@@ -1,7 +1,7 @@
 name = "Metrics"
 uuid = "273c2e6c-7e43-11e9-12af-8fca11176a4c"
 authors = ["Invenia Technical Computing Corporation"]
-version = "0.15.3"
+version = "0.15.4"
 
 [deps]
 AxisKeys = "94b1ba4f-4ee9-5380-92f1-94cde586c3c5"
@@ -10,6 +10,7 @@ Distributions = "31c24e10-a181-5473-b8eb-7969acd0382f"
 Intervals = "d8418881-c3e1-53bb-8760-2df7ec849ed5"
 KeyedDistributions = "2576fb08-064d-4cab-b15d-8dda7fcb9a6d"
 LinearAlgebra = "37e2e46d-f89d-539d-b4ee-838fcccc9c8e"
+NamedDims = "356022a1-0364-5f58-8944-0da4b18d706f"
 ObservationDims = "bd245535-7a0d-4808-be35-e2fe847ca032"
 PDMatsExtras = "2c7acb1b-7338-470f-b38f-951d2bcb9193"
 SpecialFunctions = "276daf66-3868-5448-9aa4-cd146d93841b"

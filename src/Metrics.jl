@@ -7,6 +7,7 @@ using Distributions: GenericMvTDist
 using Intervals: Interval
 using KeyedDistributions
 using LinearAlgebra: cholesky, det, dot, I, norm, tr
+using NamedDims: unname
 using ObservationDims
 using PDMatsExtras
 using SpecialFunctions: erf

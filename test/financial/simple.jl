@@ -64,20 +64,20 @@ using Metrics: split_volume
                 # with price impact
                 @test expected_return(volumes, dist, nonzero_pi...) < expected
                 @test evaluate(expected_return, volumes, dist, nonzero_pi...) < expected
-            end
 
-            @testset "with samples" begin
-                # using sample deltas
-                samples = rand(dense_dist, 10)
-                expected = dot(volumes, mean(samples, dims=2))
-                @test expected_return(volumes, samples) ≈ expected
-                @test evaluate(expected_return, volumes, samples; obsdim=2) ≈ expected
+                @testset "with samples" begin
+                    # using sample deltas
+                    samples = rand(dist, 10)
+                    expected = dot(volumes, mean(samples, dims=2))
+                    @test expected_return(volumes, samples) ≈ expected
+                    @test evaluate(expected_return, volumes, samples; obsdim=2) ≈ expected
 
-                @test expected_return(volumes, samples, nonzero_pi...) < expected
-                @test isless(
-                    evaluate(expected_return, volumes, samples, nonzero_pi...; obsdim=2),
-                    expected,
-                )
+                    @test expected_return(volumes, samples, nonzero_pi...) < expected
+                    @test isless(
+                        evaluate(expected_return, volumes, samples, nonzero_pi...; obsdim=2),
+                        expected,
+                    )
+                end
             end
         end
 
@@ -134,13 +134,13 @@ using Metrics: split_volume
                 samples = rand(dist, 1_000_000)
                 empirical_vol = std(samples' * volumes)
                 @test volatility(volumes, dist) ≈ empirical_vol atol=1e-1
-            end
 
-            @testset "with samples" begin
-                samples = rand(dense_dist, 5)
-                expected = std(samples' * volumes)
-                @test volatility(volumes, samples) ≈ expected
-                @test evaluate(volatility, volumes, samples; obsdim=2) ≈ expected
+                @testset "with samples" begin
+                    samples = rand(dist, 5)
+                    expected = std(samples' * volumes)
+                    @test volatility(volumes, samples) ≈ expected
+                    @test evaluate(volatility, volumes, samples; obsdim=2) ≈ expected
+                end
             end
         end
 
