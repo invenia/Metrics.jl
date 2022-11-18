@@ -66,7 +66,7 @@
 
         expected = 49.568769808266644
         @test expected_windfall(volumes, samples) ≈ expected
-        @test expected_windfall(volumes, samples; per_mwh=true) == 0.4506251800751513
+        @test expected_windfall(volumes, samples; per_mwh=true) ≈ 0.4506251800751513 atol=1e-10
         @test evaluate(expected_windfall, volumes, samples; obsdim=2) ≈ expected
 
         # with price impact EW should decrease (due to sign)
