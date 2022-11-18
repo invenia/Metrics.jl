@@ -16,6 +16,7 @@
     # Example from "Adaptive linear step-up procedures that control the false
     # discovery rate", Benjamini Y., Krieger A.M., Yekutieli D., 2006.
     @testset "paper example" begin
+        rng = MersenneTwister(1)
 
         pvalues = [
             0.0001, 0.0004, 0.0019, 0.0095, 0.0201,
@@ -23,7 +24,7 @@
             0.4262, 0.5719, 0.6528, 0.7590, 1.0,
         ]
 
-        shuffled_pvalues = shuffle(pvalues)
+        shuffled_pvalues = shuffle(rng, pvalues)
 
         # returns true/false if null hypothesis is rejected
         rejected = bky_test(shuffled_pvalues)

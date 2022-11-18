@@ -37,11 +37,12 @@ using Metrics: split_volume
 
         end
 
+        rng = StableRNG(1)
         # using dense cov matrix
         num_nodes = 20
-        volumes = rand(Uniform(-50,50), num_nodes)
-        mean_deltas = rand(num_nodes)
-        _sqrt = rand(num_nodes, num_nodes+2)
+        volumes = rand(rng, Uniform(-50,50), num_nodes)
+        mean_deltas = rand(rng, num_nodes)
+        _sqrt = rand(rng, num_nodes, num_nodes+2)
         scale_deltas = PDMat(Symmetric(_sqrt * _sqrt' + I))
 
         nonzero_pi = (supply_pi=fill(0.1, num_nodes), demand_pi=fill(0.1, num_nodes))
@@ -67,7 +68,7 @@ using Metrics: split_volume
 
                 @testset "with samples" begin
                     # using sample deltas
-                    samples = rand(dist, 10)
+                    samples = rand(rng, dist, 10)
                     expected = dot(volumes, mean(samples, dims=2))
                     @test expected_return(volumes, samples) ≈ expected
                     @test evaluate(expected_return, volumes, samples; obsdim=2) ≈ expected
@@ -99,8 +100,9 @@ using Metrics: split_volume
 
     @testset "volatility" begin
         # using diagonal cov matrix
+        rng = StableRNG(1)
         diag_sqrtcov = Diagonal([5.0, 6.0 ,7.0])
-        diag_dist = MvNormal(rand(3), diag_sqrtcov' * diag_sqrtcov)
+        diag_dist = MvNormal(rand(rng, 3), diag_sqrtcov' * diag_sqrtcov)
         @test isequal(
             volatility([0.1, 1.0, -10.0], diag_dist),
             sqrt(0.5^2 + 6^2 + 70^2)
@@ -108,9 +110,9 @@ using Metrics: split_volume
 
         # using dense cov matrix
         num_nodes = 10
-        volumes = rand(Uniform(-50,50), num_nodes)
-        mean_deltas = rand(num_nodes)
-        _sqrt = rand(num_nodes, num_nodes+2)
+        volumes = rand(rng, Uniform(-50,50), num_nodes)
+        mean_deltas = rand(rng, num_nodes)
+        _sqrt = rand(rng, num_nodes, num_nodes+2)
         scale_deltas = PDMat(Symmetric(_sqrt * _sqrt' + I))
 
         nonzero_pi = (supply_pi=fill(0.1, num_nodes), demand_pi=fill(0.1, num_nodes))
@@ -126,17 +128,18 @@ using Metrics: split_volume
                 ("Distribution", dense_dist),
                 ("KeyedDistribution", KeyedDistribution(dense_dist, node_names))
             )
+                rng = StableRNG(1)
                 expected = norm(sqrtcov(StatsUtils.cov(dist)) * volumes, 2)
                 @test volatility(volumes, dist) ≈ expected
                 @test evaluate(volatility, volumes, dist) ≈ expected
 
                 # test against empirical results
-                samples = rand(dist, 1_000_000)
+                samples = rand(rng, dist, 1_000_000)
                 empirical_vol = std(samples' * volumes)
                 @test volatility(volumes, dist) ≈ empirical_vol atol=1e-1
 
                 @testset "with samples" begin
-                    samples = rand(dist, 5)
+                    samples = rand(rng, dist, 5)
                     expected = std(samples' * volumes)
                     @test volatility(volumes, samples) ≈ expected
                     @test evaluate(volatility, volumes, samples; obsdim=2) ≈ expected
@@ -164,7 +167,8 @@ using Metrics: split_volume
         @testset "simple sharpe ratio" begin
             @testset "vector of returns" begin
                 # basic usage
-                returns = rand(100)
+                rng = StableRNG(1)
+                returns = rand(rng, 100)
                 mean_returns = mean(returns)
                 std_returns = std(returns)
                 expected = mean_returns / std_returns
@@ -173,7 +177,7 @@ using Metrics: split_volume
                 @test evaluate(sharpe_ratio, returns) ≈ expected
 
                 # order shouldn't matter
-                shuffle!(returns)
+                shuffle!(rng, returns)
                 @test sharpe_ratio(returns) ≈ expected
                 @test evaluate(sharpe_ratio, returns) ≈ expected
 
@@ -189,7 +193,8 @@ using Metrics: split_volume
             end
 
             @testset "distribution of returns" begin
-                returns = Normal(rand(), rand())
+                rng = StableRNG(1)
+                returns = Normal(rand(rng), rand(rng))
                 mean_returns = mean(returns)
                 std_returns = std(returns)
                 expected = mean_returns / std_returns
@@ -198,7 +203,7 @@ using Metrics: split_volume
                 @test evaluate(sharpe_ratio, returns) == expected
 
                 # zero std with non-zero mean
-                returns = Normal(rand(), 0)
+                returns = Normal(rand(rng), 0)
                 @test sharpe_ratio(returns) == Inf
                 @test evaluate(sharpe_ratio, returns) == Inf
 
@@ -212,6 +217,7 @@ using Metrics: split_volume
 
         @testset "using volumes and deltas" begin
             # using diag cov matrix
+            rng = StableRNG(1)
             vol = [0.1, 0.2, -0.3]
             diag_sqrtcov = Diagonal([5.0, 6.0 ,7.0])
             diag_dist = MvNormal([0.0, 1.0, 10.0], diag_sqrtcov' * diag_sqrtcov)
@@ -220,7 +226,7 @@ using Metrics: split_volume
             @test sharpe_ratio(vol, diag_dist) ≈ exp_return / exp_vol
 
             # using dense cov matrix
-            volumes = rand(Uniform(-50,50), 10)
+            volumes = rand(rng, Uniform(-50,50), 10)
             dense_dist = generate_mvnormal(10)
             nonzero_pi = (supply_pi=fill(0.1, 10), demand_pi=fill(0.1, 10))
 
@@ -246,7 +252,7 @@ using Metrics: split_volume
             end
 
             @testset "with samples" begin
-                samples = rand(dense_dist, 5)
+                samples = rand(rng, dense_dist, 5)
 
                 exp_return = expected_return(volumes, samples)
                 exp_vol = volatility(volumes, samples)

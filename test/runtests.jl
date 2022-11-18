@@ -12,6 +12,7 @@ using PDMats
 using PDMatsExtras
 using Random
 using Random: seed!
+using StableRNGs: StableRNG
 using Statistics
 using StatsUtils
 using StatsUtils: sqrtcov
@@ -23,7 +24,7 @@ import Statistics.mean
 include("test_utils/properties.jl")
 include("test_utils/stats.jl")
 
-seed!(1)
+seed!(StableRNG(1), 1)
 @testset "Metrics.jl" begin
     doctest(Metrics)
 

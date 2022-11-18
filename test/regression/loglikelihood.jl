@@ -37,6 +37,7 @@
 
             @testset "Using KeyedDistributions and KeyedArrays" begin
 
+                rng = StableRNG(1)
                 obs = ["a", "b", "c"]
                 features = [:f1, :f2, :f3, :f4]
                 id = KeyedDistribution(dist, obs)
@@ -48,8 +49,8 @@
                 @test marginal_gaussian_loglikelihood(a, id) ≈ expected
 
                 #shuffled
-                new_obs_order = shuffle(1:3)
-                new_feature_order = shuffle(1:4)
+                new_obs_order = shuffle(rng, 1:3)
+                new_feature_order = shuffle(rng, 1:4)
                 a = KeyedArray(
                     y_true[new_obs_order, new_feature_order],
                     obs=obs[new_obs_order],
@@ -79,7 +80,8 @@
             end
         end
 
-        sqrtcov = rand(3, 3)
+        rng = StableRNG(1)
+        sqrtcov = rand(rng, 3, 3)
         @testset "vector point" for dist in (MvNormal(3, 1.5), MvNormal(zeros(3), sqrtcov*sqrtcov'))
             y_true = [
                 8.  10   9  11
@@ -120,8 +122,8 @@
                 @test joint_gaussian_loglikelihood(a, id) ≈ expected
 
                 #shuffled
-                new_obs_order = shuffle(1:3)
-                new_feature_order = shuffle(1:4)
+                new_obs_order = shuffle(rng, 1:3)
+                new_feature_order = shuffle(rng, 1:4)
                 a = KeyedArray(
                     y_true[new_obs_order, new_feature_order],
                     obs=obs[new_obs_order],
@@ -134,6 +136,7 @@
     end
 
     @testset "loglikelihood" begin
+        rng = StableRNG(1)
         test_data = [
             # multivariate
             (
@@ -173,7 +176,7 @@
                 @test Metrics.loglikelihood(y_true_idx, y_pred_idx) == expected
                 # if the observation dimensions don't match the order, should use the axis
                 # to match the order and give a correct resuilt
-                new_obs_order = shuffle(1:3)
+                new_obs_order = shuffle(rng, 1:3)
                 y_true_idx2 = KeyedArray(y_true[new_obs_order], obs=obs[new_obs_order])
                 @test Metrics.loglikelihood(y_true_idx2, y_pred_idx) == expected
             end
@@ -186,7 +189,7 @@
                 @test Metrics.loglikelihood(y_true_idx, y_pred_idx) == expected
                 # if the observation dimensions don't match the order, should use the axis
                 # to match the order and give a correct resuilt
-                new_obs_order = shuffle(1:3)
+                new_obs_order = shuffle(rng, 1:3)
                 y_true_idx2 = KeyedArray(y_true[new_obs_order], obs=obs[new_obs_order])
                 @test Metrics.loglikelihood(y_true_idx2, y_pred_idx) == expected
             end

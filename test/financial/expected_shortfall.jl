@@ -1,4 +1,7 @@
 @testset "expected shortfall" begin
+    rng = StableRNG(1234)
+    i_matrix_samples = Matrix(I, (10, 10))
+    mv_normal_samples = rand(rng, MvNormal(ones(20)), 50)
     @testset "simple ES" begin
         # basic usage
         returns = collect(1:100)
@@ -7,7 +10,7 @@
         @test expected_shortfall(returns) == -3
 
         # order shouldn't matter
-        shuffle!(returns)
+        shuffle!(rng, returns)
         @test expected_shortfall(returns) == -3
 
         # testing a different risk_level
@@ -18,12 +21,12 @@
         # replacing larger values shouldn't matter
         returns_2 = sort(returns)
         returns_2[6:end] .= 1000
-        shuffle!(returns_2)
+        shuffle!(rng, returns_2)
         @test expected_shortfall(returns) == expected_shortfall(returns_2)
 
         @testset "per MW ES" begin
-            returns = randn(100)
-            volumes = rand(100)
+            returns = randn(rng, 100)
+            volumes = rand(rng, 100)
 
             # Check that it is extensive
             @test expected_shortfall(returns, per_mwh=true, volumes=volumes) ≈
@@ -40,10 +43,9 @@
     @testset "sample ES" begin
         # using samples
         volumes = [1, -2, 3, -4, 5, -6, 7, -8, 9, -10]
-        samples = Matrix(I, (10, 10))
         expected = -mean([-2, -4, -6, -8, -10])  # = 6.0
-        @test expected_shortfall(volumes, samples; risk_level=0.5) == expected
-        @test evaluate(expected_shortfall, volumes, samples; risk_level=0.5) == expected
+        @test expected_shortfall(volumes, i_matrix_samples; risk_level=0.5) == expected
+        @test evaluate(expected_shortfall, volumes, i_matrix_samples; risk_level=0.5) == expected
 
         # using diagonal matrix of samples - requires AbstractArray
         sample_deltas = Diagonal(1:10)
@@ -51,24 +53,22 @@
         @test expected_shortfall(volumes, sample_deltas; risk_level=0.5) == expected
 
         # generate samples from distribution of deltas
-        seed!(1234)
         volumes = repeat([1, -2, 3, -4, 5, -6, 7, -8, 9, -10], 2)
-        samples = rand(MvNormal(ones(20)), 50)
         nonzero_pi = (supply_pi=fill(0.1, 20), demand_pi=fill(0.1, 20))
 
-        expected = 48.304727988173816
-        @test expected_shortfall(volumes, samples) ≈ expected
-        @test evaluate(expected_shortfall, volumes, samples; obsdim=2) ≈ expected
+        expected = 71.644648723418
+        @test expected_shortfall(volumes, mv_normal_samples) ≈ expected
+        @test evaluate(expected_shortfall, volumes, mv_normal_samples; obsdim=2) ≈ expected
 
         # with price impact ES should increase (due to sign)
-        @test expected_shortfall(volumes, samples, nonzero_pi...) > expected
+        @test expected_shortfall(volumes, mv_normal_samples, nonzero_pi...) > expected
         @test isless(
             expected,
-            evaluate(expected_shortfall, volumes, samples, nonzero_pi...; obsdim=2),
+            evaluate(expected_shortfall, volumes, mv_normal_samples, nonzero_pi...; obsdim=2),
         )
 
         # too few samples
-        @test expected_shortfall(volumes, samples; risk_level=0.01) === missing
+        @test expected_shortfall(volumes, mv_normal_samples; risk_level=0.01) === missing
 
         # single sample should not work given `risk_level=1` but not otherwise.
         @test_throws MethodError expected_shortfall([-5], [10]; risk_level=0.99)
@@ -76,7 +76,7 @@
     end
 
     @testset "analytic ES" begin
-        seed!(1)
+        # rng = StableRNG(1)
         # for constructing some PDMats
         B = (reshape(2:10, 3, 3) / 12) .^ 2
         A = B' * B + I
@@ -115,9 +115,9 @@
                 # SES should converge to AES after sufficient samples
                 aes = expected_shortfall(volumes, dist)
                 # this requires a large number of samples due to poor convergence in the
-                # covariance matrix
-                Random.seed!(1)
-                ses = expected_shortfall(volumes, rand(dist, 1_000_000))
+                # covariance Matrixvariate
+                rng = StableRNG(1)
+                ses = expected_shortfall(volumes, rand(rng, dist, 1_000_000))
                 @test isapprox(aes, ses, atol=1e-1)
             end
 
@@ -181,9 +181,10 @@
         delta_dist = MvNormal(ones(3))
         supply_pi = [0.1, 0.1, 0.1]
         demand_pi = [0.1, 0.1, 0.1]
+        rng = StableRNG(1)
 
         deltas = mean(delta_dist)
-        samples = rand(delta_dist, 3)
+        samples = rand(rng, delta_dist, 3)
 
         bad_args = (volumes, supply_pi, demand_pi)  # length(bad_args) exceeds limit of 3
 
@@ -203,6 +204,9 @@
 end
 
 @testset "evano" begin
+    rng = StableRNG(1234)
+    i_matrix_samples = Matrix(I, (10, 10))
+    mv_normal_samples = rand(rng, MvNormal(ones(20)), 50)
     @testset "simple evano" begin
         # Basic usage
         returns = collect(1:100)
@@ -212,7 +216,8 @@ end
         @test evano(returns) == expected
 
         # Order shouldn't matter
-        shuffle!(returns)
+        rng = StableRNG(1)
+        shuffle!(rng, returns)
         @test evano(returns) == expected
 
         # Testing a different risk_level
@@ -236,10 +241,9 @@ end
     @testset "sample evano" begin
         # Using samples
         volumes = [1, -2, 3, -4, 5, -6, 7, -8, 9, -10]
-        samples = Matrix(I, (10, 10))
         expected = -0.08333333333333333
-        @test evano(volumes, samples; risk_level=0.5) == expected
-        @test evaluate(evano, volumes, samples; risk_level=0.5) == expected
+        @test evano(volumes, i_matrix_samples; risk_level=0.5) == expected
+        @test evaluate(evano, volumes, i_matrix_samples; risk_level=0.5) == expected
 
         # using diagonal matrix of samples - requires AbstractArray
         sample_deltas = Diagonal(1:10)
@@ -257,16 +261,13 @@ end
         )
 
         # generate samples from distribution of deltas
-        seed!(1234)
         volumes = repeat([1, -2, 3, -4, 5, -6, 7, -8, 9, -10], 2)
-        samples = rand(MvNormal(ones(20)), 50)
-
-        expected = 0.08900853620347395
-        @test evano(volumes, samples) ≈ expected
-        @test evaluate(evano, volumes, samples; obsdim=2) ≈ expected
+        expected = -0.040273663897995186
+        @test evano(volumes, mv_normal_samples) ≈ expected
+        @test evaluate(evano, volumes, mv_normal_samples; obsdim=2) ≈ expected
 
         # too few samples
-        @test evano(volumes, samples; risk_level=0.01) === missing
+        @test evano(volumes, mv_normal_samples; risk_level=0.01) === missing
 
         # single sample should not work given `risk_level=1` but not otherwise.
         @test_throws MethodError evano([-5], [10]; risk_level=0.99)
@@ -278,7 +279,6 @@ end
         # implemented by `Distributions`.
         # https://invenia.slack.com/archives/CMMAKP97H/p1567612804011200?thread_ts=1567543537.008300&cid=CMMAKP97H
         # More info: https://www.r-bloggers.com/multivariate-medians/
-        seed!(1)
         volumes = [1, -2, 3, -4, 5, -6, 7, -8, 9, -10]
         dense_dist = generate_mvnormal(10)
         nonzero_pi = (supply_pi=fill(0.1, 10), demand_pi=fill(0.1, 10))
@@ -300,8 +300,12 @@ end
 
 
 @testset "mean over es" begin
+    rng = StableRNG(1234)
+    i_matrix_samples = Matrix(I, (10, 10))
+    mv_normal_samples = rand(rng, MvNormal(ones(20)), 50)
     @testset "simple case" begin
         # Basic usage
+        rng = StableRNG(1)
         returns = collect(100:200)
 
         # Default risk_level is 0.05
@@ -309,7 +313,7 @@ end
         @test mean_over_es(returns) == expected
 
         @testset "order shouldn't matter" begin
-            shuffle!(returns)
+            shuffle!(rng, returns)
             @test mean_over_es(returns) == expected
         end
 
@@ -354,19 +358,17 @@ end
             @test evaluate(mean_over_es, volumes, sample_deltas, nonzero_pi...; risk_level=0.5, obsdim=2) < expected
         end
 
-        seed!(1234)
-        samples = rand(MvNormal(ones(20)), 50)
         # generate samples from distribution of deltas
         @testset "using samples from delta distribution" begin
             volumes = repeat([1, -2, 3, -4, 5, -6, 7, -8, 9, -10], 2)
 
-            expected = 0.049878054824448854
-            @test mean_over_es(volumes, samples) ≈ expected
-            @test evaluate(mean_over_es, volumes, samples; obsdim=2) ≈ expected
+            expected = -0.03761927546629896
+            @test mean_over_es(volumes, mv_normal_samples) ≈ expected
+            @test evaluate(mean_over_es, volumes, mv_normal_samples; obsdim=2) ≈ expected
         end
 
         @testset "too few samples" begin
-            @test mean_over_es(volumes, samples; risk_level=0.01) === missing
+            @test mean_over_es(volumes, mv_normal_samples; risk_level=0.01) === missing
         end
 
         # single sample should not work given `risk_level=1` but not otherwise.

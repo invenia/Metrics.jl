@@ -87,6 +87,7 @@ using Metrics: @_dimcheck, _match
         end
 
         @testset "KeyedArray and KeyedArray" begin
+            rng = StableRNG(1)
             @testset "1-D" begin
                 keyed_array2 = KeyedArray([3, 1, 2]; obs=["c", "a", "b"])
                 new_array1, new_array2 = _match(keyed_array, keyed_array2)
@@ -121,20 +122,20 @@ using Metrics: @_dimcheck, _match
             end
 
             @testset "array axes have wrong orientation" begin
-                a = KeyedArray(rand(3,2); obs=["c", "a", "b"], target=[:t1, :t2])
-                b = KeyedArray(rand(3,2); target=["c", "a", "b"], obs=[:t1, :t2])
+                a = KeyedArray(rand(rng, 3,2); obs=["c", "a", "b"], target=[:t1, :t2])
+                b = KeyedArray(rand(rng, 3,2); target=["c", "a", "b"], obs=[:t1, :t2])
                 @test_throws ArgumentError _match(a, b)
             end
 
             @testset "array axis values do not match" begin
-                a = KeyedArray(rand(3,2); obs=["c", "a", "b"], target=[:t1, :t2])
-                b = KeyedArray(rand(3,2); obs=["q", "a", "b"], target=[:t1, :t2])
+                a = KeyedArray(rand(rng, 3,2); obs=["c", "a", "b"], target=[:t1, :t2])
+                b = KeyedArray(rand(rng, 3,2); obs=["q", "a", "b"], target=[:t1, :t2])
                 @test_throws ArgumentError _match(a, b)
             end
 
             @testset "arrays have incompatible sizes" begin
-                a = KeyedArray(rand(3,2); obs=["c", "a", "b"], target=[:t1, :t2])
-                b = KeyedArray(rand(2,3); target=[:t1, :t2], obs=["c", "a", "b"])
+                a = KeyedArray(rand(rng, 3,2); obs=["c", "a", "b"], target=[:t1, :t2])
+                b = KeyedArray(rand(rng, 2,3); target=[:t1, :t2], obs=["c", "a", "b"])
                 @test_throws DimensionMismatch _match(a, b)
             end
         end

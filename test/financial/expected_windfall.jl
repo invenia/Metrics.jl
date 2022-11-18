@@ -2,12 +2,13 @@
     @testset "simple EW" begin
         # basic usage
         returns = collect(1:100)
+        rng = StableRNG(1)
 
         # default level is 0.05
         @test expected_windfall(returns) == mean(96:100)
 
         # order shouldn't matter
-        shuffle!(returns)
+        shuffle!(rng, returns)
         @test expected_windfall(returns) == mean(96:100)
 
         # testing a different level
@@ -18,7 +19,7 @@
         # replacing smaller values shouldn't matter
         returns_2 = sort(returns)
         returns_2[1:95] .= -1000
-        shuffle!(returns_2)
+        shuffle!(rng, returns_2)
         @test expected_windfall(returns) == expected_windfall(returns_2)
 
         # hard shifts should shift the result
@@ -28,8 +29,8 @@
         @test expected_windfall(2 .* returns) == 2 * expected_windfall(returns)
 
         @testset "per MW ES" begin
-            returns = randn(100)
-            volumes = rand(100)
+            returns = randn(rng, 100)
+            volumes = rand(rng, 100)
 
             # Check that it is extensive
             @test expected_windfall(returns, per_mwh=true, volumes=volumes) ≈
@@ -39,12 +40,13 @@
 
             # Check error
             @test_throws ArgumentError expected_windfall(returns, per_mwh=true)
-            @test_throws DimensionMismatch expected_windfall(returns, per_mwh=true, volumes=rand(5))
+            @test_throws DimensionMismatch expected_windfall(returns, per_mwh=true, volumes=rand(rng, 5))
         end
     end
 
     @testset "sample EW" begin
         # using samples
+        rng = StableRNG(1234)
         volumes = [1, -2, 3, -4, 5, -6, 7, -8, 9, -10]
         samples = Matrix(I, (10, 10))
         expected = mean([1, 3, 5, 7, 9])
@@ -58,14 +60,13 @@
         @test expected_windfall(volumes, sample_deltas; level=0.5) == expected
 
         # generate samples from distribution of deltas
-        seed!(1234)
         volumes = repeat([1, -2, 3, -4, 5, -6, 7, -8, 9, -10], 2)
-        samples = rand(MvNormal(ones(20)), 50)
+        samples = rand(rng, MvNormal(ones(20)), 50)
         nonzero_pi = (supply_pi=fill(0.1, 20), demand_pi=fill(0.1, 20))
 
-        expected = 63.79924794553865
+        expected = 49.568769808266644
         @test expected_windfall(volumes, samples) ≈ expected
-        @test expected_windfall(volumes, samples; per_mwh=true) == 0.5799931631412605
+        @test expected_windfall(volumes, samples; per_mwh=true) == 0.4506251800751513
         @test evaluate(expected_windfall, volumes, samples; obsdim=2) ≈ expected
 
         # with price impact EW should decrease (due to sign)
@@ -84,6 +85,7 @@
     end
 
     @testset "erroring" begin
+        rng = StableRNG(1)
         returns = collect(1:100)
         for level in (1, 0, 1.0, 0.0, -0.5, 1.1)
             @test_throws ArgumentError expected_windfall(returns; level=level)
@@ -107,7 +109,7 @@
         demand_pi = [0.1, 0.1, 0.1]
 
         deltas = mean(delta_dist)
-        samples = rand(delta_dist, 3)
+        samples = rand(rng, delta_dist, 3)
 
         bad_args = (volumes, supply_pi, demand_pi)  # length(bad_args) exceeds limit of 3
 
@@ -118,11 +120,12 @@
     end
 
     @testset "ew_over_es" begin
-        returns = randn(100)
+        rng = StableRNG(1)
+        returns = randn(rng, 100)
 
         @test ew_over_es(returns) ≈ expected_windfall(returns) / expected_shortfall(returns)
 
-        volumes = rand(100)
+        volumes = rand(rng, 100)
 
         @test ew_over_es(returns, per_mwh=true, volumes=volumes) ≈
             expected_windfall(returns, per_mwh=true, volumes=volumes) /
@@ -136,6 +139,6 @@
 
         # Check error
         @test_throws ArgumentError ew_over_es(returns, per_mwh=true)
-        @test_throws DimensionMismatch ew_over_es(returns, per_mwh=true, volumes=rand(5))
+        @test_throws DimensionMismatch ew_over_es(returns, per_mwh=true, volumes=rand(rng, 5))
     end
 end

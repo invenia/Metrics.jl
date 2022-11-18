@@ -37,12 +37,13 @@
     end
 
     @testset "different distribution dimensions" begin
+        rng = MersenneTwister(1)
         # Both distributions p and q must have the same distribution dimension count, if
         # they don't an error will be raised
-        d0 = rand(3)
-        d1 = rand(4)
-        p = MvNormal(rand(3), d0' * d0)
-        q = MvNormal(rand(4), d1' * d1)
+        d0 = rand(rng, 3)
+        d1 = rand(rng, 4)
+        p = MvNormal(rand(rng, 3), d0' * d0)
+        q = MvNormal(rand(rng, 4), d1' * d1)
 
         @test_throws DimensionMismatch kullback_leibler(p, q)
     end
@@ -126,9 +127,10 @@
     end
 
     @testset "simple examples" begin
+        rng = MersenneTwister(1)
         # Exploiting the simple case of diagonal covariances and zero means
-        diag0 = rand(0.1:1e-3:1.0, 10).^2
-        diag1 = rand(0.1:1e-3:1.0, 10).^2
+        diag0 = rand(rng, 0.1:1e-3:1.0, 10).^2
+        diag1 = rand(rng, 0.1:1e-3:1.0, 10).^2
         p = MvNormal(zeros(10), Diagonal(diag0))
         q = MvNormal(zeros(10), Diagonal(diag1))
 
@@ -136,9 +138,9 @@
             sum(diag0 ./ diag1) - 10 + log(prod(diag1) / prod(diag0))
         )
 
-        diag0 = rand(0.1:1e-3:1.0, 10).^2
-        m0 = rand(10)
-        m1 = rand(10)
+        diag0 = rand(rng, 0.1:1e-3:1.0, 10).^2
+        m0 = rand(rng, 10)
+        m1 = rand(rng, 10)
         p = MvNormal(m0, Diagonal(diag0))
         q = MvNormal(m1, I)
 
@@ -158,6 +160,7 @@
 
     @testset "using KeyedDistributions" begin
         names = ["foo", "bar", "baz"]
+        rng = MersenneTwister(1)
 
         @testset "normal usage" begin
 
@@ -170,8 +173,8 @@
 
         end
         @testset "shuffled" begin
-            a = KeyedDistribution(MvNormal(μ0, Σ0), shuffle(names))
-            b = KeyedDistribution(MvNormal(μ1, Σ1), shuffle(names))
+            a = KeyedDistribution(MvNormal(μ0, Σ0), shuffle(rng, names))
+            b = KeyedDistribution(MvNormal(μ1, Σ1), shuffle(rng, names))
 
             ida = only(axiskeys(a))
             idb = only(axiskeys(b))

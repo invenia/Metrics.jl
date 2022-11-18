@@ -9,13 +9,14 @@ end
 
 
 @testset "price impact" begin
+    rng = StableRNG(1)
     N = 50  # e.g. number of nodes
     nonzero_pi = (supply_pi=fill(0.1, N), demand_pi=fill(0.1, N))
 
     # Ensure supply is positive and demand negative,
     # no nodes have both supply and demand,
     # some nodes have zero volume (so we test this case).
-    volumes = rand(Uniform(-20, 20), N)
+    volumes = rand(rng, Uniform(-20, 20), N)
     zero_vols = sample(1:N, 4, replace = false)
     volumes[zero_vols] .= 0
 
