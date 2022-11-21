@@ -1,9 +1,9 @@
 @testset "picp.jl" begin
-
+    rng = StableRNG(1)
     testing_distributions = let
-        sqrtcov4 = randn(4, 4)
-        sqrtcov10 = randn(10, 10)
-        sqrtcov20 = randn(20, 20)
+        sqrtcov4 = randn(rng, 4, 4)
+        sqrtcov10 = randn(rng, 10, 10)
+        sqrtcov20 = randn(rng, 20, 20)
 
         (
             # Univariate:
@@ -13,12 +13,12 @@
             Normal(0.1,8),
             # Multivariate: we **only** support MvNormal)
             MvNormal(3, 0.2),
-            MvNormal(randn(4), sqrtcov4 * sqrtcov4'),
-            MvNormal(randn(10), sqrtcov10 * sqrtcov10'),
-            MvNormal(randn(20), sqrtcov20 * sqrtcov20'),
+            MvNormal(randn(rng, 4), sqrtcov4 * sqrtcov4'),
+            MvNormal(randn(rng, 10), sqrtcov10 * sqrtcov10'),
+            MvNormal(randn(rng, 20), sqrtcov20 * sqrtcov20'),
             # KeyedDistributions: we also **only** support MvNormal
             KeyedDistribution(MvNormal(3, 0.2), ["a", "b", "c"]),
-            KeyedDistribution(MvNormal(randn(4), sqrtcov4 * sqrtcov4'), ["a", "b", "c", "d"]),
+            KeyedDistribution(MvNormal(randn(rng, 4), sqrtcov4 * sqrtcov4'), ["a", "b", "c", "d"]),
         )
     end
 
@@ -30,9 +30,9 @@
     Returns an iterator of observations
     """
     function rand_out_of_dist(dist, n_samples)
-        basis = max((rand(dist) for _ in 1:500)...)
+        basis = max((rand(rng, dist) for _ in 1:500)...)
         center = mean(dist)
-        return [center .+ 10*(rand()-0.5).*basis for ii in 1:n_samples]
+        return [center .+ 10*(rand(rng, )-0.5).*basis for ii in 1:n_samples]
     end
 
     @testset "picp" begin
@@ -41,8 +41,8 @@
         # We check it here by testing those properties. (rather than checking exact values)
         @testset "Samples based (Univariate only)" begin
             # Testing uniform distribution case
-            dist_samples = rand(10_000)
-            test_samples = rand(10_000)
+            dist_samples = rand(rng, 10_000)
+            test_samples = rand(rng, 10_000)
             for α in (0.1, 0.3, 0.5, 0.7, 0.9)
                 @test picp(α, dist_samples, dist_samples) ≈ α
                 @test picp(α, dist_samples, test_samples) ≈ α rtol=0.15
@@ -67,7 +67,7 @@
         end
 
         @testset "Distributions - $(typeof(dist))" for dist in testing_distributions
-            samples = [rand(dist) for _ in 1:5_000]
+            samples = [rand(rng, dist) for _ in 1:5_000]
             for α in (0.1, 0.3, 0.5, 0.7, 1.0)
                 # It is exected that for a good sample the portion of points within the confidance interval
                 # will be equal to the size of the confidance interval (α)
@@ -102,7 +102,7 @@
 
                 @testset "increasing how different true data is decreases PICP" begin
                     old_picp = α
-                    plain_samples = [rand(dist) for _ in 1:6000]
+                    plain_samples = [rand(rng, dist) for _ in 1:6000]
                     corrupt_samples = rand_out_of_dist(dist, 6_000)
                     for n_plain in 6000:-1000:0
                         data = vcat(
@@ -123,8 +123,8 @@
 
         @testset "Samples based (Univariate only)" begin
             # Testing uniform distribution case
-            dist_samples = rand(1000)
-            test_samples = rand(1000)
+            dist_samples = rand(rng, 1000)
+            test_samples = rand(rng, 1000)
             @test isequal(
                 [picp(x, dist_samples, test_samples) for x in 0.2:0.1:0.7],
                 wpicp(0.2:0.1:0.7, dist_samples, test_samples)
@@ -133,7 +133,7 @@
 
         @testset "Distributions - $typeof(dist)" for dist in testing_distributions
             @testset "$name" for (name, samples) in (
-                ("ideal_samples",  [rand(dist) for _ in 1:5_000]),
+                ("ideal_samples",  [rand(rng, dist) for _ in 1:5_000]),
                 ("nonideal_samples",  rand_out_of_dist(dist, 5_000)),
             )
                 @test isequal(
@@ -156,25 +156,25 @@
             @testset "ideal estimate" begin
                 # The following invarients are promised only for ideal estimates
                 @testset "invarient to mean and spread" begin
-                    true_points = rand(Normal(0, 0.5), 1_000_000)
+                    true_points = rand(rng, Normal(0, 0.5), 1_000_000)
                     estimated_dist = Normal(0, 0.5)
                     @test apicp(estimated_dist, true_points) ≈ 1 atol=0.01
 
-                    true_points = rand(Normal(3, 0.5), 1_000_000)
+                    true_points = rand(rng, Normal(3, 0.5), 1_000_000)
                     estimated_dist = Normal(3, 0.5)
                     @test apicp(estimated_dist, true_points) ≈ 1 atol=0.01
 
 
-                    true_points = rand(Normal(3, 20), 1_000_000)
+                    true_points = rand(rng, Normal(3, 20), 1_000_000)
                     estimated_dist = Normal(3, 20)
                     @test apicp(estimated_dist, true_points) ≈ 1 atol=0.01
                 end
                 @testset "invarient (reasonable) window selection" begin
-                    true_points = rand(Normal(3, 20), 1_000_000)
+                    true_points = rand(rng, Normal(3, 20), 1_000_000)
                     estimated_dist = Normal(3, 20)
                     @test apicp(0.05:0.05:0.95, estimated_dist, true_points) ≈ 1 atol=0.01
 
-                    true_points = rand(Normal(3, 20), 1_000_000)
+                    true_points = rand(rng, Normal(3, 20), 1_000_000)
                     estimated_dist = Normal(3, 20)
                     @test apicp(0.05:0.005:0.95, estimated_dist, true_points) ≈ 1 atol=0.01
                 end
@@ -182,7 +182,7 @@
         end
 
         @testset "shifted estimate" begin
-            true_points = rand(Normal(0, 0.5), 1_000_000)
+            true_points = rand(rng, Normal(0, 0.5), 1_000_000)
             @testset "incorrect mean causes decrease" begin
                 @test apicp(Normal(1, 0.5), true_points) < apicp(Normal(0, 0.5), true_points)
             end

@@ -45,6 +45,7 @@
         ("vector", (y_true_vector, y_pred_vector)),
         ("matrix", (y_true_matrix, y_pred_matrix)),
     )
+    rng = StableRNG(1)
 
     # test properties on all metrics and argument types
     @testset "$type properties" for (type, (y_true, y_pred)) in forecast_pairs
@@ -62,11 +63,14 @@
                 @test evaluate(potential_payoff,y_true_keyed, y_pred_keyed) ≈ expected["dist"][type]
             end
             @testset "KeyedDistribution with shuffled KeyedArray" begin
-                new_order = shuffle(1:length(names))
+                new_order = shuffle(rng, 1:length(names))
                 _y_true_keyed = KeyedArray(y_true[new_order], obs=names[new_order])
 
-                @test potential_payoff(_y_true_keyed, y_pred_keyed) ≈ expected["dist"][type]
-                @test evaluate(potential_payoff,_y_true_keyed, y_pred_keyed) ≈ expected["dist"][type]
+                # Values change here because of the 'order' shuffle.
+                # Instead of [1, 2, 3] we have [2, 1, 3]. This changes the 'dot' calcs in
+                # potential_payoff().
+                @test potential_payoff(_y_true_keyed, y_pred_keyed) ≈ 1.8518518518518523
+                @test evaluate(potential_payoff,_y_true_keyed, y_pred_keyed) ≈ 1.8518518518518523
             end
         end
     end

@@ -1,11 +1,12 @@
 # helper function to generate MvNormals
+rng = StableRNG(1)
 function generate_mvnormal(mean, size::Integer)
     @assert length(mean) == size
-    X = rand(size, size)
+    X = rand(rng, size, size)
     rand_cov = X' * X + 0.01I
     return MvNormal(mean, Symmetric(rand_cov))
 end
-generate_mvnormal(size::Integer) = generate_mvnormal(rand(size), size)
+generate_mvnormal(size::Integer) = generate_mvnormal(rand(rng, size), size)
 
 # relocate a distribution to a new mean
 relocate(d::Normal, new_μ) = Normal(new_μ, d.σ)
@@ -187,9 +188,10 @@ Statistics.mean(y_pred::AbstractVector{<:Sampleable}) = mean.(y_pred)
     end
 
     @testset "mean on Vector{<:Sampleable}" begin
+        rng = StableRNG(1)
 
         @testset "Normal" begin
-            means = rand(5)
+            means = rand(rng, 5)
             vars = [1, 2, 3, 4, 5]
             dists = Normal.(means, vars)
 
@@ -197,7 +199,7 @@ Statistics.mean(y_pred::AbstractVector{<:Sampleable}) = mean.(y_pred)
         end
 
         @testset "MvNormal" begin
-            means = [rand(3), rand(3), rand(3)]
+            means = [rand(rng, 3), rand(rng, 3), rand(rng, 3)]
             sigmas = [1, 2, 3]
             dists = MvNormal.(means, sigmas)
 
@@ -207,14 +209,14 @@ Statistics.mean(y_pred::AbstractVector{<:Sampleable}) = mean.(y_pred)
         @testset "MatrixNormal" begin
             U = [1 2; 2 4.5]
             V = [1 2 3; 2 5.5 10.2; 3 10.2 24]
-            means = [rand(2, 3), rand(2, 3), rand(2, 3)]
+            means = [rand(rng, 2, 3), rand(rng, 2, 3), rand(rng, 2, 3)]
             dists = MatrixNormal.(means, Ref(U), Ref(V))
 
             @test mean(dists) == means
         end
 
         @testset "KeyedDistribution" begin
-            means = [rand(5), rand(5), rand(5)]
+            means = [rand(rng, 5), rand(rng, 5), rand(rng, 5)]
             sigmas = [1, 2, 3]
             dists = MvNormal.(means, sigmas)
 

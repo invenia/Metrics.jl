@@ -1,9 +1,7 @@
 @testset "subsample.jl" begin
-
-    seed!(1)
-
+    rng = StableRNG(1)
     # synthetic series for testing
-    series = randn(1000, 10)
+    series = randn(rng, 1000, 10)
     series_a = series[:, 1]
     series_b = series[:, 2]
 
@@ -61,7 +59,7 @@
         @testset "basic" begin
             β = 1.4
             x = 1:1:10
-            y = map(_x -> repeat([_x], 50) .^ β + rand(50), x)
+            y = map(_x -> repeat([_x], 50) .^ β + rand(rng, 50), x)
 
             @test isapprox(Metrics._compute_log_log_slope(x, y), β, atol=0.1)
         end
@@ -83,8 +81,8 @@
         end
 
         @testset "only works for Vector{Vector}" begin
-            @test_throws MethodError Metrics._compute_log_log_slope(rand(10), rand(10))
-            @test_throws MethodError Metrics._compute_log_log_slope(rand(10), rand(10, 4))
+            @test_throws MethodError Metrics._compute_log_log_slope(rand(10), rand(rng, 10))
+            @test_throws MethodError Metrics._compute_log_log_slope(rand(10), rand(rng, 10, 4))
         end
 
     end
@@ -115,7 +113,7 @@
         # 1001 > length(series_a) = 1000
         @test_throws DomainError Metrics.adaptive_block_size(mean, series_a, sizemin=998, sizemax=1001)
 
-        @test_throws DimensionMismatch Metrics.adaptive_block_size(mean, randn(5), randn(4))
+        @test_throws DimensionMismatch Metrics.adaptive_block_size(mean, randn(rng, 5), randn(rng, 4))
     end
 
     @testset "Function distance" begin
@@ -140,7 +138,7 @@
 
             result = map(
                 x -> subsample_difference_ci(mean, x[1], x[2]; sizemin=4, sizemax=80),
-                [(randn(1000), randn(1000)) for _ in 1:50],
+                [(randn(rng, 1000), randn(rng, 1000)) for _ in 1:50],
             )
 
             lower = mean(first, result)
@@ -331,7 +329,7 @@
             end
 
             @testset "default β" begin
-                series = rand(400)
+                series = rand(rng, 400)
 
                 for metric in [
                     mean,
@@ -354,8 +352,8 @@
             end
 
             @testset "default sizemin" begin
-                sseries1 = rand(200)
-                sseries2 = rand(200)
+                sseries1 = rand(rng, 200)
+                sseries2 = rand(rng, 200)
 
                 for metric in [
                     mean_over_es,

@@ -1,5 +1,6 @@
 @testset "summaries.jl" begin
     FD = FixedDecimal{Int, 2}
+    rng = StableRNG(1)
     @testset "Regression Summaries" begin
         # We don't need to check the exact values returned, we already have robust tests for each metric.
         # but we do want to make sure the summaries come back in a type we can consume.
@@ -130,8 +131,9 @@
                 y_pred_idx = KeyedDistribution(i.y_pred, obs)
                 summary_withidx = regression_summary(y_true_idx, y_pred_idx)
                 @test summary_withidx == summary
-                # suffle the keys
-                new_obs_order = shuffle(1:3)
+                # shuffle the keys
+                # Note: This shuffling doesn't actually change the ordering of the new KeyedArray
+                new_obs_order = shuffle(StableRNG(123), 1:3)
                 y_true_idx2 = KeyedArray(y_true[new_obs_order]; obs=obs[new_obs_order])
                 summary_withdiffidx = regression_summary(y_true_idx2, y_pred_idx)
                 @test summary_withdiffidx == summary
@@ -141,8 +143,8 @@
     @testset "Financial Summaries" begin
         @testset "volumes::AbstractVector, deltas::Union{MvNormal, AbstractMatrix}" begin
             num_nodes = 20
-            volumes = rand(Uniform(-50,50), num_nodes)
-            mean_deltas = rand(num_nodes)
+            volumes = rand(rng, Uniform(-50,50), num_nodes)
+            mean_deltas = rand(rng, num_nodes)
             deltas = generate_mvnormal(mean_deltas, num_nodes)
 
             expected_type = typeof((;
@@ -160,15 +162,15 @@
                 summary_mwh = financial_summary(volumes, deltas; per_mwh=true)
                 total_volume = sum(abs, volumes)
 
-                @test summary_mwh.expected_return == summary.expected_return / total_volume
-                @test summary_mwh.expected_shortfall == summary.expected_shortfall / total_volume
+                @test summary_mwh.expected_return ≈ (summary.expected_return / total_volume) atol=1e-14
+                @test summary_mwh.expected_shortfall ≈ (summary.expected_shortfall / total_volume) atol=1e-14
                 @test summary_mwh.sharpe_ratio == summary.sharpe_ratio
-                @test summary_mwh.volatility == summary.volatility / total_volume
+                @test summary_mwh.volatility ≈ (summary.volatility / total_volume) atol=1e-14
             end
         end
 
         @testset "returns::AbstractVector; risk_level::Real=0.5" begin
-            returns = rand(20)
+            returns = rand(rng, 20)
             risk_level = 0.05
 
             expected_type = typeof((;

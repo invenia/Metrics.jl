@@ -239,6 +239,7 @@
             ("vector", (y_true_vector, y_pred_vector)),
             ("matrix", (y_true_matrix, y_pred_matrix)),
         )
+        rng = StableRNG(1)
 
         @testset "$m" for m in metrics
 
@@ -275,7 +276,7 @@
                         @test evaluate(m, y_true_keyed, y_pred_keyed) ≈ expected[typeof(m)]["dist"][type]
                     end
                     @testset "KeyedDistribution with shuffled KeyedArray" begin
-                        new_order = shuffle(1:length(names))
+                        new_order = shuffle(rng, 1:length(names))
                         _y_true_keyed = KeyedArray(y_true[new_order], obs=names[new_order])
 
                         @test m(_y_true_keyed, y_pred_keyed) ≈ expected[typeof(m)]["dist"][type]
@@ -320,13 +321,23 @@
                             )
                         end
                         @testset "KeyedArray with shuffled KeyedArray" begin
-                            new_order = shuffle(1:length(names))
+                            new_order = shuffle(rng, 1:length(names))
                             y_pred_keyarr = KeyedArray(y_means, obs=names[new_order])
 
-                            @test isapprox(
-                                mean_metric(y_true_keyed, y_pred_keyarr),
-                                expected[typeof(single_metric)]["point"][type] / length(y_true)
-                            )
+                            # new order = [2, 3, 1]
+                            # Therefore the mean metric is 29 instead of 35. This only affects
+                            # expected_squared_error, as the order of [3, 2, 1] for expected_absolute_error works fine.
+                            if single_metric == expected_squared_error
+                                @test isapprox(
+                                    mean_metric(y_true_keyed, y_pred_keyarr),
+                                    29 / length(y_true)
+                                )
+                            else
+                                @test isapprox(
+                                    mean_metric(y_true_keyed, y_pred_keyarr),
+                                    expected[typeof(single_metric)]["point"][type] / length(y_true)
+                                )
+                            end
                         end
                         @testset "KeyedArrays don't match" begin
                             y_pred_keyarr = KeyedArray(y_means, obs=["a", "b", "q"])
@@ -345,7 +356,7 @@
                             )
                         end
                         @testset "KeyedDistribution with shuffled KeyedArray" begin
-                            new_order = shuffle(1:length(names))
+                            new_order = shuffle(rng, 1:length(names))
                             _y_true_keyed = KeyedArray(y_true[new_order], obs=names[new_order])
 
                             @test isapprox(
@@ -504,6 +515,7 @@
             ("vector", (y_true_vector, y_pred_vector)),
             ("matrix", (y_true_matrix, y_pred_matrix)),
         )
+        rng = StableRNG(1)
 
         @testset "$m" for m in metrics
 
@@ -538,7 +550,7 @@
                     end
                     @testset "KeyedArray with shuffled KeyedArray" begin
                         # make a new vector of predicted KeyedArrays with shuffles axis names
-                        new_order = shuffle(1:length(names))
+                        new_order = shuffle(rng, 1:length(names))
                         y_pred_keyarr = [KeyedArray(y[new_order], obs=names[new_order]) for y in y_means]
                         @test m(y_true_keyed, y_pred_keyarr) ≈ expected[typeof(m)]["point"][type]
                     end
@@ -557,7 +569,7 @@
                     end
                     @testset "KeyedDistribution with shuffled KeyedArray" begin
                         # make a new vector of KeyedArrays with shuffled dimnames
-                        new_order = shuffle(1:length(names))
+                        new_order = shuffle(rng, 1:length(names))
                         _y_true_keyed = [y[new_order] for y in y_true_keyed]
 
                         @test m(_y_true_keyed, y_pred_keyed) ≈ expected[typeof(m)]["dist"][type]
