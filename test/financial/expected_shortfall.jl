@@ -1,6 +1,6 @@
 @testset "expected shortfall" begin
     rng = StableRNG(1234)
-    i_matrix_samples = Matrix(I, (10, 10))
+    i_matrix = Matrix(I, (10, 10))
     mv_normal_samples = rand(rng, MvNormal(ones(20)), 50)
     @testset "simple ES" begin
         # basic usage
@@ -44,8 +44,8 @@
         # using samples
         volumes = [1, -2, 3, -4, 5, -6, 7, -8, 9, -10]
         expected = -mean([-2, -4, -6, -8, -10])  # = 6.0
-        @test expected_shortfall(volumes, i_matrix_samples; risk_level=0.5) == expected
-        @test evaluate(expected_shortfall, volumes, i_matrix_samples; risk_level=0.5) == expected
+        @test expected_shortfall(volumes, i_matrix; risk_level=0.5) == expected
+        @test evaluate(expected_shortfall, volumes, i_matrix; risk_level=0.5) == expected
 
         # using diagonal matrix of samples - requires AbstractArray
         sample_deltas = Diagonal(1:10)
@@ -76,7 +76,6 @@
     end
 
     @testset "analytic ES" begin
-        # rng = StableRNG(1)
         # for constructing some PDMats
         B = (reshape(2:10, 3, 3) / 12) .^ 2
         A = B' * B + I
@@ -205,7 +204,7 @@ end
 
 @testset "evano" begin
     rng = StableRNG(1234)
-    i_matrix_samples = Matrix(I, (10, 10))
+    i_matrix = Matrix(I, (10, 10))
     mv_normal_samples = rand(rng, MvNormal(ones(20)), 50)
     @testset "simple evano" begin
         # Basic usage
@@ -216,7 +215,6 @@ end
         @test evano(returns) == expected
 
         # Order shouldn't matter
-        rng = StableRNG(1)
         shuffle!(rng, returns)
         @test evano(returns) == expected
 
@@ -242,8 +240,8 @@ end
         # Using samples
         volumes = [1, -2, 3, -4, 5, -6, 7, -8, 9, -10]
         expected = -0.08333333333333333
-        @test evano(volumes, i_matrix_samples; risk_level=0.5) == expected
-        @test evaluate(evano, volumes, i_matrix_samples; risk_level=0.5) == expected
+        @test evano(volumes, i_matrix; risk_level=0.5) == expected
+        @test evaluate(evano, volumes, i_matrix; risk_level=0.5) == expected
 
         # using diagonal matrix of samples - requires AbstractArray
         sample_deltas = Diagonal(1:10)
@@ -260,7 +258,6 @@ end
             expected,
         )
 
-        # generate samples from distribution of deltas
         volumes = repeat([1, -2, 3, -4, 5, -6, 7, -8, 9, -10], 2)
         expected = -0.040273663897995186
         @test evano(volumes, mv_normal_samples) ≈ expected
@@ -301,7 +298,7 @@ end
 
 @testset "mean over es" begin
     rng = StableRNG(1234)
-    i_matrix_samples = Matrix(I, (10, 10))
+    i_matrix = Matrix(I, (10, 10))
     mv_normal_samples = rand(rng, MvNormal(ones(20)), 50)
     @testset "simple case" begin
         # Basic usage
@@ -339,10 +336,9 @@ end
     volumes = [6, -7, 8, -9, 10, -11, 12, -13, 14, -15]
     @testset "sample mean over es" begin
         @testset "using samples" begin
-            samples = Matrix(I, (10, 10))
             expected = -0.045454545454545435
-            @test mean_over_es(volumes, samples; risk_level=0.5) == expected
-            @test evaluate(mean_over_es, volumes, samples; risk_level=0.5) == expected
+            @test mean_over_es(volumes, i_matrix; risk_level=0.5) == expected
+            @test evaluate(mean_over_es, volumes, i_matrix; risk_level=0.5) == expected
         end
 
         sample_deltas = Diagonal(1:10)

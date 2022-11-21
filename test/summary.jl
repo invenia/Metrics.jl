@@ -131,7 +131,7 @@
                 y_pred_idx = KeyedDistribution(i.y_pred, obs)
                 summary_withidx = regression_summary(y_true_idx, y_pred_idx)
                 @test summary_withidx == summary
-                # suffle the keys
+                # shuffle the keys
                 # Note: This shuffling doesn't actually change the ordering of the new KeyedArray
                 new_obs_order = shuffle(StableRNG(123), 1:3)
                 y_true_idx2 = KeyedArray(y_true[new_obs_order]; obs=obs[new_obs_order])

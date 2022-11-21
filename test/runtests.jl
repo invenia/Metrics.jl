@@ -24,7 +24,6 @@ import Statistics.mean
 include("test_utils/properties.jl")
 include("test_utils/stats.jl")
 
-seed!(StableRNG(1), 1)
 @testset "Metrics.jl" begin
     doctest(Metrics)
 
