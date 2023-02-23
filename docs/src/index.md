@@ -20,7 +20,7 @@ Thus, they may be used at all levels of the [RTE pipeline](https://gitlab.inveni
 The `model` metrics are used to compare the outputs of models and forecasters against each other.
 Unlike `regression` metrics, they do not compare `prediction`s against a known `truth`, hence they form a separate category.
 
-The `financial` metrics are used in evaluating the outputs of [Portfolio Optimization](https://gitlab.invenia.ca/invenia/PortfolioOptimizers.jl) or the returns of an extended backrun after the [`financials`](https://invenia.pages.invenia.ca/BidFinance.jl/pages/api/#BidFinance.get_financials-Tuple{S3DB.AbstractClient,TimeZones.ZonedDateTime,Bids.FixedDataFrame,ElectricityMarkets.Market}) have been calculated.
+The `financial` metrics are used in evaluating the outputs of [Portfolio Optimization](https://gitlab.invenia.ca/invenia/PortfolioOptimizers.jl) or the returns of an extended backrun after the [`financials`](https://invenia.pages.invenia.ca/monitoring/BidFinance.jl/pages/api/#BidFinance.get_financials-Tuple{S3DB.AbstractClient,TimeZones.ZonedDateTime,Bids.FixedDataFrame,ElectricityMarkets.Market}) have been calculated.
 These contain functions for computing quantities such as `median_return`, `sharpe_ratio`, and `expected_shortfall`.
 This would typically be used during the [`RiskAnalysis`](https://gitlab.invenia.ca/invenia/RiskAnalysis.jl) performed on a backrun.
 
